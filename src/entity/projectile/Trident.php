@@ -121,7 +121,7 @@ class Trident extends Projectile{
 			if($this->isReturning){
 				$owner = $this->getOwningEntity();
 				$world = $this->getWorld();
-				if($this->canReturn()){
+				if($owner instanceof Player && $this->canReturn($owner)){
 					$this->setHasGravity(false);
 					$this->setHasBlockCollision(false);
 					$this->canCollide = false;
@@ -163,7 +163,12 @@ class Trident extends Projectile{
 	}
 
 	public function attack(EntityDamageEvent $source) : void{
-		if($source->getCause() === EntityDamageEvent::CAUSE_VOID && $this->item->hasEnchantment(VanillaEnchantments::LOYALTY()) && $this->canReturn()){
+		if(
+			$source->getCause() === EntityDamageEvent::CAUSE_VOID &&
+			$this->item->hasEnchantment(VanillaEnchantments::LOYALTY()) &&
+			($owner = $this->getOwningEntity()) instanceof Player &&
+			$this->canReturn($owner)
+		){
 			if(!$this->isReturning){
 				$this->startReturning();
 			}
@@ -181,6 +186,9 @@ class Trident extends Projectile{
 			throw new \InvalidArgumentException("Trident must have a count of at least 1");
 		}
 		$this->item = clone $item;
+		if($this->isReturning && !$item->hasEnchantment(VanillaEnchantments::LOYALTY())){
+			$this->stopReturning();
+		}
 		$this->networkPropertiesDirty = true;
 	}
 
@@ -206,9 +214,16 @@ class Trident extends Projectile{
 		$this->networkPropertiesDirty = true;
 	}
 
-	private function canReturn() : bool{
-		$owner = $this->getOwningEntity();
-		return $owner instanceof Player && $owner->canBeCollidedWith() && $owner->getWorld() === $this->getWorld();
+	private function stopReturning() : void{
+		$this->setHasGravity(true);
+		$this->setHasBlockCollision(true);
+		$this->canCollide = true;
+		$this->isReturning = false;
+		$this->networkPropertiesDirty = true;
+	}
+
+	private function canReturn(Player $owner) : bool{
+		return $owner->canBeCollidedWith() && $owner->getWorld() === $this->getWorld();
 	}
 
 	public function canCollideWith(Entity $entity) : bool{
@@ -233,7 +248,7 @@ class Trident extends Projectile{
 			$ev->cancel();
 			$shouldDespawn = true;
 		}
-		if($this->item->hasEnchantment(VanillaEnchantments::LOYALTY()) && $player->getId() !== $this->ownerId){
+		if($this->item->hasEnchantment(VanillaEnchantments::LOYALTY()) && $this->ownerId !== null && $player->getId() !== $this->ownerId){
 			$ev->cancel();
 		}
 
@@ -245,7 +260,7 @@ class Trident extends Projectile{
 				if($this->favoredSlot !== null && $inventory->slotExists($this->favoredSlot) && $inventory->isSlotEmpty($this->favoredSlot)){
 					$inventory->setItem($this->favoredSlot, $item);
 				}else{
-					$ev->getInventory()->addItem($item);
+					$inventory->addItem($item);
 				}
 			}
 			$shouldDespawn = true;
