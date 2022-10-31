@@ -254,7 +254,6 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 	//TODO: Abilities
 	protected bool $autoJump = true;
 	protected bool $allowFlight = false;
-	protected bool $blockCollision = true;
 	protected bool $flying = false;
 
 	/** @phpstan-var positive-int|null  */
@@ -456,17 +455,9 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 	 */
 	public function setHasBlockCollision(bool $value) : void{
 		if($this->blockCollision !== $value){
-			$this->blockCollision = $value;
+			parent::setHasBlockCollision($value);
 			$this->getNetworkSession()->syncAbilities($this);
 		}
-	}
-
-	/**
-	 * Returns whether blocks may obstruct the player's movement.
-	 * If false, the player can move through any block unobstructed.
-	 */
-	public function hasBlockCollision() : bool{
-		return $this->blockCollision;
 	}
 
 	public function setFlying(bool $value) : void{
@@ -2389,7 +2380,6 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 		parent::syncNetworkData($properties);
 
 		$properties->setGenericFlag(EntityMetadataFlags::ACTION, $this->startAction > -1);
-		$properties->setGenericFlag(EntityMetadataFlags::HAS_COLLISION, $this->hasBlockCollision());
 
 		$properties->setPlayerFlag(PlayerMetadataFlags::SLEEP, $this->sleeping !== null);
 		$properties->setBlockPos(EntityMetadataProperties::PLAYER_BED_POSITION, $this->sleeping !== null ? BlockPosition::fromVector3($this->sleeping) : new BlockPosition(0, 0, 0));

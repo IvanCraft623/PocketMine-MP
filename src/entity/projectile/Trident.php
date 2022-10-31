@@ -27,9 +27,11 @@ use pocketmine\block\Block;
 use pocketmine\entity\Entity;
 use pocketmine\entity\EntitySizeInfo;
 use pocketmine\entity\Location;
+use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\entity\EntityItemPickupEvent;
 use pocketmine\event\entity\ProjectileHitEntityEvent;
 use pocketmine\event\entity\ProjectileHitEvent;
+use pocketmine\item\enchantment\VanillaEnchantments;
 use pocketmine\item\Trident as TridentItem;
 use pocketmine\math\RayTraceResult;
 use pocketmine\math\Vector3;
@@ -40,6 +42,7 @@ use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataFlags;
 use pocketmine\player\Player;
 use pocketmine\world\sound\TridentHitGroundSound;
 use pocketmine\world\sound\TridentHitSound;
+use pocketmine\world\sound\TridentReturnSound;
 
 class Trident extends Projectile{
 
@@ -52,6 +55,10 @@ class Trident extends Projectile{
 	protected bool $canCollide = true;
 
 	protected bool $spawnedInCreative;
+
+	protected bool $isReturning = false;
+
+	protected ?int $favoredSlot = null;
 
 	public function __construct(
 		Location $location,
@@ -76,12 +83,19 @@ class Trident extends Projectile{
 		parent::initEntity($nbt);
 
 		$this->spawnedInCreative = $nbt->getByte("isCreative", 0) === 1;
+
+		$slot = $nbt->getInt("favoredSlot", -1);
+		if($slot < 0 || $slot > 8){
+			$slot = null;
+		}
+		$this->favoredSlot = $slot;
 	}
 
 	public function saveNBT() : CompoundTag{
 		$nbt = parent::saveNBT();
 		$nbt->setTag("Trident", $this->item->nbtSerialize());
 		$nbt->setByte("isCreative", $this->spawnedInCreative ? 1 : 0);
+		$nbt->setInt("favoredSlot", $this->favoredSlot ?? -1);
 		return $nbt;
 	}
 
@@ -97,7 +111,33 @@ class Trident extends Projectile{
 			return false;
 		}
 
-		return parent::entityBaseTick($tickDiff);
+		$hasUpdate = parent::entityBaseTick($tickDiff);
+
+		$loyaltyLevel = $this->item->getEnchantmentLevel(VanillaEnchantments::LOYALTY());
+		if($loyaltyLevel > 0){
+			if($this->blockHit !== null && !$this->isReturning){
+				$this->startReturning();
+			}
+			if($this->isReturning){
+				$owner = $this->getOwningEntity();
+				$world = $this->getWorld();
+				if($this->canReturn()){
+					$this->setHasGravity(false);
+					$this->setHasBlockCollision(false);
+					$this->canCollide = false;
+
+					$vectorDiff = $owner->getEyePos()->subtractVector($this->location);
+					$this->setPosition($this->location->add(0, $vectorDiff->y * 0.015 * $loyaltyLevel, 0));
+					$this->setMotion($this->motion->multiply(0.95)->addVector($vectorDiff->normalize()->multiply(0.05 * $loyaltyLevel)));
+				}else{
+					$world->dropItem($this->location, $this->item);
+					$this->flagForDespawn();
+				}
+				$hasUpdate = true;
+			}
+		}
+
+		return $hasUpdate;
 	}
 
 	protected function onHitEntity(Entity $entityHit, RayTraceResult $hitResult) : void{
@@ -122,6 +162,16 @@ class Trident extends Projectile{
 		return parent::getMotionOnHit($event);
 	}
 
+	public function attack(EntityDamageEvent $source) : void{
+		if($source->getCause() === EntityDamageEvent::CAUSE_VOID && $this->item->hasEnchantment(VanillaEnchantments::LOYALTY()) && $this->canReturn()){
+			if(!$this->isReturning){
+				$this->startReturning();
+			}
+			return;
+		}
+		parent::attack($source);
+	}
+
 	public function getItem() : TridentItem{
 		return clone $this->item;
 	}
@@ -134,35 +184,70 @@ class Trident extends Projectile{
 		$this->networkPropertiesDirty = true;
 	}
 
+	public function getFavoredSlot() : ?int {
+		return $this->favoredSlot;
+	}
+
+	public function setFavoredSlot(?int $slot) : void {
+		if($slot !== null && ($slot < 0 || $slot > 8)){
+			throw new \InvalidArgumentException("$slot is not a valid hotbar slot index (expected 0 - 8)");
+		}
+		$this->favoredSlot = $slot;
+	}
+
+	public function isReturning() : bool{
+		return $this->isReturning;
+	}
+
+	private function startReturning() : void{
+		$this->broadcastSound(new TridentReturnSound());
+		$this->blockHit = null;
+		$this->isReturning = true;
+		$this->networkPropertiesDirty = true;
+	}
+
+	private function canReturn() : bool{
+		$owner = $this->getOwningEntity();
+		return $owner instanceof Player && $owner->canBeCollidedWith() && $owner->getWorld() === $this->getWorld();
+	}
+
 	public function canCollideWith(Entity $entity) : bool{
 		return $this->canCollide && $entity->getId() !== $this->ownerId && parent::canCollideWith($entity);
 	}
 
 	public function onCollideWithPlayer(Player $player) : void{
-		if($this->blockHit === null){
-			return;
+		if($this->blockHit !== null || ($this->isReturning && $player->getId() === $this->ownerId)){
+			$this->pickup($player);
 		}
-
-		$this->pickup($player);
 	}
 
 	private function pickup(Player $player) : void{
-		$item = $this->getItem();
 		$shouldDespawn = false;
 
-		$inventory = $player->getInventory();
-		$ev = new EntityItemPickupEvent($player, $this, $item, $player->getInventory());
-		if($player->hasFiniteResources() && $inventory->getAddableItemQuantity($item) > 0){
+		$playerInventory = $player->getInventory();
+		$ev = new EntityItemPickupEvent($player, $this, $this->getItem(), $player->getInventory());
+		if($player->hasFiniteResources() && !$playerInventory->canAddItem($ev->getItem())){
 			$ev->cancel();
 		}
 		if($this->spawnedInCreative){
 			$ev->cancel();
 			$shouldDespawn = true;
 		}
+		if($this->item->hasEnchantment(VanillaEnchantments::LOYALTY()) && $player->getId() !== $this->ownerId){
+			$ev->cancel();
+		}
 
 		$ev->call();
 		if(!$ev->isCancelled()){
-			$ev->getInventory()?->addItem($ev->getItem());
+			$inventory = $ev->getInventory();
+			$item = $ev->getItem();
+			if($inventory !== null){
+				if($this->favoredSlot !== null && $inventory->slotExists($this->favoredSlot) && $inventory->isSlotEmpty($this->favoredSlot)){
+					$inventory->setItem($this->favoredSlot, $item);
+				}else{
+					$ev->getInventory()->addItem($item);
+				}
+			}
 			$shouldDespawn = true;
 		}
 
@@ -179,5 +264,6 @@ class Trident extends Projectile{
 		parent::syncNetworkData($properties);
 
 		$properties->setGenericFlag(EntityMetadataFlags::ENCHANTED, $this->item->hasEnchantments());
+		$properties->setGenericFlag(EntityMetadataFlags::SHOW_TRIDENT_ROPE, $this->isReturning);
 	}
 }

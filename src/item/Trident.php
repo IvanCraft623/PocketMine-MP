@@ -28,6 +28,7 @@ use pocketmine\entity\Entity;
 use pocketmine\entity\Location;
 use pocketmine\entity\projectile\Trident as TridentEntity;
 use pocketmine\event\entity\ProjectileLaunchEvent;
+use pocketmine\item\enchantment\VanillaEnchantments;
 use pocketmine\player\Player;
 use pocketmine\world\sound\TridentThrowSound;
 use function min;
@@ -55,6 +56,9 @@ class Trident extends Tool implements Releasable{
 		$p = $diff / 20;
 		$baseForce = min((($p ** 2) + $p * 2) / 3, 1) * 2.4;
 		$entity->setMotion($player->getDirectionVector()->multiply($baseForce));
+		if($this->hasEnchantment(VanillaEnchantments::LOYALTY())){
+			$entity->setFavoredSlot($player->getInventory()->getHeldItemIndex());
+		}
 
 		$ev = new ProjectileLaunchEvent($entity);
 		$ev->call();

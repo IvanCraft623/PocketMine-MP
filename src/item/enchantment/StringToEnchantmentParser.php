@@ -45,6 +45,7 @@ final class StringToEnchantmentParser extends StringToTParser{
 		$result->register("flame", fn() => VanillaEnchantments::FLAME());
 		$result->register("infinity", fn() => VanillaEnchantments::INFINITY());
 		$result->register("knockback", fn() => VanillaEnchantments::KNOCKBACK());
+		$result->register("loyalty", fn() => VanillaEnchantments::LOYALTY());
 		$result->register("mending", fn() => VanillaEnchantments::MENDING());
 		$result->register("power", fn() => VanillaEnchantments::POWER());
 		$result->register("projectile_protection", fn() => VanillaEnchantments::PROJECTILE_PROTECTION());

@@ -160,6 +160,7 @@ abstract class Entity{
 	protected bool $immobile = false;
 	protected bool $invisible = false;
 	protected bool $silent = false;
+	protected bool $blockCollision = true;
 
 	protected ?int $ownerId = null;
 	protected ?int $targetId = null;
@@ -772,6 +773,24 @@ abstract class Entity{
 		$this->gravityEnabled = $v;
 	}
 
+	/**
+	 * Returns whether blocks may obstruct the entity's movement.
+	 * If false, the entity can move through any block unobstructed.
+	 */
+	public function hasBlockCollision() : bool{
+		return $this->blockCollision;
+	}
+
+	/**
+	 * Sets whether blocks may obstruct the entity's movement.
+	 */
+	public function setHasBlockCollision(bool $value) : void{
+		if($this->blockCollision !== $value){
+			$this->blockCollision = $value;
+			$this->networkPropertiesDirty = true;
+		}
+	}
+
 	protected function applyDragBeforeGravity() : bool{
 		return false;
 	}
@@ -802,7 +821,7 @@ abstract class Entity{
 
 	protected function checkObstruction(float $x, float $y, float $z) : bool{
 		$world = $this->getWorld();
-		if(count($world->getCollisionBoxes($this, $this->getBoundingBox(), false)) === 0){
+		if(count($world->getCollisionBoxes($this, $this->getBoundingBox(), false)) === 0 || !$this->hasBlockCollision()){
 			return false;
 		}
 
@@ -1094,7 +1113,7 @@ abstract class Entity{
 		$wantedY = $dy;
 		$wantedZ = $dz;
 
-		if($this->keepMovement){
+		if($this->keepMovement || !$this->hasBlockCollision()){
 			$this->boundingBox->offset($dx, $dy, $dz);
 		}else{
 			$this->ySize *= self::STEP_CLIP_MULTIPLIER;
@@ -1200,10 +1219,17 @@ abstract class Entity{
 	}
 
 	protected function checkGroundState(float $wantedX, float $wantedY, float $wantedZ, float $dx, float $dy, float $dz) : void{
-		$this->isCollidedVertically = $wantedY != $dy;
-		$this->isCollidedHorizontally = ($wantedX != $dx || $wantedZ != $dz);
-		$this->isCollided = ($this->isCollidedHorizontally || $this->isCollidedVertically);
-		$this->onGround = ($wantedY != $dy && $wantedY < 0);
+		if($this->hasBlockCollision()){
+			$this->isCollidedVertically = $wantedY != $dy;
+			$this->isCollidedHorizontally = ($wantedX != $dx || $wantedZ != $dz);
+			$this->isCollided = ($this->isCollidedHorizontally || $this->isCollidedVertically);
+			$this->onGround = ($wantedY != $dy && $wantedY < 0);
+		}else{
+			$this->isCollidedVertically = false;
+			$this->isCollidedHorizontally = false;
+			$this->isCollided = false;
+			$this->onGround = false;
+		}
 	}
 
 	/**
@@ -1256,6 +1282,10 @@ abstract class Entity{
 	}
 
 	protected function checkBlockIntersections() : void{
+		if (!$this->hasBlockCollision()) {
+			return;
+		}
+
 		$vectors = [];
 
 		foreach($this->getBlocksAroundWithEntityInsideActions() as $block){
@@ -1619,7 +1649,7 @@ abstract class Entity{
 		$properties->setGenericFlag(EntityMetadataFlags::AFFECTED_BY_GRAVITY, $this->gravityEnabled);
 		$properties->setGenericFlag(EntityMetadataFlags::CAN_CLIMB, $this->canClimb);
 		$properties->setGenericFlag(EntityMetadataFlags::CAN_SHOW_NAMETAG, $this->nameTagVisible);
-		$properties->setGenericFlag(EntityMetadataFlags::HAS_COLLISION, true);
+		$properties->setGenericFlag(EntityMetadataFlags::HAS_COLLISION, $this->hasBlockCollision());
 		$properties->setGenericFlag(EntityMetadataFlags::IMMOBILE, $this->immobile);
 		$properties->setGenericFlag(EntityMetadataFlags::INVISIBLE, $this->invisible);
 		$properties->setGenericFlag(EntityMetadataFlags::SILENT, $this->silent);

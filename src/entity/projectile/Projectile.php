@@ -168,15 +168,17 @@ abstract class Projectile extends Entity{
 		$entityHit = null;
 		$hitResult = null;
 
-		foreach(VoxelRayTrace::betweenPoints($start, $end) as $vector3){
-			$block = $this->getWorld()->getBlockAt($vector3->x, $vector3->y, $vector3->z);
+		if($this->hasBlockCollision()){
+			foreach(VoxelRayTrace::betweenPoints($start, $end) as $vector3){
+				$block = $this->getWorld()->getBlockAt($vector3->x, $vector3->y, $vector3->z);
 
-			$blockHitResult = $this->calculateInterceptWithBlock($block, $start, $end);
-			if($blockHitResult !== null){
-				$end = $blockHitResult->hitVector;
-				$blockHit = $block;
-				$hitResult = $blockHitResult;
-				break;
+				$blockHitResult = $this->calculateInterceptWithBlock($block, $start, $end);
+				if($blockHitResult !== null){
+					$end = $blockHitResult->hitVector;
+					$blockHit = $block;
+					$hitResult = $blockHitResult;
+					break;
+				}
 			}
 		}
 

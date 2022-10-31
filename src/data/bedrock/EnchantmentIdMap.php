@@ -73,6 +73,8 @@ final class EnchantmentIdMap{
 		$this->register(EnchantmentIds::MENDING, VanillaEnchantments::MENDING());
 
 		$this->register(EnchantmentIds::VANISHING, VanillaEnchantments::VANISHING());
+
+		$this->register(EnchantmentIds::LOYALTY, VanillaEnchantments::LOYALTY());
 	}
 
 	public function register(int $mcpeId, Enchantment $enchantment) : void{

@@ -41,6 +41,7 @@ use pocketmine\utils\RegistryTrait;
  * @method static Enchantment FLAME()
  * @method static Enchantment INFINITY()
  * @method static KnockbackEnchantment KNOCKBACK()
+ * @method static Enchantment LOYALTY()
  * @method static Enchantment MENDING()
  * @method static Enchantment POWER()
  * @method static ProtectionEnchantment PROJECTILE_PROTECTION()
@@ -85,7 +86,7 @@ final class VanillaEnchantments{
 
 		self::register("EFFICIENCY", new Enchantment(KnownTranslationFactory::enchantment_digging(), Rarity::COMMON, ItemFlags::DIG, ItemFlags::SHEARS, 5));
 		self::register("SILK_TOUCH", new Enchantment(KnownTranslationFactory::enchantment_untouching(), Rarity::MYTHIC, ItemFlags::DIG, ItemFlags::SHEARS, 1));
-		self::register("UNBREAKING", new Enchantment(KnownTranslationFactory::enchantment_durability(), Rarity::UNCOMMON, ItemFlags::DIG | ItemFlags::ARMOR | ItemFlags::FISHING_ROD | ItemFlags::BOW, ItemFlags::TOOL | ItemFlags::CARROT_STICK | ItemFlags::ELYTRA, 3));
+		self::register("UNBREAKING", new Enchantment(KnownTranslationFactory::enchantment_durability(), Rarity::UNCOMMON, ItemFlags::DIG | ItemFlags::ARMOR | ItemFlags::FISHING_ROD | ItemFlags::BOW | ItemFlags::TRIDENT, ItemFlags::TOOL | ItemFlags::CARROT_STICK | ItemFlags::ELYTRA, 3));
 
 		self::register("POWER", new Enchantment(KnownTranslationFactory::enchantment_arrowDamage(), Rarity::COMMON, ItemFlags::BOW, ItemFlags::NONE, 5));
 		self::register("PUNCH", new Enchantment(KnownTranslationFactory::enchantment_arrowKnockback(), Rarity::RARE, ItemFlags::BOW, ItemFlags::NONE, 2));
@@ -95,6 +96,8 @@ final class VanillaEnchantments{
 		self::register("MENDING", new Enchantment(KnownTranslationFactory::enchantment_mending(), Rarity::RARE, ItemFlags::NONE, ItemFlags::ALL, 1));
 
 		self::register("VANISHING", new Enchantment(KnownTranslationFactory::enchantment_curse_vanishing(), Rarity::MYTHIC, ItemFlags::NONE, ItemFlags::ALL, 1));
+
+		self::register("LOYALTY", new Enchantment(KnownTranslationFactory::enchantment_tridentLoyalty(), Rarity::RARE, ItemFlags::TRIDENT, ItemFlags::NONE, 3));
 	}
 
 	protected static function register(string $name, Enchantment $member) : void{
