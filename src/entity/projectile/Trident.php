@@ -141,9 +141,6 @@ class Trident extends Projectile{
 	}
 
 	protected function onHitEntity(Entity $entityHit, RayTraceResult $hitResult) : void{
-		if(!$this->canCollide){
-			return;
-		}
 		parent::onHitEntity($entityHit, $hitResult);
 		$this->canCollide = false;
 		$this->broadcastSound(new TridentHitSound());
@@ -155,11 +152,12 @@ class Trident extends Projectile{
 		$this->broadcastSound(new TridentHitGroundSound());
 	}
 
-	public function getMotionOnHit(?ProjectileHitEvent $event) : Vector3{
+	public function onHit(ProjectileHitEvent $event) : Vector3{
+		$motion = parent::onHit($event);
 		if($event instanceof ProjectileHitEntityEvent){
-			return new Vector3($this->motion->x * -0.01, $this->motion->y * -0.1, $this->motion->z * -0.01);
+			$motion = new Vector3($this->motion->x * -0.01, $this->motion->y * -0.1, $this->motion->z * -0.01);
 		}
-		return parent::getMotionOnHit($event);
+		return $motion;
 	}
 
 	public function attack(EntityDamageEvent $source) : void{
@@ -185,11 +183,13 @@ class Trident extends Projectile{
 		if($item->isNull()){
 			throw new \InvalidArgumentException("Trident must have a count of at least 1");
 		}
-		$this->item = clone $item;
+		if($this->item->hasEnchantments() !== $item->hasEnchantments()){
+			$this->networkPropertiesDirty = true;
+		}
 		if($this->isReturning && !$item->hasEnchantment(VanillaEnchantments::LOYALTY())){
 			$this->stopReturning();
 		}
-		$this->networkPropertiesDirty = true;
+		$this->item = clone $item;
 	}
 
 	public function getFavoredSlot() : ?int {
@@ -240,7 +240,7 @@ class Trident extends Projectile{
 		$shouldDespawn = false;
 
 		$playerInventory = $player->getInventory();
-		$ev = new EntityItemPickupEvent($player, $this, $this->getItem(), $player->getInventory());
+		$ev = new EntityItemPickupEvent($player, $this, $this->getItem(), $playerInventory);
 		if($player->hasFiniteResources() && !$playerInventory->canAddItem($ev->getItem())){
 			$ev->cancel();
 		}
