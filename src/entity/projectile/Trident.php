@@ -46,6 +46,10 @@ use pocketmine\world\sound\TridentReturnSound;
 
 class Trident extends Projectile{
 
+	public const TAG_ITEM = "Trident"; //TAG_Compound
+	protected const TAG_SPAWNED_IN_CREATIVE = "isCreative"; //TAG_Byte
+	protected const TAG_FAVORED_SLOT = "favoredSlot"; //TAG_Int
+
 	public static function getNetworkTypeId() : string{ return EntityIds::THROWN_TRIDENT; }
 
 	protected TridentItem $item;
@@ -54,7 +58,7 @@ class Trident extends Projectile{
 
 	protected bool $canCollide = true;
 
-	protected bool $spawnedInCreative;
+	protected bool $spawnedInCreative = false;
 
 	protected bool $isReturning = false;
 
@@ -82,9 +86,9 @@ class Trident extends Projectile{
 	protected function initEntity(CompoundTag $nbt) : void{
 		parent::initEntity($nbt);
 
-		$this->spawnedInCreative = $nbt->getByte("isCreative", 0) === 1;
+		$this->spawnedInCreative = $nbt->getByte(self::TAG_SPAWNED_IN_CREATIVE, 0) === 1;
 
-		$slot = $nbt->getInt("favoredSlot", -1);
+		$slot = $nbt->getInt(self::TAG_FAVORED_SLOT, -1);
 		if($slot < 0 || $slot > 8){
 			$slot = null;
 		}
@@ -93,9 +97,9 @@ class Trident extends Projectile{
 
 	public function saveNBT() : CompoundTag{
 		$nbt = parent::saveNBT();
-		$nbt->setTag("Trident", $this->item->nbtSerialize());
-		$nbt->setByte("isCreative", $this->spawnedInCreative ? 1 : 0);
-		$nbt->setInt("favoredSlot", $this->favoredSlot ?? -1);
+		$nbt->setTag(self::TAG_ITEM, $this->item->nbtSerialize());
+		$nbt->setByte(self::TAG_SPAWNED_IN_CREATIVE, $this->spawnedInCreative ? 1 : 0);
+		$nbt->setInt(self::TAG_FAVORED_SLOT, $this->favoredSlot ?? -1);
 		return $nbt;
 	}
 
