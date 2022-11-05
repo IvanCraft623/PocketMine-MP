@@ -52,8 +52,6 @@ class Trident extends Projectile{
 
 	public static function getNetworkTypeId() : string{ return EntityIds::THROWN_TRIDENT; }
 
-	protected TridentItem $item;
-
 	protected float $damage = 8.0;
 
 	protected bool $canCollide = true;
@@ -66,14 +64,13 @@ class Trident extends Projectile{
 
 	public function __construct(
 		Location $location,
-		TridentItem $item,
+		protected TridentItem $item,
 		?Entity $shootingEntity,
 		?CompoundTag $nbt = null
 	){
 		if($item->isNull()){
 			throw new \InvalidArgumentException("Trident must have a count of at least 1");
 		}
-		$this->setItem($item);
 		parent::__construct($location, $shootingEntity, $nbt);
 	}
 
