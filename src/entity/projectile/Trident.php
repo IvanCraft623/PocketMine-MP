@@ -30,6 +30,7 @@ use pocketmine\entity\Location;
 use pocketmine\event\entity\EntityItemPickupEvent;
 use pocketmine\event\entity\ProjectileHitEntityEvent;
 use pocketmine\event\entity\ProjectileHitEvent;
+use pocketmine\item\enchantment\VanillaEnchantments;
 use pocketmine\item\Trident as TridentItem;
 use pocketmine\math\RayTraceResult;
 use pocketmine\math\Vector3;
@@ -40,6 +41,7 @@ use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataFlags;
 use pocketmine\player\Player;
 use pocketmine\world\sound\TridentHitGroundSound;
 use pocketmine\world\sound\TridentHitSound;
+use function ceil;
 
 class Trident extends Projectile{
 
@@ -122,6 +124,16 @@ class Trident extends Projectile{
 			$motion = new Vector3($this->motion->x * -0.01, $this->motion->y * -0.1, $this->motion->z * -0.01);
 		}
 		return $motion;
+	}
+
+	public function getResultDamage(Entity $victim) : int{
+		$base = parent::getResultDamage();
+		$impaling = VanillaEnchantments::IMPALING();
+		if(($impalingLevel = $this->item->getEnchantmentLevel($impaling)) > 0 && $impaling->isApplicableTo($victim)){
+			return (int) ceil($base + $impaling->getDamageBonus($impalingLevel));
+		}else{
+			return $base;
+		}
 	}
 
 	public function getItem() : TridentItem{

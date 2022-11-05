@@ -1079,6 +1079,16 @@ abstract class Entity{
 		return false;
 	}
 
+	public function isTouchingWater() : bool{
+		$inset = 0.001; //Offset against floating-point errors
+		foreach($this->getBlocksIntersected($inset) as $block){
+			if($block instanceof Water){
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public function isInsideOfSolid() : bool{
 		$block = $this->getWorld()->getBlockAt((int) floor($this->location->x), (int) floor($y = ($this->location->y + $this->getEyeHeight())), (int) floor($this->location->z));
 

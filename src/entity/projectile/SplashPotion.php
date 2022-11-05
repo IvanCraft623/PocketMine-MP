@@ -70,7 +70,7 @@ class SplashPotion extends Throwable{
 		return $nbt;
 	}
 
-	public function getResultDamage() : int{
+	public function getResultDamage(Entity $victim) : int{
 		return -1; //no damage
 	}
 

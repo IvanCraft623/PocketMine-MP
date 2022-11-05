@@ -117,7 +117,7 @@ abstract class Projectile extends Entity{
 	/**
 	 * Returns the amount of damage this projectile will deal to the entity it hits.
 	 */
-	public function getResultDamage() : int{
+	public function getResultDamage(Entity $victim) : int{
 		return (int) ceil($this->motion->length() * $this->damage);
 	}
 
@@ -280,7 +280,7 @@ abstract class Projectile extends Entity{
 	 * Called when the projectile collides with an Entity.
 	 */
 	protected function onHitEntity(Entity $entityHit, RayTraceResult $hitResult) : void{
-		$damage = $this->getResultDamage();
+		$damage = $this->getResultDamage($entityHit);
 
 		if($damage >= 0){
 			if($this->getOwningEntity() === null){

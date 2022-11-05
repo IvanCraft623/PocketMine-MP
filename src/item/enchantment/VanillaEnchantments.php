@@ -95,6 +95,8 @@ final class VanillaEnchantments{
 		self::register("MENDING", new Enchantment(KnownTranslationFactory::enchantment_mending(), Rarity::RARE, ItemFlags::NONE, ItemFlags::ALL, 1));
 
 		self::register("VANISHING", new Enchantment(KnownTranslationFactory::enchantment_curse_vanishing(), Rarity::MYTHIC, ItemFlags::NONE, ItemFlags::ALL, 1));
+
+		self::register("IMPALING", new ImpalingEnchantment(KnownTranslationFactory::enchantment_tridentImpaling(), Rarity::RARE, ItemFlags::TRIDENT, ItemFlags::NONE, 5));
 	}
 
 	protected static function register(string $name, Enchantment $member) : void{

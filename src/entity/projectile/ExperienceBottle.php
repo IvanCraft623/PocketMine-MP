@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace pocketmine\entity\projectile;
 
+use pocketmine\entity\Entity;
 use pocketmine\event\entity\ProjectileHitEvent;
 use pocketmine\math\Vector3;
 use pocketmine\network\mcpe\protocol\types\entity\EntityIds;
@@ -35,7 +36,7 @@ class ExperienceBottle extends Throwable{
 
 	protected function getInitialGravity() : float{ return 0.07; }
 
-	public function getResultDamage() : int{
+	public function getResultDamage(Entity $victim) : int{
 		return -1;
 	}
 
