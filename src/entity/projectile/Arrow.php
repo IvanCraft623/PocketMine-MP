@@ -96,7 +96,7 @@ class Arrow extends Projectile{
 	}
 
 	public function getResultDamage(Entity $victim) : int{
-		$base = parent::getResultDamage();
+		$base = parent::getResultDamage($victim);
 		if($this->isCritical()){
 			return ($base + mt_rand(0, (int) ($base / 2) + 1));
 		}else{

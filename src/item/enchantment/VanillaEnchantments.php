@@ -39,6 +39,7 @@ use pocketmine\utils\RegistryTrait;
  * @method static FireAspectEnchantment FIRE_ASPECT()
  * @method static ProtectionEnchantment FIRE_PROTECTION()
  * @method static Enchantment FLAME()
+ * @method static ImpalingEnchantment IMPALING()
  * @method static Enchantment INFINITY()
  * @method static KnockbackEnchantment KNOCKBACK()
  * @method static Enchantment MENDING()

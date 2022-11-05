@@ -127,7 +127,7 @@ class Trident extends Projectile{
 	}
 
 	public function getResultDamage(Entity $victim) : int{
-		$base = parent::getResultDamage();
+		$base = parent::getResultDamage($victim);
 		$impaling = VanillaEnchantments::IMPALING();
 		if(($impalingLevel = $this->item->getEnchantmentLevel($impaling)) > 0 && $impaling->isApplicableTo($victim)){
 			return (int) ceil($base + $impaling->getDamageBonus($impalingLevel));
