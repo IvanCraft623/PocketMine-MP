@@ -228,19 +228,22 @@ abstract class Projectile extends Entity{
 				assert(false, "unknown hit type");
 			}
 
+			$collided = true;
 			if($ev !== null){
 				$ev->call();
-				$this->onHit($ev);
 
 				if($ev instanceof ProjectileHitEntityEvent){
-					$this->onHitEntity($ev->getEntityHit(), $ev->getRayTraceResult());
+					$collided = $this->onHitEntity($ev->getEntityHit(), $ev->getRayTraceResult());
 				}elseif($ev instanceof ProjectileHitBlockEvent){
 					$this->onHitBlock($ev->getBlockHit(), $ev->getRayTraceResult());
+				}
+
+				if($collided){
+					$this->onHit($ev);
 				}
 			}
 
 			$this->isCollided = $this->onGround = true;
-			$this->motion = new Vector3(0, 0, 0);
 		}else{
 			$this->isCollided = $this->onGround = false;
 			$this->blockHit = null;
@@ -280,8 +283,10 @@ abstract class Projectile extends Entity{
 
 	/**
 	 * Called when the projectile collides with an Entity.
+	 *
+	 * Returns whether the collision was successful
 	 */
-	protected function onHitEntity(Entity $entityHit, RayTraceResult $hitResult) : void{
+	protected function onHitEntity(Entity $entityHit, RayTraceResult $hitResult) : bool{
 		$damage = $this->getResultDamage();
 
 		if($damage >= 0){
@@ -293,16 +298,21 @@ abstract class Projectile extends Entity{
 
 			$entityHit->attack($ev);
 
-			if($this->isOnFire()){
-				$ev = new EntityCombustByEntityEvent($this, $entityHit, 5);
-				$ev->call();
-				if(!$ev->isCancelled()){
-					$entityHit->setOnFire($ev->getDuration());
+			if(!$ev->isCancelled()){
+				if($this->isOnFire()){
+					$ev = new EntityCombustByEntityEvent($this, $entityHit, 5);
+					$ev->call();
+					if(!$ev->isCancelled()){
+						$entityHit->setOnFire($ev->getDuration());
+					}
 				}
+
+				$this->flagForDespawn();
+			}else{
+				return false;
 			}
 		}
-
-		$this->flagForDespawn();
+		return true;
 	}
 
 	/**
@@ -311,5 +321,6 @@ abstract class Projectile extends Entity{
 	protected function onHitBlock(Block $blockHit, RayTraceResult $hitResult) : void{
 		$this->blockHit = $blockHit->getPosition()->asVector3();
 		$blockHit->onProjectileHit($this, $hitResult);
+		$this->motion = new Vector3(0, 0, 0);
 	}
 }
