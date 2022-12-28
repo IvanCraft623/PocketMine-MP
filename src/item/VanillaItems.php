@@ -71,6 +71,7 @@ use pocketmine\world\World;
  * @method static Bread BREAD()
  * @method static Item BRICK()
  * @method static Bucket BUCKET()
+ * @method static Camera CAMERA()
  * @method static Carrot CARROT()
  * @method static Armor CHAINMAIL_BOOTS()
  * @method static Armor CHAINMAIL_CHESTPLATE()
@@ -359,6 +360,7 @@ final class VanillaItems{
 		self::register("bread", new Bread(new IID(Ids::BREAD), "Bread"));
 		self::register("brick", new Item(new IID(Ids::BRICK), "Brick"));
 		self::register("bucket", new Bucket(new IID(Ids::BUCKET), "Bucket"));
+		self::register("camera", new Camera(new IID(Ids::CAMERA), "Camera"));
 		self::register("carrot", new Carrot(new IID(Ids::CARROT), "Carrot"));
 		self::register("charcoal", new Coal(new IID(Ids::CHARCOAL), "Charcoal"));
 		self::register("chemical_aluminium_oxide", new Item(new IID(Ids::CHEMICAL_ALUMINIUM_OXIDE), "Aluminium Oxide"));
