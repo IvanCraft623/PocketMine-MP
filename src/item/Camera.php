@@ -34,10 +34,6 @@ use pocketmine\world\sound\CameraTakePictureSound;
 
 class Camera extends Item implements Releasable{
 
-	public function getBlock(?int $clickedFace = null) : Block{
-		return VanillaBlocks::CAMERA();
-	}
-
 	public function canStartUsingItem(Player $player) : bool{
 		return true;
 	}

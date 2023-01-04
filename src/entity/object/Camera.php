@@ -27,13 +27,23 @@ use pocketmine\entity\Entity;
 use pocketmine\entity\EntitySizeInfo;
 use pocketmine\event\entity\EntityDamageByEntityEvent;
 use pocketmine\event\entity\EntityDamageEvent;
+use pocketmine\math\Vector3;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\network\mcpe\protocol\types\entity\EntityIds;
+use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataCollection;
+use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataProperties;
+use pocketmine\player\Player;
+use pocketmine\world\particle\HugeExplodeParticle;
 use pocketmine\world\particle\SmokeParticle;
+use pocketmine\world\sound\CameraTakePictureSound;
+use function atan2;
+use function rad2deg;
 
 class Camera extends Entity{
 
 	private const TAG_HEALTH = "Health"; //TAG_Short
+
+	protected int $fuse = 80;
 
 	public static function getNetworkTypeId() : string{ return EntityIds::TRIPOD_CAMERA; }
 
@@ -56,9 +66,46 @@ class Camera extends Entity{
 		return $nbt;
 	}
 
+	protected function entityBaseTick(int $tickDiff = 1) : bool{
+		if($this->closed){
+			return false;
+		}
+
+		$hasUpdate = parent::entityBaseTick($tickDiff);
+
+		$target = $this->getTargetEntity();
+		$world = $this->getWorld();
+		if($target !== null && $target->getWorld() === $world){
+			$this->fuse -= $tickDiff;
+			$this->networkPropertiesDirty = true;
+
+			$diff = $target->getLocation()->subtractVector($this->location);
+			$yaw = rad2deg(atan2($diff->z, $diff->x)) - 90;
+			if($yaw < 0){
+				$yaw += 360;
+			}
+			$this->setRotation($yaw, 0);
+
+			if ($this->fuse % 2 === 0) {
+				$this->location->getWorld()->addParticle($this->location->addVector($this->getDirectionVector()->multiply(-(4 / 16) * $this->getScale())->add(0, $this->getSize()->getHeight(), 0)), new SmokeParticle());
+			}
+
+			if($this->fuse <= 0){
+				$this->flagForDespawn();
+				$world->addSound($target->getLocation(), new CameraTakePictureSound());
+			}
+
+			$hasUpdate = true;
+		}else{
+			$this->fuse = 80;
+		}
+
+		return $hasUpdate;
+	}
+
 	public function attack(EntityDamageEvent $source) : void{
 		//It is only damaged if caused by a player
-		if(!($source instanceof EntityDamageByEntityEvent && $source->getDamager() instanceof Player)){
+		if($source->getCause() !== EntityDamageEvent::CAUSE_VOID && !($source instanceof EntityDamageByEntityEvent && $source->getDamager() instanceof Player)){
 			$source->cancel();
 		}
 
@@ -66,7 +113,20 @@ class Camera extends Entity{
 
 		if(!$source->isCancelled()){
 			$this->flagForDespawn();
-			$this->location->getWorld()->addParticle($this->location, new SmokeParticle());
 		}
+	}
+
+	public function onInteract(Player $player, Vector3 $clickPos) : bool{
+		if($this->getTargetEntity() === null){
+			$this->setTargetEntity($player);
+			return true;
+		}
+		return parent::onInteract($player, $clickPos);
+	}
+
+	protected function syncNetworkData(EntityMetadataCollection $properties) : void{
+		parent::syncNetworkData($properties);
+
+		$properties->setInt(EntityMetadataProperties::FUSE_LENGTH, $this->fuse);
 	}
 }

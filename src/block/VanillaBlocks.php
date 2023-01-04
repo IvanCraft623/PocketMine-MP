@@ -147,7 +147,7 @@ use function mb_strtolower;
  * @method static CakeWithCandle CAKE_WITH_CANDLE()
  * @method static CakeWithDyedCandle CAKE_WITH_DYED_CANDLE()
  * @method static Opaque CALCITE()
- * @method static Camera CAMERA()
+ * @method static Opaque CAMERA()
  * @method static Candle CANDLE()
  * @method static Carpet CARPET()
  * @method static Carrot CARROTS()
@@ -788,7 +788,7 @@ final class VanillaBlocks{
 		self::register("brown_mushroom", new BrownMushroom(new BID(Ids::BROWN_MUSHROOM), "Brown Mushroom", new Info(BreakInfo::instant(), [Tags::POTTABLE_PLANTS])));
 		self::register("cactus", new Cactus(new BID(Ids::CACTUS), "Cactus", new Info(new BreakInfo(0.4), [Tags::POTTABLE_PLANTS])));
 		self::register("cake", new Cake(new BID(Ids::CAKE), "Cake", new Info(new BreakInfo(0.5))));
-		self::register("camera", new Camera(new BID(Ids::CAMERA), "Camera", new Info(BreakInfo::instant())));
+		self::register("camera", new Opaque(new BID(Ids::CAMERA), "Camera", new Info(BreakInfo::instant())));
 		self::register("carrots", new Carrot(new BID(Ids::CARROTS), "Carrot Block", new Info(BreakInfo::instant())));
 
 		$chestBreakInfo = new Info(BreakInfo::axe(2.5));
