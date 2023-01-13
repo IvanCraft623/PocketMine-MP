@@ -30,7 +30,6 @@ use pocketmine\world\loot\condition\LootConditionHandlingTrait;
 use pocketmine\world\loot\entry\function\EntryFunction;
 use pocketmine\world\loot\LootContext;
 use pocketmine\world\loot\LootTable;
-use function count;
 
 class LootEntry implements \JsonSerializable{
 	use LootConditionHandlingTrait;
@@ -48,8 +47,7 @@ class LootEntry implements \JsonSerializable{
 		array $conditions = []
 	) {
 		if($weight < 1){
-			throw new \IvnvalidArgumentException("Weight must be at least of 1");
-			
+			throw new \InvvalidArgumentException("Weight must be at least of 1");
 		}
 		Utils::validateArrayValueType($functions, function(EntryFunction $_) : void{});
 		Utils::validateArrayValueType($conditions, function(LootCondition $_) : void{});

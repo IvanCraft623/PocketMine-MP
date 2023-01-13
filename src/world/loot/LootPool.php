@@ -28,16 +28,15 @@ use pocketmine\utils\Utils;
 use pocketmine\world\loot\condition\LootCondition;
 use pocketmine\world\loot\condition\LootConditionHandlingTrait;
 use pocketmine\world\loot\entry\LootEntry;
-use function count;
+use function gettype;
 use function is_array;
 use function is_int;
-use function gettype;
 
 class LootPool implements \JsonSerializable{
 	use LootConditionHandlingTrait;
 
 	/**
-	 * @param LootEntry[] $entries
+	 * @param LootEntry[]     $entries
 	 * @param LootCondition[] $conditions
 	 */
 	public function __construct(

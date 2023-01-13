@@ -23,7 +23,6 @@ declare(strict_types=1);
 
 namespace pocketmine\world\loot\entry\function\types;
 
-use pocketmine\item\Item;
 use pocketmine\world\loot\entry\function\EntryFunction;
 use pocketmine\world\loot\LootContext;
 

@@ -23,12 +23,8 @@ declare(strict_types=1);
 
 namespace pocketmine\world\loot\condition\types;
 
-use pocketmine\entity\Entity;
-use pocketmine\event\entity\EntityDamageByEntityEvent;
-use pocketmine\player\Player;
 use pocketmine\world\loot\condition\LootCondition;
 use pocketmine\world\loot\LootContext;
-use function is_float;
 
 class RandomChance extends LootCondition{
 

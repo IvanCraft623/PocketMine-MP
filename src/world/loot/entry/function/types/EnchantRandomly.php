@@ -29,8 +29,9 @@ use pocketmine\item\Item;
 use pocketmine\world\loot\entry\function\EntryFunction;
 use pocketmine\world\loot\LootContext;
 use function array_values;
+use function count;
 
-class EnchantRandomly extends EntryFunction{ 
+class EnchantRandomly extends EntryFunction{
 
 	public function __construct(private bool $treasureEnchants = false) {
 	}

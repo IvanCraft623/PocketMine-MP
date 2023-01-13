@@ -25,7 +25,6 @@ namespace pocketmine\world\loot\condition;
 
 use pocketmine\world\loot\LootContext;
 use function count;
-use function spl_object_id;
 
 /**
  * This trait encapsulates all condition handling needed for loot.

@@ -32,6 +32,7 @@ use pocketmine\utils\SingletonTrait;
 use pocketmine\utils\Utils;
 use pocketmine\world\loot\condition\types\KilledByPlayerOrChild;
 use pocketmine\world\loot\condition\types\RandomChance;
+use function is_float;
 use function str_replace;
 use function strtolower;
 use function trim;
@@ -69,9 +70,9 @@ final class LootConditionFactory{
 	}
 
 	/**
-	 * Registers an loot condition type into the index.
+	 * Registers a loot condition type into the index.
 	 *
-	 * @param string   $className Class that extends LootCondition
+	 * @param string $className Class that extends LootCondition
 	 * @phpstan-param class-string<LootCondition> $className
 	 * @phpstan-param \Closure(array $arguments) : LootCondition $creationFunc
 	 *

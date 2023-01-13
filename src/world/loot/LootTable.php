@@ -24,7 +24,6 @@ declare(strict_types=1);
 namespace pocketmine\world\loot;
 
 use pocketmine\utils\Utils;
-use pocketmine\world\loot\LootContext;
 
 class LootTable implements \JsonSerializable{
 

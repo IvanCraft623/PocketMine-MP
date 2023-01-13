@@ -41,7 +41,7 @@ class LootContext{
 		$this->world = $world;
 		$this->origin = $origin;
 		$this->player = $player;
-		$this->random  = $random ?? new Random();
+		$this->random = $random ?? new Random();
 	}
 
 	public function getWorld() : World{

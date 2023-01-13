@@ -153,7 +153,7 @@ final class EntryFunctionFactory{
 	/**
 	 * Registers an entry function type into the index.
 	 *
-	 * @param string   $className Class that extends EntryFunction
+	 * @param string $className Class that extends EntryFunction
 	 * @phpstan-param class-string<EntryFunction> $className
 	 * @phpstan-param \Closure(array $arguments) : EntryFunction $creationFunc
 	 *

@@ -23,15 +23,13 @@ declare(strict_types=1);
 
 namespace pocketmine\world\loot\entry\function\types;
 
-use pocketmine\item\enchantment\EnchantmentInstance;
-use pocketmine\item\enchantment\VanillaEnchantments;
 use pocketmine\item\Durable;
 use pocketmine\item\Item;
 use pocketmine\world\loot\entry\function\EntryFunction;
 use pocketmine\world\loot\LootContext;
 use function ceil;
 
-class SetDamage extends EntryFunction{ 
+class SetDamage extends EntryFunction{
 
 	public function __construct(private float $min, private float $max) {
 		if($min < 0 || $min > 1){

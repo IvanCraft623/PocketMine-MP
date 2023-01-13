@@ -23,10 +23,10 @@ declare(strict_types=1);
 
 namespace pocketmine\world\loot\entry\function\types;
 
-use pocketmine\item\Armor;
 use pocketmine\block\utils\DyeColor;
-use pocketmine\item\ItemTypeIds;
+use pocketmine\item\Armor;
 use pocketmine\item\Item;
+use pocketmine\item\ItemTypeIds;
 use pocketmine\world\loot\entry\function\EntryFunction;
 use pocketmine\world\loot\LootContext;
 use function array_values;
