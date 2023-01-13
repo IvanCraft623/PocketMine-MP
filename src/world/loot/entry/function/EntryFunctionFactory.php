@@ -102,10 +102,11 @@ final class EntryFunctionFactory{
 		}, "set_count");
 
 		$this->register(SetCustomName::class, function(array $data) : SetCustomName{
-			if(!isset($data["name"]) || is_string($data["name"])){
-				throw new SavedDataLoadingException("Name is not a string or doesn't exists");
+			$name = $data["name"] ?? null;
+			if(!is_string($name)){
+				throw new SavedDataLoadingException("Name is not a string or key doesn't exists");
 			}
-			return new SetCustomName($data["name"]);
+			return new SetCustomName($name);
 		}, "set_name");
 
 		$this->register(SetDamage::class, function(array $data) : SetDamage{
