@@ -171,12 +171,12 @@ class LootPool implements \JsonSerializable{
 	 * } $data
 	 */
 	public static function jsonDeserialize(array $data) : LootPool{
-		$rolls = $data["rolls"] ?? 1;
+		$rolls = $data["rolls"];
 		if(is_int($rolls)){
 			$minRolls = $maxRolls = $rolls;
 		}else{
-			$minRolls = $rolls["min"] ?? 1;
-			$maxRolls = $rolls["max"] ?? 1;
+			$minRolls = $rolls["min"];
+			$maxRolls = $rolls["max"];
 		}
 
 		$entries = [];
