@@ -30,6 +30,7 @@ use DaveRandom\CallbackValidator\ReturnType;
 use pocketmine\data\SavedDataLoadingException;
 use pocketmine\utils\SingletonTrait;
 use pocketmine\utils\Utils;
+use pocketmine\world\loot\condition\types\KilledByPlayer;
 use pocketmine\world\loot\condition\types\KilledByPlayerOrChild;
 use pocketmine\world\loot\condition\types\RandomChance;
 use function is_float;
@@ -53,6 +54,10 @@ final class LootConditionFactory{
 	private array $saveNames = [];
 
 	public function __construct() {
+		$this->register(KilledByPlayer::class, function(array $data) : KilledByPlayer{
+			return new KilledByPlayer();
+		}, "killed_by_player");
+
 		$this->register(KilledByPlayerOrChild::class, function(array $data) : KilledByPlayerOrChild{
 			return new KilledByPlayerOrChild();
 		}, "killed_by_player_or_pets");

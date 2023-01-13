@@ -33,11 +33,13 @@ use pocketmine\utils\Utils;
 use pocketmine\world\loot\entry\function\types\EnchantRandomly;
 use pocketmine\world\loot\entry\function\types\RandomDye;
 use pocketmine\world\loot\entry\function\types\SetCount;
+use pocketmine\world\loot\entry\function\types\SetCustomName;
 use pocketmine\world\loot\entry\function\types\SetDamage;
 use pocketmine\world\loot\entry\function\types\SetMeta;
 use function is_array;
 use function is_int;
 use function is_numeric;
+use function is_string;
 use function str_replace;
 use function strtolower;
 use function trim;
@@ -98,6 +100,13 @@ final class EntryFunctionFactory{
 			}
 			return new SetCount($min, $max);
 		}, "set_count");
+
+		$this->register(SetCustomName::class, function(array $data) : SetCustomName{
+			if(!isset($data["name"]) || is_string($data["name"])){
+				throw new SavedDataLoadingException("Name is not a string or doesn't exists");
+			}
+			return new SetCustomName($data["name"]);
+		}, "set_name");
 
 		$this->register(SetDamage::class, function(array $data) : SetDamage{
 			if(!isset($data["damage"])){
