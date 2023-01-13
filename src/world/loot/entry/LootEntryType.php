@@ -65,7 +65,7 @@ final class LootEntryType{
 	}
 
 	/**
-	 * @phpstan-param \Closure(LootEntry, LootContext) : array<Item>|array $resultGetter
+	 * @phpstan-param \Closure(LootEntry, LootContext) : Item[]|array $resultGetter
 	 */
 	private function __construct(
 		string $enumName,

@@ -94,8 +94,8 @@ class LootEntry implements \JsonSerializable{
 	 * 	name?: string,
 	 * 	weight?: int,
 	 * 	quality?: int,
-	 * 	functions?: array<array{function: string, ...},
-	 * 	conditions?: array<array{condition: string, ...}
+	 * 	functions?: array<array{function: string, ...}>,
+	 * 	conditions?: array<array{condition: string, ...}>
 	 * }
 	 */
 	public function jsonSerialize() : array{
@@ -136,13 +136,13 @@ class LootEntry implements \JsonSerializable{
 	 * 	name?: string,
 	 * 	weight?: int,
 	 * 	quality?: int,
-	 * 	functions?: array<array{function: string, ...},
-	 * 	conditions?: array<array{condition: string, ...}
+	 * 	functions?: array<array{function: string, ...}>,
+	 * 	conditions?: array<array{condition: string, ...}>
 	 * } $data
 	 */
 	public static function jsonDeserialize(array $data) : LootEntry{
 		$entry = null;
-		switch($data["type"] ?? null){
+		switch($data["type"]){
 			case "item":
 				$type = LootEntryType::ITEM();
 
@@ -159,7 +159,7 @@ class LootEntry implements \JsonSerializable{
 				$type = LootEntryType::EMPTY();
 				break;
 			default:
-				throw new \InvalidArgumentException("Type doesn't exists");
+				throw new \InvalidArgumentException("Type \"" . $data["type"] . "\" doesn't exists");
 		}
 
 		$weight = (int) ($data["weight"] ?? 1);

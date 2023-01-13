@@ -114,16 +114,16 @@ class LootPool implements \JsonSerializable{
 	 *
 	 * @return mixed[]
 	 * @phpstan-return array{
-	 * 	rolls: int|array{min: int, max: int}},
+	 * 	rolls: int|array{min: int, max: int},
 	 * 	entries?: array<array{
 	 * 		type: string,
 	 * 		name?: string,
 	 * 		weight?: int,
 	 * 		quality?: int,
-	 * 		functions?: array<array{function: string, ...},
-	 * 		conditions?: array<array{condition: string, ...}
+	 * 		functions?: array<array{function: string, ...}>,
+	 * 		conditions?: array<array{condition: string, ...}>
 	 * 	},
-	 * 	conditions?: array<array{condition: string, ...}
+	 * 	conditions?: array<array{condition: string, ...}>
 	 * }
 	 */
 	public function jsonSerialize() : array{
@@ -158,16 +158,16 @@ class LootPool implements \JsonSerializable{
 	 *
 	 * @param mixed[] $data
 	 * @phpstan-param array{
-	 * 	rolls: int|array{min: int, max: int}},
+	 * 	rolls: int|array{min: int, max: int},
 	 * 	entries?: array<array{
 	 * 		type: string,
 	 * 		name?: string,
 	 * 		weight?: int,
 	 * 		quality?: int,
-	 * 		functions?: array<array{function: string, ...},
-	 * 		conditions?: array<array{condition: string, ...}
+	 * 		functions?: array<array{function: string, ...}>,
+	 * 		conditions?: array<array{condition: string, ...}>
 	 * 	},
-	 * 	conditions?: array<array{condition: string, ...}
+	 * 	conditions?: array<array{condition: string, ...}>
 	 * } $data
 	 */
 	public static function jsonDeserialize(array $data) : LootPool{
