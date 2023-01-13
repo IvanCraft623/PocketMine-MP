@@ -181,8 +181,9 @@ final class EntryFunctionFactory{
 	 *
 	 * @param mixed[] $data
 	 * @phpstan-param array{
-	 * 	function: string
-	 * }
+	 * 	function: string,
+	 * 	...
+	 * } $data
 	 *
 	 * @throws SavedDataLoadingException
 	 * @internal

@@ -94,8 +94,8 @@ class LootEntry implements \JsonSerializable{
 	 * 	name?: string,
 	 * 	weight?: int,
 	 * 	quality?: int,
-	 * 	functions?: array<string, $mixed>
-	 * 	conditions?: array<string, mixed>
+	 * 	functions?: array<array{function: string, ...},
+	 * 	conditions?: array<array{condition: string, ...}
 	 * }
 	 */
 	public function jsonSerialize() : array{
@@ -136,8 +136,8 @@ class LootEntry implements \JsonSerializable{
 	 * 	name?: string,
 	 * 	weight?: int,
 	 * 	quality?: int,
-	 * 	functions?: array<string, $mixed>
-	 * 	conditions?: array<string, mixed>
+	 * 	functions?: array<array{function: string, ...},
+	 * 	conditions?: array<array{condition: string, ...}
 	 * } $data
 	 */
 	public static function jsonDeserialize(array $data) : LootEntry{

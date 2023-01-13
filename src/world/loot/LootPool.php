@@ -28,8 +28,7 @@ use pocketmine\utils\Utils;
 use pocketmine\world\loot\condition\LootCondition;
 use pocketmine\world\loot\condition\LootConditionHandlingTrait;
 use pocketmine\world\loot\entry\LootEntry;
-use function gettype;
-use function is_array;
+use function count;
 use function is_int;
 
 class LootPool implements \JsonSerializable{
@@ -115,9 +114,16 @@ class LootPool implements \JsonSerializable{
 	 *
 	 * @return mixed[]
 	 * @phpstan-return array{
-	 * 	rolls: int|array<string, int>,
-	 * 	entries?: array<string, mixed>,
-	 * 	conditions?: array<string, mixed>
+	 * 	rolls: int|array{min: int, max: int}},
+	 * 	entries?: array<array{
+	 * 		type: string,
+	 * 		name?: string,
+	 * 		weight?: int,
+	 * 		quality?: int,
+	 * 		functions?: array<array{function: string, ...},
+	 * 		conditions?: array<array{condition: string, ...}
+	 * 	},
+	 * 	conditions?: array<array{condition: string, ...}
 	 * }
 	 */
 	public function jsonSerialize() : array{
@@ -132,12 +138,16 @@ class LootPool implements \JsonSerializable{
 			];
 		}
 
-		foreach($this->entries as $entry){
-			$data["entries"][] = $entry->jsonSerialize();
+		if(count($this->entries) !== 0){
+			foreach($this->entries as $entry){
+				$data["entries"][] = $entry->jsonSerialize();
+			}
 		}
 
-		foreach($this->conditions as $condition){
-			$data["conditions"][] = $condition->jsonSerialize();
+		if(count($this->conditions) !== 0){
+			foreach($this->conditions as $condition){
+				$data["conditions"][] = $condition->jsonSerialize();
+			}
 		}
 
 		return $data;
@@ -148,20 +158,25 @@ class LootPool implements \JsonSerializable{
 	 *
 	 * @param mixed[] $data
 	 * @phpstan-param array{
-	 * 	rolls: int|array<string, int>,
-	 * 	entries?: array<string, mixed>,
-	 * 	conditions?: array<string, mixed>
+	 * 	rolls: int|array{min: int, max: int}},
+	 * 	entries?: array<array{
+	 * 		type: string,
+	 * 		name?: string,
+	 * 		weight?: int,
+	 * 		quality?: int,
+	 * 		functions?: array<array{function: string, ...},
+	 * 		conditions?: array<array{condition: string, ...}
+	 * 	},
+	 * 	conditions?: array<array{condition: string, ...}
 	 * } $data
 	 */
 	public static function jsonDeserialize(array $data) : LootPool{
 		$rolls = $data["rolls"] ?? 1;
 		if(is_int($rolls)){
 			$minRolls = $maxRolls = $rolls;
-		}elseif(is_array($rolls)){
+		}else{
 			$minRolls = $rolls["min"] ?? 1;
 			$maxRolls = $rolls["max"] ?? 1;
-		}else{
-			throw new \InvalidArgumentException("Expected int or array for \"rolls\", " . gettype($rolls) . " given");
 		}
 
 		$entries = [];

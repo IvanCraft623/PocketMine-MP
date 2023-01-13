@@ -94,8 +94,9 @@ final class LootConditionFactory{
 	 *
 	 * @param mixed[] $data
 	 * @phpstan-param array{
-	 * 	condition: string
-	 * }
+	 * 	condition: string,
+	 * 	...
+	 * } $data
 	 *
 	 * @throws SavedDataLoadingException
 	 * @internal

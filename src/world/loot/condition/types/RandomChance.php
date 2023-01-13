@@ -43,7 +43,7 @@ class RandomChance extends LootCondition{
 	 *
 	 * @phpstan-return array{
 	 * 	condition: string,
-	 * 	chance: int
+	 * 	chance: float
 	 * }
 	 */
 	public function jsonSerialize() : array{
