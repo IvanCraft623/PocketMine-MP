@@ -34,12 +34,26 @@ abstract class EntryFunction implements \JsonSerializable{
 	public function onCreation(LootContext $context, Item $item) : void{
 	}
 
+	/**
+	 * Returns an array of an entry function properties that can be serialized to json.
+	 *
+	 * @phpstan-return array{
+	 * 	function: string
+	 * }
+	 */
 	public function jsonSerialize() : array{
 		return ["function" => EntryFunctionFactory::getInstance()->getSaveId($this::class)];
 	}
 
+	/**
+	 * Returns a EntryFunction from properties created in an array by {@link EntryFunction#jsonSerialize}
+	 *
+	 * @phpstan-param array{
+	 * 	function: string
+	 * } $data
+	 */
 	public static function jsonDeserialize(array $data) : EntryFunction{
-		return EntryFunctionFactory::getInstance()->createFromData($data) ?? throw new \InvalidArgumentException("EntryFunction \"" . ($data["function"] ?? "unknown") . "\" is not registered");
+		return EntryFunctionFactory::getInstance()->createFromData($data) ?? throw new \InvalidArgumentException("EntryFunction \"" . $data["function"] . "\" is not registered");
 		;
 	}
 }

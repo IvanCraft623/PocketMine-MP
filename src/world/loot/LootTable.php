@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace pocketmine\world\loot;
 
+use pocketmine\item\Item;
 use pocketmine\utils\Utils;
 
 class LootTable implements \JsonSerializable{
@@ -61,6 +62,9 @@ class LootTable implements \JsonSerializable{
 	 * Returns an array of loot table properties that can be serialized to json.
 	 *
 	 * @return mixed[]
+	 * @phpstan-return array{
+	 * 	pools?: array<string, mixed>
+	 * }
 	 */
 	final public function jsonSerialize() : array{
 		$data = [];
@@ -72,6 +76,14 @@ class LootTable implements \JsonSerializable{
 		return $data;
 	}
 
+	/**
+	 * Returns a LootTable from properties created in an array by {@link LootTable#jsonSerialize}
+	 *
+	 * @param mixed[] $data
+	 * @phpstan-param array{
+	 * 	pools?: array<string, mixed>
+	 * } $data
+	 */
 	public static function jsonDeserialize(array $data) : LootTable{
 		$pools = [];
 

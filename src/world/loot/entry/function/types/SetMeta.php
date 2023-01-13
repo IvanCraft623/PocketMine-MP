@@ -41,6 +41,14 @@ class SetMeta extends EntryFunction{
 		$meta = $context->getRandom()->nextRange($this->min, $this->max);
 	}
 
+	/**
+	 * Returns an array of properties that can be serialized to json.
+	 *
+	 * @phpstan-return array{
+	 * 	function: string,
+	 * 	data: int|array<string, int>
+	 * }
+	 */
 	public function jsonSerialize() : array{
 		$data = parent::jsonSerialize();
 

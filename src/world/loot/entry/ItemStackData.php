@@ -34,6 +34,9 @@ final class ItemStackData{
 
 	public function __construct(public string $name){ }
 
+	/**
+	 * @param EntryFunction[] $functions
+	 */
 	public function generate(LootContext $context, array $functions = []) : ?Item{
 		Utils::validateArrayValueType($functions, function(EntryFunction $_) : void{});
 
@@ -44,7 +47,7 @@ final class ItemStackData{
 			$function->onPreCreation($context, $meta, $count);
 		}
 
-		if($count !== 0){
+		if($count > 0){
 			try{
 				$item = GlobalItemDataHandlers::getDeserializer()->deserializeStack(GlobalItemDataHandlers::getUpgrader()->upgradeItemTypeDataString(
 					$this->name,

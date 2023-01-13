@@ -43,6 +43,14 @@ class EnchantRandomly extends EntryFunction{
 		$item->addEnchantment(new EnchantmentInstance($enchants[$context->getRandom()->nextBoundedInt(count($enchants) - 1)]));
 	}
 
+	/**
+	 * Returns an array of properties that can be serialized to json.
+	 *
+	 * @phpstan-return array{
+	 * 	function: string,
+	 * 	treasure?: bool
+	 * }
+	 */
 	public function jsonSerialize() : array{
 		$data = parent::jsonSerialize();
 

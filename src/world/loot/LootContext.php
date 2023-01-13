@@ -59,7 +59,7 @@ class LootContext{
 		return $this->origin;
 	}
 
-	public function getPlayer() : Player{
+	public function getPlayer() : ?Player{
 		return $this->player;
 	}
 

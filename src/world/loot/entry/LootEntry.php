@@ -47,7 +47,7 @@ class LootEntry implements \JsonSerializable{
 		array $conditions = []
 	) {
 		if($weight < 1){
-			throw new \InvvalidArgumentException("Weight must be at least of 1");
+			throw new \InvalidArgumentException("Weight must be at least of 1");
 		}
 		Utils::validateArrayValueType($functions, function(EntryFunction $_) : void{});
 		Utils::validateArrayValueType($conditions, function(LootCondition $_) : void{});
@@ -85,6 +85,19 @@ class LootEntry implements \JsonSerializable{
 		return $this->type->generate($this, $context);
 	}
 
+	/**
+	 * Returns an array of loot entry properties that can be serialized to json.
+	 *
+	 * @return mixed[]
+	 * @phpstan-return array{
+	 * 	type: string,
+	 * 	name?: string,
+	 * 	weight?: int,
+	 * 	quality?: int,
+	 * 	functions?: array<string, $mixed>
+	 * 	conditions?: array<string, mixed>
+	 * }
+	 */
 	public function jsonSerialize() : array{
 		$data = [];
 
@@ -114,14 +127,21 @@ class LootEntry implements \JsonSerializable{
 		return $data;
 	}
 
+	/**
+	 * Returns a LootEntry from properties created in an array by {@link LootEntry#jsonSerialize}
+	 *
+	 * @param mixed[] $data
+	 * @phpstan-param array{
+	 * 	type: string,
+	 * 	name?: string,
+	 * 	weight?: int,
+	 * 	quality?: int,
+	 * 	functions?: array<string, $mixed>
+	 * 	conditions?: array<string, mixed>
+	 * } $data
+	 */
 	public static function jsonDeserialize(array $data) : LootEntry{
-		$type = match($data["type"] ?? null){
-			"item" => LootEntryType::ITEM(),
-			"loot_table" => LootEntryType::LOOT_TABLE(),
-			"empty" => LootEntryType::EMPTY(),
-			default => throw new \InvalidArgumentException("Type doesn't exists")
-		};
-
+		$entry = null;
 		switch($data["type"] ?? null){
 			case "item":
 				$type = LootEntryType::ITEM();
@@ -137,11 +157,9 @@ class LootEntry implements \JsonSerializable{
 				break;
 			case "empty":
 				$type = LootEntryType::EMPTY();
-				$entry = null;
 				break;
 			default:
 				throw new \InvalidArgumentException("Type doesn't exists");
-				break;
 		}
 
 		$weight = (int) ($data["weight"] ?? 1);

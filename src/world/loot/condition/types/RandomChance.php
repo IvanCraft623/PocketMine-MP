@@ -38,6 +38,14 @@ class RandomChance extends LootCondition{
 		return $context->getRandom()->nextFloat() <= $this->chance;
 	}
 
+	/**
+	 * Returns an array of properties that can be serialized to json.
+	 *
+	 * @phpstan-return array{
+	 * 	condition: string,
+	 * 	chance: int
+	 * }
+	 */
 	public function jsonSerialize() : array{
 		$data = parent::jsonSerialize();
 

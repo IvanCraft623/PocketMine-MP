@@ -110,6 +110,16 @@ class LootPool implements \JsonSerializable{
 		return $items;
 	}
 
+	/**
+	 * Returns an array of loot pool properties that can be serialized to json.
+	 *
+	 * @return mixed[]
+	 * @phpstan-return array{
+	 * 	rolls: int|array<string, int>,
+	 * 	entries?: array<string, mixed>,
+	 * 	conditions?: array<string, mixed>
+	 * }
+	 */
 	public function jsonSerialize() : array{
 		$data = [];
 
@@ -122,17 +132,27 @@ class LootPool implements \JsonSerializable{
 			];
 		}
 
-		foreach($this->conditions as $condition){
-			$data["conditions"][] = $condition->jsonSerialize();
-		}
-
 		foreach($this->entries as $entry){
 			$data["entries"][] = $entry->jsonSerialize();
+		}
+
+		foreach($this->conditions as $condition){
+			$data["conditions"][] = $condition->jsonSerialize();
 		}
 
 		return $data;
 	}
 
+	/**
+	 * Returns a LootPool from properties created in an array by {@link LootPool#jsonSerialize}
+	 *
+	 * @param mixed[] $data
+	 * @phpstan-param array{
+	 * 	rolls: int|array<string, int>,
+	 * 	entries?: array<string, mixed>,
+	 * 	conditions?: array<string, mixed>
+	 * } $data
+	 */
 	public static function jsonDeserialize(array $data) : LootPool{
 		$rolls = $data["rolls"] ?? 1;
 		if(is_int($rolls)){

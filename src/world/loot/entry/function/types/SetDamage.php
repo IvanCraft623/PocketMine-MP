@@ -50,6 +50,14 @@ class SetDamage extends EntryFunction{
 		}
 	}
 
+	/**
+	 * Returns an array of properties that can be serialized to json.
+	 *
+	 * @phpstan-return array{
+	 * 	function: string,
+	 * 	damage: float|array<string, float>
+	 * }
+	 */
 	public function jsonSerialize() : array{
 		$data = parent::jsonSerialize();
 

@@ -74,7 +74,7 @@ final class LootConditionFactory{
 	 *
 	 * @param string $className Class that extends LootCondition
 	 * @phpstan-param class-string<LootCondition> $className
-	 * @phpstan-param \Closure(array $arguments) : LootCondition $creationFunc
+	 * @phpstan-param \Closure(array<string, mixed> $arguments) : LootCondition $creationFunc
 	 *
 	 * @throws \InvalidArgumentException
 	 */
@@ -92,14 +92,16 @@ final class LootConditionFactory{
 	/**
 	 * Creates an loot condition from data stored on a chunk.
 	 *
-	 * @param array<string, mixed> $data
+	 * @param mixed[] $data
+	 * @phpstan-param array{
+	 * 	condition: string
+	 * }
 	 *
 	 * @throws SavedDataLoadingException
 	 * @internal
 	 */
 	public function createFromData(array $data) : ?LootCondition{
-		$saveId = $data["condition"] ?? throw new SavedDataLoadingException("Expected condition id");
-		$func = $this->creationFuncs[$this->reprocess($saveId)] ?? null;
+		$func = $this->creationFuncs[$this->reprocess($data["condition"])] ?? null;
 		if($func === null){
 			return null;
 		}

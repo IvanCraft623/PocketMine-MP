@@ -87,6 +87,8 @@ final class EntryFunctionFactory{
 				}
 				$min = $count["min"];
 				$max = $count["max"];
+			}else{
+				throw new SavedDataLoadingException("Min and max values not found");
 			}
 			if($min < 0){
 				throw new SavedDataLoadingException("Min cannot be less than 0");
@@ -103,7 +105,7 @@ final class EntryFunctionFactory{
 			}
 			$damage = $data["damage"];
 			if(is_numeric($damage)){
-				$min = $max = $damage;
+				$min = $max = (float) $damage;
 			}elseif(is_array($damage)){
 				if(!isset($damage["min"]) || !is_numeric($damage["min"])){
 					throw new SavedDataLoadingException("Value \"min\" isn't numeric or doesn't exists");
@@ -113,6 +115,8 @@ final class EntryFunctionFactory{
 				}
 				$min = (float) $damage["min"];
 				$max = (float) $damage["max"];
+			}else{
+				throw new SavedDataLoadingException("Min and max values not found");
 			}
 			if($max < 0 || $max > 1){
 				throw new SavedDataLoadingException("Max must be between 0.0 and 1.0");
@@ -139,6 +143,8 @@ final class EntryFunctionFactory{
 				}
 				$min = $meta["min"];
 				$max = $meta["max"];
+			}else{
+				throw new SavedDataLoadingException("Min and max values not found");
 			}
 			if($min < 0){
 				throw new SavedDataLoadingException("Min cannot be less than 0");
@@ -155,7 +161,7 @@ final class EntryFunctionFactory{
 	 *
 	 * @param string $className Class that extends EntryFunction
 	 * @phpstan-param class-string<EntryFunction> $className
-	 * @phpstan-param \Closure(array $arguments) : EntryFunction $creationFunc
+	 * @phpstan-param \Closure(array<string, mixed> $arguments) : EntryFunction $creationFunc
 	 *
 	 * @throws \InvalidArgumentException
 	 */
@@ -173,14 +179,16 @@ final class EntryFunctionFactory{
 	/**
 	 * Creates an entry function from data stored on a chunk.
 	 *
-	 * @param array<string, mixed> $data
+	 * @param mixed[] $data
+	 * @phpstan-param array{
+	 * 	function: string
+	 * }
 	 *
 	 * @throws SavedDataLoadingException
 	 * @internal
 	 */
 	public function createFromData(array $data) : ?EntryFunction{
-		$saveId = $data["function"] ?? throw new SavedDataLoadingException("Expected function id");
-		$func = $this->creationFuncs[$this->reprocess($saveId)] ?? null;
+		$func = $this->creationFuncs[$this->reprocess($data["function"])] ?? null;
 		if($func === null){
 			return null;
 		}

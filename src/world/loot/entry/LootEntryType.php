@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace pocketmine\world\loot\entry;
 
+use pocketmine\item\Item;
 use pocketmine\utils\EnumTrait;
 use pocketmine\world\loot\LootContext;
 use pocketmine\world\loot\LootTable;
@@ -47,7 +48,7 @@ final class LootEntryType{
 			new self("item", function(LootEntry $entry, LootContext $context) : array{
 				$stack = $entry->getEntry();
 				if(!$stack instanceof ItemStackData){
-					throw new \InvaligArgumentException("Entry should be ItemStackData type");
+					throw new \InvalidArgumentException("Entry should be ItemStackData type");
 				}
 				$item = $stack->generate($context, $entry->getFunctions());
 				return $item === null ? [] : [$item];
@@ -55,7 +56,7 @@ final class LootEntryType{
 			new self("loot_table", function(LootEntry $entry, LootContext $context) : array{
 				$table = $entry->getEntry();
 				if(!$table instanceof LootTable){
-					throw new \InvaligArgumentException("Entry should be LootTable type");
+					throw new \InvalidArgumentException("Entry should be LootTable type");
 				}
 				return $table->generate($context);
 			}),
@@ -64,7 +65,7 @@ final class LootEntryType{
 	}
 
 	/**
-	 * @phpstan-param \Closure(LootEntry, LootContext) : Item[] $resultGetter
+	 * @phpstan-param \Closure(LootEntry, LootContext) : ?array<Item> $resultGetter
 	 */
 	private function __construct(
 		string $enumName,
