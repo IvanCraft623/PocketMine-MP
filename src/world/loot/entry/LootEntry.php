@@ -162,8 +162,8 @@ class LootEntry implements \JsonSerializable{
 				throw new \InvalidArgumentException("Type \"" . $data["type"] . "\" doesn't exists");
 		}
 
-		$weight = (int) ($data["weight"] ?? 1);
-		$quality = (int) ($data["quality"] ?? 1);
+		$weight = $data["weight"] ?? 1;
+		$quality = $data["quality"] ?? 1;
 
 		$functions = [];
 		if(isset($data["functions"])){

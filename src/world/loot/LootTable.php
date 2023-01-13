@@ -73,7 +73,7 @@ class LootTable implements \JsonSerializable{
 	 * 			quality?: int,
 	 * 			functions?: array<array{function: string, ...}>,
 	 * 			conditions?: array<array{condition: string, ...}>
-	 * 		},
+	 * 		}>,
 	 * 		conditions?: array<array{condition: string, ...}>
 	 * 	}>
 	 * }
@@ -104,7 +104,7 @@ class LootTable implements \JsonSerializable{
 	 * 			quality?: int,
 	 * 			functions?: array<array{function: string, ...}>,
 	 * 			conditions?: array<array{condition: string, ...}>
-	 * 		},
+	 * 		}>,
 	 * 		conditions?: array<array{condition: string, ...}>
 	 * 	}>
 	 * } $data
