@@ -38,7 +38,7 @@ class LootEntry{
 	/**
 	 * @param EntryFunction[] $functions
 	 * @param LootCondition[] $conditions
-	 * @param LootPool[] $pools
+	 * @param LootPool[]      $pools
 	 */
 	public function __construct(
 		protected LootEntryType $type,
@@ -47,14 +47,14 @@ class LootEntry{
 		protected int $quality = 1,
 		protected array $functions = [],
 		array $conditions = [],
-		protected array $pools
+		protected array $pools = []
 	) {
 		if($weight < 1){
 			throw new \InvalidArgumentException("Weight must be at least of 1");
 		}
 		Utils::validateArrayValueType($functions, function(EntryFunction $_) : void{});
 		Utils::validateArrayValueType($conditions, function(LootCondition $_) : void{});
-		Utils::validateArrayValueType($conditions, function(LootPool $_) : void{});
+		Utils::validateArrayValueType($pools, function(LootPool $_) : void{});
 
 		$this->conditions = $conditions;
 	}

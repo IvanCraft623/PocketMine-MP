@@ -23,9 +23,11 @@ declare(strict_types=1);
 
 namespace pocketmine\world\loot\json;
 
+use pocketmine\world\loot\entry\ItemStackData;
 use pocketmine\world\loot\entry\LootEntry;
 use pocketmine\world\loot\LootPool;
 use pocketmine\world\loot\LootTable;
+use function count;
 
 /**
  * Bunch of functions to convert loot tables into properties that can be serialized to json.
@@ -50,12 +52,14 @@ final class LootTableSerializerHelper{
 	 * 	}>
 	 * }
 	 */
-	public function serializeLootTable(LootTable $table) : array{
+	public static function serializeLootTable(LootTable $table) : array{
 		$data = [];
 
 		$pools = $table->getPools();
-		foreach($pools as $pool){
-			$data["pools"][] = self::serializeLootPool();
+		if(count($pools) !== 0){
+			foreach($pools as $pool){
+				$data["pools"][] = self::serializeLootPool($pool);
+			}
 		}
 
 		return $data;

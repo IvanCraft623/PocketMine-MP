@@ -28,8 +28,6 @@ use pocketmine\utils\Utils;
 use pocketmine\world\loot\condition\LootCondition;
 use pocketmine\world\loot\condition\LootConditionHandlingTrait;
 use pocketmine\world\loot\entry\LootEntry;
-use function count;
-use function is_int;
 
 class LootPool{
 	use LootConditionHandlingTrait;

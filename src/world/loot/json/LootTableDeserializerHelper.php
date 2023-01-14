@@ -26,10 +26,12 @@ namespace pocketmine\world\loot\json;
 use pocketmine\data\SavedDataLoadingException;
 use pocketmine\world\loot\condition\LootCondition;
 use pocketmine\world\loot\entry\function\EntryFunction;
+use pocketmine\world\loot\entry\ItemStackData;
 use pocketmine\world\loot\entry\LootEntry;
 use pocketmine\world\loot\entry\LootEntryType;
 use pocketmine\world\loot\LootPool;
 use pocketmine\world\loot\LootTable;
+use function is_int;
 
 final class LootTableDeserializerHelper{
 
@@ -51,7 +53,7 @@ final class LootTableDeserializerHelper{
 	 * 	}>
 	 * } $data
 	 */
-	public function deserializeLootTable(array $data) : LootTable{
+	public static function deserializeLootTable(array $data) : LootTable{
 		$pools = [];
 
 		if(isset($data["pools"])){
@@ -79,7 +81,7 @@ final class LootTableDeserializerHelper{
 	 * 	conditions?: array<array{condition: string, ...}>
 	 * } $data
 	 */
-	public function deserializeLootPool(array $data) : LootTable{
+	public static function deserializeLootPool(array $data) : LootPool{
 		$rolls = $data["rolls"] ?? 1;
 		if(is_int($rolls)){
 			$minRolls = $maxRolls = $rolls;
@@ -159,7 +161,7 @@ final class LootTableDeserializerHelper{
 		$pools = [];
 		if(isset($data["pools"])){
 			foreach($data["pools"] as $poolsData){
-				$functions[] = self::deserializeLootPool($poolsData);
+				$pools[] = self::deserializeLootPool($poolsData);
 			}
 		}
 

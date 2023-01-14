@@ -25,7 +25,6 @@ namespace pocketmine\world\loot;
 
 use pocketmine\item\Item;
 use pocketmine\utils\Utils;
-use function count;
 
 class LootTable{
 
