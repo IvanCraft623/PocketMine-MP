@@ -27,7 +27,6 @@ use pocketmine\world\loot\entry\ItemStackData;
 use pocketmine\world\loot\entry\LootEntry;
 use pocketmine\world\loot\LootPool;
 use pocketmine\world\loot\LootTable;
-use function count;
 
 /**
  * Bunch of functions to convert loot tables into properties that can be serialized to json.
@@ -37,7 +36,7 @@ final class LootTableSerializerHelper{
 	/**
 	 * @return mixed[]
 	 * @phpstan-return array{
-	 * 	pools?: array<array{
+	 * 	pools: array<array{
 	 * 		rolls: int|array{min: int, max: int},
 	 * 		entries?: array<array{
 	 * 			type: string,
@@ -56,10 +55,8 @@ final class LootTableSerializerHelper{
 		$data = [];
 
 		$pools = $table->getPools();
-		if(count($pools) !== 0){
-			foreach($pools as $pool){
-				$data["pools"][] = self::serializeLootPool($pool);
-			}
+		foreach($pools as $pool){
+			$data["pools"][] = self::serializeLootPool($pool);
 		}
 
 		return $data;
