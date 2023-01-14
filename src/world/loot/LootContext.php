@@ -51,7 +51,7 @@ class LootContext{
 	/**
 	 * Returns what caused the table to be generated.
 	 * It could be:
-	 * - a player when fishing
+	 * - a fishing rod
 	 * - an entity at death
 	 * - a chest from a structure
 	 */

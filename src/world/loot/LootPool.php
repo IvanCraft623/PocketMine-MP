@@ -31,7 +31,7 @@ use pocketmine\world\loot\entry\LootEntry;
 use function count;
 use function is_int;
 
-class LootPool implements \JsonSerializable{
+class LootPool{
 	use LootConditionHandlingTrait;
 
 	/**
@@ -107,92 +107,5 @@ class LootPool implements \JsonSerializable{
 		}
 
 		return $items;
-	}
-
-	/**
-	 * Returns an array of loot pool properties that can be serialized to json.
-	 *
-	 * @return mixed[]
-	 * @phpstan-return array{
-	 * 	rolls: int|array{min: int, max: int},
-	 * 	entries?: array<array{
-	 * 		type: string,
-	 * 		name?: string,
-	 * 		weight?: int,
-	 * 		quality?: int,
-	 * 		functions?: array<array{function: string, ...}>,
-	 * 		conditions?: array<array{condition: string, ...}>
-	 * 	}>,
-	 * 	conditions?: array<array{condition: string, ...}>
-	 * }
-	 */
-	public function jsonSerialize() : array{
-		$data = [];
-
-		if($this->minRolls === $this->maxRolls){
-			$data["rolls"] = $this->minRolls;
-		}else{
-			$data["rolls"] = [
-				"min" => $this->minRolls,
-				"max" => $this->maxRolls
-			];
-		}
-
-		if(count($this->entries) !== 0){
-			foreach($this->entries as $entry){
-				$data["entries"][] = $entry->jsonSerialize();
-			}
-		}
-
-		if(count($this->conditions) !== 0){
-			foreach($this->conditions as $condition){
-				$data["conditions"][] = $condition->jsonSerialize();
-			}
-		}
-
-		return $data;
-	}
-
-	/**
-	 * Returns a LootPool from properties created in an array by {@link LootPool#jsonSerialize}
-	 *
-	 * @param mixed[] $data
-	 * @phpstan-param array{
-	 * 	rolls: int|array{min: int, max: int},
-	 * 	entries?: array<array{
-	 * 		type: string,
-	 * 		name?: string,
-	 * 		weight?: int,
-	 * 		quality?: int,
-	 * 		functions?: array<array{function: string, ...}>,
-	 * 		conditions?: array<array{condition: string, ...}>
-	 * 	}>,
-	 * 	conditions?: array<array{condition: string, ...}>
-	 * } $data
-	 */
-	public static function jsonDeserialize(array $data) : LootPool{
-		$rolls = $data["rolls"];
-		if(is_int($rolls)){
-			$minRolls = $maxRolls = $rolls;
-		}else{
-			$minRolls = $rolls["min"];
-			$maxRolls = $rolls["max"];
-		}
-
-		$entries = [];
-		if(isset($data["entries"])){
-			foreach($data["entries"] as $entryData){
-				$entries[] = LootEntry::jsonDeserialize($entryData);
-			}
-		}
-
-		$conditions = [];
-		if(isset($data["conditions"])){
-			foreach($data["conditions"] as $conditionData){
-				$conditions[] = LootCondition::jsonDeserialize($conditionData);
-			}
-		}
-
-		return new LootPool($entries, $minRolls, $maxRolls, $conditions);
 	}
 }

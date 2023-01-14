@@ -27,7 +27,7 @@ use pocketmine\item\Item;
 use pocketmine\utils\Utils;
 use function count;
 
-class LootTable implements \JsonSerializable{
+class LootTable{
 
 	/**
 	 * @param LootPool[] $pools
@@ -57,67 +57,5 @@ class LootTable implements \JsonSerializable{
 		}
 
 		return $items;
-	}
-
-	/**
-	 * Returns an array of loot table properties that can be serialized to json.
-	 *
-	 * @return mixed[]
-	 * @phpstan-return array{
-	 * 	pools?: array<array{
-	 * 		rolls: int|array{min: int, max: int},
-	 * 		entries?: array<array{
-	 * 			type: string,
-	 * 			name?: string,
-	 * 			weight?: int,
-	 * 			quality?: int,
-	 * 			functions?: array<array{function: string, ...}>,
-	 * 			conditions?: array<array{condition: string, ...}>
-	 * 		}>,
-	 * 		conditions?: array<array{condition: string, ...}>
-	 * 	}>
-	 * }
-	 */
-	final public function jsonSerialize() : array{
-		$data = [];
-
-		if(count($this->pools) !== 0){
-			foreach($this->pools as $pool){
-				$data["pools"][] = $pool->jsonSerialize();
-			}
-		}
-
-		return $data;
-	}
-
-	/**
-	 * Returns a LootTable from properties created in an array by {@link LootTable#jsonSerialize}
-	 *
-	 * @param mixed[] $data
-	 * @phpstan-param array{
-	 * 	pools?: array<array{
-	 * 		rolls: int|array{min: int, max: int},
-	 * 		entries?: array<array{
-	 * 			type: string,
-	 * 			name?: string,
-	 * 			weight?: int,
-	 * 			quality?: int,
-	 * 			functions?: array<array{function: string, ...}>,
-	 * 			conditions?: array<array{condition: string, ...}>
-	 * 		}>,
-	 * 		conditions?: array<array{condition: string, ...}>
-	 * 	}>
-	 * } $data
-	 */
-	public static function jsonDeserialize(array $data) : LootTable{
-		$pools = [];
-
-		if(isset($data["pools"])){
-			foreach($data["pools"] as $poolData){
-				$pools[] = LootPool::jsonDeserialize($poolData);
-			}
-		}
-
-		return new LootTable($pools);
 	}
 }

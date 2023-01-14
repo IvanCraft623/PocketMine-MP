@@ -29,14 +29,16 @@ use pocketmine\world\loot\condition\LootCondition;
 use pocketmine\world\loot\condition\LootConditionHandlingTrait;
 use pocketmine\world\loot\entry\function\EntryFunction;
 use pocketmine\world\loot\LootContext;
+use pocketmine\world\loot\LootPool;
 use pocketmine\world\loot\LootTable;
 
-class LootEntry implements \JsonSerializable{
+class LootEntry{
 	use LootConditionHandlingTrait;
 
 	/**
 	 * @param EntryFunction[] $functions
 	 * @param LootCondition[] $conditions
+	 * @param LootPool[] $pools
 	 */
 	public function __construct(
 		protected LootEntryType $type,
@@ -44,13 +46,15 @@ class LootEntry implements \JsonSerializable{
 		protected int $weight = 1,
 		protected int $quality = 1,
 		protected array $functions = [],
-		array $conditions = []
+		array $conditions = [],
+		protected array $pools
 	) {
 		if($weight < 1){
 			throw new \InvalidArgumentException("Weight must be at least of 1");
 		}
 		Utils::validateArrayValueType($functions, function(EntryFunction $_) : void{});
 		Utils::validateArrayValueType($conditions, function(LootCondition $_) : void{});
+		Utils::validateArrayValueType($conditions, function(LootPool $_) : void{});
 
 		$this->conditions = $conditions;
 	}
@@ -79,105 +83,26 @@ class LootEntry implements \JsonSerializable{
 	}
 
 	/**
+	 * @return LootPool[]
+	 */
+	public function getPools() : array{
+		return $this->pools;
+	}
+
+	/**
 	 * @return Item[]
 	 */
 	public function generate(LootContext $context) : array{
-		return $this->type->generate($this, $context);
-	}
+		$items = $this->type->generate($this, $context);
 
-	/**
-	 * Returns an array of loot entry properties that can be serialized to json.
-	 *
-	 * @return mixed[]
-	 * @phpstan-return array{
-	 * 	type: string,
-	 * 	name?: string,
-	 * 	weight?: int,
-	 * 	quality?: int,
-	 * 	functions?: array<array{function: string, ...}>,
-	 * 	conditions?: array<array{condition: string, ...}>
-	 * }
-	 */
-	public function jsonSerialize() : array{
-		$data = [];
-
-		$data["type"] = $this->type->name();
-		if($this->entry instanceof ItemStackData){
-			$data["name"] = $this->entry->name;
-		}elseif($this->entry instanceof LootTable){
-			#TODO: LootTableFactory
-		}
-
-		if($this->weight !== 1){
-			$data["weight"] = $this->weight;
-		}
-
-		if($this->quality !== 1){
-			$data["quality"] = $this->quality;
-		}
-
-		foreach($this->functions as $function){
-			$data["functions"][] = $function->jsonSerialize();
-		}
-
-		foreach($this->conditions as $condition){
-			$data["conditions"][] = $condition->jsonSerialize();
-		}
-
-		return $data;
-	}
-
-	/**
-	 * Returns a LootEntry from properties created in an array by {@link LootEntry#jsonSerialize}
-	 *
-	 * @param mixed[] $data
-	 * @phpstan-param array{
-	 * 	type: string,
-	 * 	name?: string,
-	 * 	weight?: int,
-	 * 	quality?: int,
-	 * 	functions?: array<array{function: string, ...}>,
-	 * 	conditions?: array<array{condition: string, ...}>
-	 * } $data
-	 */
-	public static function jsonDeserialize(array $data) : LootEntry{
-		$entry = null;
-		switch($data["type"]){
-			case "item":
-				$type = LootEntryType::ITEM();
-
-				if(!isset($data["name"])){
-					throw new \InvalidArgumentException("Expected key \"name\"");
+		foreach($this->pools as $pool){
+			if($pool->evaluateConditions($context)){
+				foreach($pool->generate($context) as $item) {
+					$items[] = $item;
 				}
-				$entry = new ItemStackData($data["name"]);
-				break;
-			case "loot_table":
-				$type = LootEntryType::LOOT_TABLE();
-				#TODO: LootTableFactory
-				break;
-			case "empty":
-				$type = LootEntryType::EMPTY();
-				break;
-			default:
-				throw new \InvalidArgumentException("Type \"" . $data["type"] . "\" doesn't exists");
-		}
-
-		$weight = $data["weight"] ?? 1;
-		$quality = $data["quality"] ?? 1;
-
-		$functions = [];
-		if(isset($data["functions"])){
-			foreach($data["functions"] as $functionData){
-				$functions[] = EntryFunction::jsonDeserialize($functionData);
-			}
-		}
-		$conditions = [];
-		if(isset($data["conditions"])){
-			foreach($data["conditions"] as $conditionData){
-				$conditions[] = LootCondition::jsonDeserialize($conditionData);
 			}
 		}
 
-		return new LootEntry($type, $entry, $weight, $quality, $functions, $conditions);
+		return $items;
 	}
 }
