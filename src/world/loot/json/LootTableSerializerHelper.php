@@ -27,6 +27,7 @@ use pocketmine\world\loot\entry\ItemStackData;
 use pocketmine\world\loot\entry\LootEntry;
 use pocketmine\world\loot\LootPool;
 use pocketmine\world\loot\LootTable;
+use pocketmine\world\loot\LootTableFactory;
 
 /**
  * Bunch of functions to convert loot tables into properties that can be serialized to json.
@@ -126,7 +127,7 @@ final class LootTableSerializerHelper{
 		if($e instanceof ItemStackData){
 			$data["name"] = $e->name;
 		}elseif($e instanceof LootTable){
-			#TODO: LootTableFactory
+			$data["name"] = LootTableFactory::getInstance()->getSaveName($e::class);
 		}
 
 		$weight = $entry->getWeight();

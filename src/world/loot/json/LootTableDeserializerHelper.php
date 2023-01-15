@@ -31,7 +31,8 @@ use pocketmine\world\loot\entry\LootEntry;
 use pocketmine\world\loot\entry\LootEntryType;
 use pocketmine\world\loot\LootPool;
 use pocketmine\world\loot\LootTable;
-use function is_int;
+use pocketmine\world\loot\LootTableFactory;
+use function is_numeric;
 
 final class LootTableDeserializerHelper{
 
@@ -39,12 +40,12 @@ final class LootTableDeserializerHelper{
 	 * @param mixed[] $data
 	 * @phpstan-param array{
 	 * 	pools?: array<array{
-	 * 		rolls: int|array{min: int, max: int},
+	 * 		rolls: int|float|array{min: int|float, max: int|float},
 	 * 		entries?: array<array{
 	 * 			type: string,
 	 * 			name?: string,
-	 * 			weight?: int,
-	 * 			quality?: int,
+	 * 			weight?: int|float,
+	 * 			quality?: int|float,
 	 * 			functions?: array<array{function: string, ...}>,
 	 * 			conditions?: array<array{condition: string, ...}>,
 	 * 			...
@@ -68,12 +69,12 @@ final class LootTableDeserializerHelper{
 	/**
 	 * @param mixed[] $data
 	 * @phpstan-param array{
-	 * 	rolls?: int|array{min: int, max: int},
+	 * 	rolls?: int|float|array{min: int|float, max: int|float},
 	 * 	entries?: array<array{
 	 * 		type: string,
 	 * 		name?: string,
-	 * 		weight?: int,
-	 * 		quality?: int,
+	 * 		weight?: int|float,
+	 * 		quality?: int|float,
 	 * 		functions?: array<array{function: string, ...}>,
 	 * 		conditions?: array<array{condition: string, ...}>,
 	 * 		...
@@ -83,11 +84,11 @@ final class LootTableDeserializerHelper{
 	 */
 	public static function deserializeLootPool(array $data) : LootPool{
 		$rolls = $data["rolls"] ?? 1;
-		if(is_int($rolls)){
-			$minRolls = $maxRolls = $rolls;
+		if(is_numeric($rolls)){
+			$minRolls = $maxRolls = (int) $rolls;
 		}else{
-			$minRolls = $rolls["min"];
-			$maxRolls = $rolls["max"];
+			$minRolls = (int) $rolls["min"];
+			$maxRolls = (int) $rolls["max"];
 		}
 
 		$entries = [];
@@ -112,8 +113,8 @@ final class LootTableDeserializerHelper{
 	 * @phpstan-param array{
 	 * 	type: string,
 	 * 	name?: string,
-	 * 	weight?: int,
-	 * 	quality?: int,
+	 * 	weight?: int|float,
+	 * 	quality?: int|float,
 	 * 	functions?: array<array{function: string, ...}>,
 	 * 	conditions?: array<array{condition: string, ...}>,
 	 * 	...
@@ -132,7 +133,12 @@ final class LootTableDeserializerHelper{
 				break;
 			case "loot_table":
 				$type = LootEntryType::LOOT_TABLE();
-				#TODO: LootTableFactory
+
+				if(!isset($data["name"])){
+					throw new SavedDataLoadingException("Expected key \"name\"");
+				}
+				$name = $data["name"];
+				$entry = LootTableFactory::getInstance()->get($name) ?? throw new SavedDataLoadingException("LootTable $name is not registered");
 				break;
 			case "empty":
 				$type = LootEntryType::EMPTY();
@@ -141,8 +147,8 @@ final class LootTableDeserializerHelper{
 				throw new SavedDataLoadingException("Type \"" . $data["type"] . "\" doesn't exists");
 		}
 
-		$weight = $data["weight"] ?? 1;
-		$quality = $data["quality"] ?? 1;
+		$weight = (int) ($data["weight"] ?? 1);
+		$quality = (int) ($data["quality"] ?? 1);
 
 		$functions = [];
 		if(isset($data["functions"])){

@@ -37,7 +37,6 @@ use pocketmine\world\loot\entry\function\types\SetCustomName;
 use pocketmine\world\loot\entry\function\types\SetDamage;
 use pocketmine\world\loot\entry\function\types\SetMeta;
 use function is_array;
-use function is_int;
 use function is_numeric;
 use function is_string;
 use function str_replace;
@@ -78,17 +77,17 @@ final class EntryFunctionFactory{
 				throw new SavedDataLoadingException("Key \"count\" doesn't exists");
 			}
 			$count = $data["count"];
-			if(is_int($count)){
-				$min = $max = $count;
+			if(is_numeric($count)){
+				$min = $max = (int) $count;
 			}elseif(is_array($count)){
-				if(!isset($count["min"]) || !is_int($count["min"])){
-					throw new SavedDataLoadingException("Value \"min\" isn't an int or doesn't exists");
+				if(!isset($count["min"]) || !is_numeric($count["min"])){
+					throw new SavedDataLoadingException("Value \"min\" isn't numeric or doesn't exists");
 				}
-				if(!isset($count["max"]) || !is_int($count["max"])){
-					throw new SavedDataLoadingException("Value \"max\" isn't an int or doesn't exists");
+				if(!isset($count["max"]) || !is_numeric($count["max"])){
+					throw new SavedDataLoadingException("Value \"max\" isn't numeric or doesn't exists");
 				}
-				$min = $count["min"];
-				$max = $count["max"];
+				$min = (int) $count["min"];
+				$max = (int) $count["max"];
 			}else{
 				throw new SavedDataLoadingException("Min and max values not found");
 			}
@@ -142,17 +141,17 @@ final class EntryFunctionFactory{
 				throw new SavedDataLoadingException("Key \"data\" doesn't exists");
 			}
 			$meta = $data["data"];
-			if(is_int($meta)){
+			if(is_numeric($meta)){
 				$min = $max = $meta;
 			}elseif(is_array($meta)){
-				if(!isset($meta["min"]) || !is_int($meta["min"])){
-					throw new SavedDataLoadingException("Value \"min\" isn't an int or doesn't exists");
+				if(!isset($meta["min"]) || !is_numeric($meta["min"])){
+					throw new SavedDataLoadingException("Value \"min\" isn't numeric or doesn't exists");
 				}
-				if(!isset($meta["max"]) || !is_int($meta["max"])){
-					throw new SavedDataLoadingException("Value \"max\" isn't an int or doesn't exists");
+				if(!isset($meta["max"]) || !is_numeric($meta["max"])){
+					throw new SavedDataLoadingException("Value \"max\" isn't numeric or doesn't exists");
 				}
-				$min = $meta["min"];
-				$max = $meta["max"];
+				$min = (int) $meta["min"];
+				$max = (int) $meta["max"];
 			}else{
 				throw new SavedDataLoadingException("Min and max values not found");
 			}
