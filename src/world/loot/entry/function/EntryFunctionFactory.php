@@ -38,6 +38,7 @@ use pocketmine\world\loot\entry\function\types\SetCustomName;
 use pocketmine\world\loot\entry\function\types\SetDamage;
 use pocketmine\world\loot\entry\function\types\SetMeta;
 use pocketmine\world\loot\entry\function\types\SetSuspiciousStewType;
+use function count;
 use function is_array;
 use function is_numeric;
 use function is_string;

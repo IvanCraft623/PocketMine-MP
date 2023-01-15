@@ -30,25 +30,15 @@ use pocketmine\item\SuspiciousStewType;
 use pocketmine\utils\Utils;
 use pocketmine\world\loot\entry\function\EntryFunction;
 use pocketmine\world\loot\LootContext;
-use function count;
 
 class SetSuspiciousStewType extends EntryFunction{
 
 	/**
-	 * @var SuspiciousStewType[]
-	 */
-	protected array $types;
-
-	/**
 	 * @param SuspiciousStewType[] $types
+	 * @phpstan-param non-empty-list<SuspiciousStewType>
 	 */
-	public function __construct(array $types){
-		if(count($types) === 0){
-			throw new \InvalidArgumentException("Types cannot be an empty array");
-		}
+	public function __construct(protected array $types){
 		Utils::validateArrayValueType($types, function(SuspiciousStewType $_) : void{});
-
-		$this->types = array_values($types);
 	}
 
 	public function onCreation(LootContext $context, Item $item) : void{
@@ -68,11 +58,9 @@ class SetSuspiciousStewType extends EntryFunction{
 	public function jsonSerialize() : array{
 		$data = parent::jsonSerialize();
 
-		$effectsData = [];
 		foreach($this->types as $type){
-			$effectsData[] = ["id" => SuspiciousStewTypeIdMap::getInstance()->toId($type)];
+			$data["effects"][] = ["id" => SuspiciousStewTypeIdMap::getInstance()->toId($type)];
 		}
-		$data["effects"] = $effectsData;
 
 		return $data;
 	}
