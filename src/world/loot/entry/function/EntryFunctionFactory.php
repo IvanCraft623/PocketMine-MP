@@ -142,7 +142,7 @@ final class EntryFunctionFactory{
 			}
 			$meta = $data["data"];
 			if(is_numeric($meta)){
-				$min = $max = $meta;
+				$min = $max = (int) $meta;
 			}elseif(is_array($meta)){
 				if(!isset($meta["min"]) || !is_numeric($meta["min"])){
 					throw new SavedDataLoadingException("Value \"min\" isn't numeric or doesn't exists");

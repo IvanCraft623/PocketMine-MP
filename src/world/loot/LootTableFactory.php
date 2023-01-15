@@ -24,12 +24,10 @@ declare(strict_types=1);
 namespace pocketmine\world\loot;
 
 use pocketmine\utils\SingletonTrait;
-use pocketmine\utils\Utils;
 use function str_replace;
 use function strtolower;
 use function trim;
 
-#TODO!
 final class LootTableFactory{
 	use SingletonTrait;
 
