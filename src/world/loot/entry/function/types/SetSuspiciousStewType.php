@@ -30,12 +30,13 @@ use pocketmine\item\SuspiciousStewType;
 use pocketmine\utils\Utils;
 use pocketmine\world\loot\entry\function\EntryFunction;
 use pocketmine\world\loot\LootContext;
+use function count;
 
 class SetSuspiciousStewType extends EntryFunction{
 
 	/**
 	 * @param SuspiciousStewType[] $types
-	 * @phpstan-param non-empty-list<SuspiciousStewType>
+	 * @phpstan-param non-empty-list<SuspiciousStewType> $types
 	 */
 	public function __construct(protected array $types){
 		Utils::validateArrayValueType($types, function(SuspiciousStewType $_) : void{});
