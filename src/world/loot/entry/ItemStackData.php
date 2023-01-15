@@ -30,6 +30,7 @@ use pocketmine\world\format\io\GlobalItemDataHandlers;
 use pocketmine\world\loot\entry\function\EntryFunction;
 use pocketmine\world\loot\LootContext;
 use function ceil;
+use function min;
 
 final class ItemStackData{
 
@@ -69,7 +70,7 @@ final class ItemStackData{
 				$maxStackSize = $item->getMaxStackSize();
 				$stacks = (int) ceil($count / $maxStackSize);
 				if($stacks > 1){
-					for($i = 0; $i < $stacks; $i++){ 
+					for($i = 0; $i < $stacks; $i++){
 						$items[] = $item->pop(min($maxStackSize, $item->getCount()));
 					}
 				}else{

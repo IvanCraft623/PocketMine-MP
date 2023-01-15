@@ -68,9 +68,11 @@ class SetSuspiciousStewType extends EntryFunction{
 	public function jsonSerialize() : array{
 		$data = parent::jsonSerialize();
 
+		$effectsData = [];
 		foreach($this->types as $type){
-			$data["effects"][] = ["id" => SuspiciousStewTypeIdMap::getInstance()->toId($type)];
+			$effectsData[] = ["id" => SuspiciousStewTypeIdMap::getInstance()->toId($type)];
 		}
+		$data["effects"] = $effectsData;
 
 		return $data;
 	}
