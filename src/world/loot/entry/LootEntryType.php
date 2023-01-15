@@ -50,8 +50,7 @@ final class LootEntryType{
 				if(!$stack instanceof ItemStackData){
 					throw new \InvalidArgumentException("Entry should be ItemStackData type");
 				}
-				$item = $stack->generate($context, $entry->getFunctions());
-				return $item === null ? [] : [$item];
+				return $stack->generate($context, $entry->getFunctions());
 			}),
 			new self("loot_table", function(LootEntry $entry, LootContext $context) : array{
 				$table = $entry->getEntry();

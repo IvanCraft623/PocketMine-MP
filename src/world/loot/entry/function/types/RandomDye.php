@@ -43,7 +43,7 @@ class RandomDye extends EntryFunction{
 			default => false
 		} && $item instanceof Armor){
 			$colors = array_values(DyeColor::getAll());
-			$item->setCustomColor(($colors[$context->getRandom()->nextBoundedInt(count($colors) - 1)])->getRgbValue());
+			$item->setCustomColor(($colors[$context->getRandom()->nextBoundedInt(count($colors))])->getRgbValue());
 		}
 	}
 }

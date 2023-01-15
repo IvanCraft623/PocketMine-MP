@@ -29,6 +29,7 @@ use pocketmine\utils\Utils;
 use pocketmine\world\format\io\GlobalItemDataHandlers;
 use pocketmine\world\loot\entry\function\EntryFunction;
 use pocketmine\world\loot\LootContext;
+use function ceil;
 
 final class ItemStackData{
 
@@ -36,12 +37,16 @@ final class ItemStackData{
 
 	/**
 	 * @param EntryFunction[] $functions
+	 *
+	 * @return Item[]
 	 */
-	public function generate(LootContext $context, array $functions = []) : ?Item{
+	public function generate(LootContext $context, array $functions = []) : array{
 		Utils::validateArrayValueType($functions, function(EntryFunction $_) : void{});
 
 		$meta = 0;
 		$count = 1;
+
+		$items = [];
 
 		foreach($functions as $function){
 			$function->onPreCreation($context, $meta, $count);
@@ -60,12 +65,23 @@ final class ItemStackData{
 					$function->onCreation($context, $item);
 				}
 
-				return $item;
+				//split up stacks
+				$maxStackSize = $item->getMaxStackSize();
+				$stacks = (int) ceil($count / $maxStackSize);
+				if($stacks > 1){
+					for($i = 0; $i < $stacks; $i++){ 
+						$items[] = $item->pop(min($maxStackSize, $item->getCount()));
+					}
+				}else{
+					$items[] = $item;
+				}
+
+				return $items;
 			}catch(ItemTypeDeserializeException $e){
 				//probably unknown item
 			}
 		}
 
-		return null;
+		return $items;
 	}
 }

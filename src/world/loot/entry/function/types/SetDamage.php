@@ -31,7 +31,7 @@ use function ceil;
 
 class SetDamage extends EntryFunction{
 
-	public function __construct(private float $min, private float $max) {
+	public function __construct(private float $min, private float $max){
 		if($min < 0 || $min > 1){
 			throw new \InvalidArgumentException("Min must be between 0.0 and 1.0");
 		}

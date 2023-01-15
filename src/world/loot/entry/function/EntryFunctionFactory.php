@@ -27,6 +27,7 @@ use DaveRandom\CallbackValidator\BuiltInTypes;
 use DaveRandom\CallbackValidator\CallbackType;
 use DaveRandom\CallbackValidator\ParameterType;
 use DaveRandom\CallbackValidator\ReturnType;
+use pocketmine\data\bedrock\SuspiciousStewTypeIdMap;
 use pocketmine\data\SavedDataLoadingException;
 use pocketmine\utils\SingletonTrait;
 use pocketmine\utils\Utils;
@@ -36,6 +37,7 @@ use pocketmine\world\loot\entry\function\types\SetCount;
 use pocketmine\world\loot\entry\function\types\SetCustomName;
 use pocketmine\world\loot\entry\function\types\SetDamage;
 use pocketmine\world\loot\entry\function\types\SetMeta;
+use pocketmine\world\loot\entry\function\types\SetSuspiciousStewType;
 use function is_array;
 use function is_numeric;
 use function is_string;
@@ -163,6 +165,25 @@ final class EntryFunctionFactory{
 			}
 			return new SetMeta($min, $max);
 		}, "set_data");
+
+		$this->register(SetSuspiciousStewType::class, function(array $data) : SetSuspiciousStewType{
+			if(!isset($data["effects"]) || !is_array($data["effects"])){
+				throw new SavedDataLoadingException("\"effects\" isn't an array or doesn't exists");
+			}
+
+			$types = [];
+			foreach($data["effects"] as $typeData){
+				if(!isset($typeData["id"]) || !is_numeric($typeData["id"])){
+					throw new SavedDataLoadingException("\"id\" isn't numeric or doesn't exists");
+				}
+				$id = (int) $typeData["id"];
+				$types[] = SuspiciousStewTypeIdMap::getInstance()->fromId($id) ?? throw new SavedDataLoadingException("Unknown suspicious stew type ID $id");
+			}
+			if(count($types) === 0){
+				throw new SavedDataLoadingException("No suspicious stew types found");
+			}
+			return new SetSuspiciousStewType($types);
+		}, "set_stew_effect");
 	}
 
 	/**

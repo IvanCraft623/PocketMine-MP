@@ -28,7 +28,7 @@ use pocketmine\world\loot\LootContext;
 
 class SetMeta extends EntryFunction{
 
-	public function __construct(private int $min, private int $max) {
+	public function __construct(private int $min, private int $max){
 		if($min < 0){
 			throw new \InvalidArgumentException("Min cannot be less than 0");
 		}

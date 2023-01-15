@@ -23,17 +23,38 @@ declare(strict_types=1);
 
 namespace pocketmine\world\loot\entry\function\types;
 
+use pocketmine\data\bedrock\SuspiciousStewTypeIdMap;
 use pocketmine\item\Item;
+use pocketmine\item\SuspiciousStew;
+use pocketmine\item\SuspiciousStewType;
+use pocketmine\utils\Utils;
 use pocketmine\world\loot\entry\function\EntryFunction;
 use pocketmine\world\loot\LootContext;
+use function count;
 
-class SetCustomName extends EntryFunction{
+class SetSuspiciousStewType extends EntryFunction{
 
-	public function __construct(private string $name){
+	/**
+	 * @var SuspiciousStewType[]
+	 */
+	protected array $types;
+
+	/**
+	 * @param SuspiciousStewType[] $types
+	 */
+	public function __construct(array $types){
+		if(count($types) === 0){
+			throw new \InvalidArgumentException("Types cannot be an empty array");
+		}
+		Utils::validateArrayValueType($types, function(SuspiciousStewType $_) : void{});
+
+		$this->types = array_values($types);
 	}
 
 	public function onCreation(LootContext $context, Item $item) : void{
-		$item->setCustomName($this->name);
+		if($item instanceof SuspiciousStew){
+			$item->setType($this->types[$context->getRandom()->nextBoundedInt(count($this->types))]);
+		}
 	}
 
 	/**
@@ -41,13 +62,15 @@ class SetCustomName extends EntryFunction{
 	 *
 	 * @phpstan-return array{
 	 * 	function: string,
-	 * 	name: string
+	 * 	effects: array<array{id: int}>
 	 * }
 	 */
 	public function jsonSerialize() : array{
 		$data = parent::jsonSerialize();
 
-		$data["name"] = $this->name;
+		foreach($this->types as $type){
+			$data["effects"][] = ["id" => SuspiciousStewTypeIdMap::getInstance()->toId($type)];
+		}
 
 		return $data;
 	}
