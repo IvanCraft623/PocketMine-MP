@@ -29,9 +29,11 @@ use pocketmine\world\loot\entry\function\EntryFunction;
 use pocketmine\world\loot\entry\ItemStackData;
 use pocketmine\world\loot\entry\LootEntry;
 use pocketmine\world\loot\entry\LootEntryType;
-use pocketmine\world\loot\LootPool;
 use pocketmine\world\loot\LootTable;
 use pocketmine\world\loot\LootTableFactory;
+use pocketmine\world\loot\pool\LootPool;
+use pocketmine\world\loot\pool\TieredPool;
+use pocketmine\world\loot\pool\WeightedPool;
 use function is_numeric;
 
 final class LootTableDeserializerHelper{
@@ -76,13 +78,84 @@ final class LootTableDeserializerHelper{
 	 * 		weight?: int|float,
 	 * 		quality?: int|float,
 	 * 		functions?: array<array{function: string, ...}>,
+	 * 		conditions?: array<array{condition: string, ...}>
+	 * 		...
+	 * 	}>,
+	 * 	tiers?: array{
+	 * 		initial_range?: int|float,
+	 * 		bonus_rolls?: int|float,
+	 * 		bonus_chance?: float
+	 * 	},
+	 * 	conditions?: array<array{condition: string, ...}>
+	 * } $data
+	 */
+	public static function deserializeLootPool(array $data) : LootPool{
+		if(isset($data["tiers"])){
+			return self::deserializeTieredPool($data);
+		}else{
+			return self::deserializeWeightedPool($data);
+		}
+	}
+
+	/**
+	 * @param mixed[] $data
+	 * @phpstan-param array{
+	 * 	tiers: array{
+	 * 		initial_range?: int|float,
+	 * 		bonus_rolls?: int|float,
+	 * 		bonus_chance?: float
+	 * 	},
+	 * 	entries?: array<array{
+	 * 		type: string,
+	 * 		name?: string,
+	 * 		weight?: int|float,
+	 * 		quality?: int|float,
+	 * 		functions?: array<array{function: string, ...}>,
 	 * 		conditions?: array<array{condition: string, ...}>,
 	 * 		...
 	 * 	}>,
 	 * 	conditions?: array<array{condition: string, ...}>
 	 * } $data
 	 */
-	public static function deserializeLootPool(array $data) : LootPool{
+	public static function deserializeTieredPool(array $data) : TieredPool{
+		$entries = [];
+		if(isset($data["entries"])){
+			foreach($data["entries"] as $entryData){
+				$entries[] = self::deserializeLootEntry($entryData);
+			}
+		}
+
+		$conditions = [];
+		if(isset($data["conditions"])){
+			foreach($data["conditions"] as $conditionData){
+				$conditions[] = LootCondition::jsonDeserialize($conditionData);
+			}
+		}
+
+		$initialRange = (int) ($data["tiers"]["initial_range"] ?? 1);
+		$bonusRolls = (int) ($data["tiers"]["bonus_rolls"] ?? 0);
+		$bonusChance = (float) ($data["tiers"]["bonus_chance"] ?? 0);
+
+		return new TieredPool($entries, $initialRange, $bonusRolls, $bonusChance, $conditions);
+	}
+
+	/**
+	 * @param mixed[] $data
+	 * @phpstan-param array{
+	 * 	rolls?: int|float|array{min: int|float, max: int|float},
+	 * 	entries?: array<array{
+	 * 		type: string,
+	 * 		name?: string,
+	 * 		weight?: int|float,
+	 * 		quality?: int|float,
+	 * 		functions?: array<array{function: string, ...}>,
+	 * 		conditions?: array<array{condition: string, ...}>,
+	 * 		...
+	 * 	}>,
+	 * 	conditions?: array<array{condition: string, ...}>
+	 * } $data
+	 */
+	public static function deserializeWeightedPool(array $data) : WeightedPool{
 		$rolls = $data["rolls"] ?? 1;
 		if(is_numeric($rolls)){
 			$minRolls = $maxRolls = (int) $rolls;
@@ -105,7 +178,7 @@ final class LootTableDeserializerHelper{
 			}
 		}
 
-		return new LootPool($entries, $minRolls, $maxRolls, $conditions);
+		return new WeightedPool($entries, $minRolls, $maxRolls, $conditions);
 	}
 
 	/**

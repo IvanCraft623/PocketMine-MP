@@ -21,30 +21,25 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\world\loot;
+namespace pocketmine\world\loot\pool;
 
 use pocketmine\item\Item;
-use pocketmine\utils\Utils;
 use pocketmine\world\loot\condition\LootCondition;
-use pocketmine\world\loot\condition\LootConditionHandlingTrait;
 use pocketmine\world\loot\entry\LootEntry;
+use pocketmine\world\loot\LootContext;
 
-class LootPool{
-	use LootConditionHandlingTrait;
+class WeightedPool extends LootPool{
 
 	/**
 	 * @param LootEntry[]     $entries
 	 * @param LootCondition[] $conditions
 	 */
 	public function __construct(
-		protected array $entries,
+		array $entries,
 		protected int $minRolls = 1,
 		protected int $maxRolls = 1,
 		array $conditions = []
 	) {
-		Utils::validateArrayValueType($entries, function(LootEntry $_) : void{});
-		Utils::validateArrayValueType($conditions, function(LootCondition $_) : void{});
-
 		if($minRolls < 0){
 			throw new \InvalidArgumentException("minRolls cannot be less than 0");
 		}
@@ -52,7 +47,7 @@ class LootPool{
 			throw new \InvalidArgumentException("minRolls is larger that maxRolls");
 		}
 
-		$this->conditions = $conditions;
+		parent::__construct($entries, $conditions);
 	}
 
 	public function getMinRolls() : int{
@@ -64,17 +59,14 @@ class LootPool{
 	}
 
 	/**
-	 * @return LootEntry[]
-	 */
-	public function getEntries() : array{
-		return $this->entries;
-	}
-
-	/**
 	 * @return Item[]
 	 */
 	public function generate(LootContext $context) : array{
 		$items = [];
+
+		if(count($this->entries) === 0){
+			return $items;
+		}
 
 		$rolls = $context->getRandom()->nextRange($this->minRolls, $this->maxRolls);
 		if($rolls < 1){

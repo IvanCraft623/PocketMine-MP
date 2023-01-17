@@ -25,6 +25,7 @@ namespace pocketmine\world\loot;
 
 use pocketmine\item\Item;
 use pocketmine\utils\Utils;
+use pocketmine\world\loot\pool\LootPool;
 
 class LootTable{
 

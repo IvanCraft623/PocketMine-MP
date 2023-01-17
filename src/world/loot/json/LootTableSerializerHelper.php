@@ -25,9 +25,10 @@ namespace pocketmine\world\loot\json;
 
 use pocketmine\world\loot\entry\ItemStackData;
 use pocketmine\world\loot\entry\LootEntry;
-use pocketmine\world\loot\LootPool;
 use pocketmine\world\loot\LootTable;
 use pocketmine\world\loot\LootTableFactory;
+use pocketmine\world\loot\pool\TieredPool;
+use pocketmine\world\loot\pool\WeightedPool;
 
 /**
  * Bunch of functions to convert loot tables into properties that can be serialized to json.
@@ -37,36 +38,41 @@ final class LootTableSerializerHelper{
 	/**
 	 * @return mixed[]
 	 * @phpstan-return array{
-	 * 	pools?: array<array{
-	 * 		rolls: int|array{min: int, max: int},
-	 * 		entries?: array<array{
-	 * 			type: string,
-	 * 			name?: string,
-	 * 			weight?: int,
-	 * 			quality?: int,
-	 * 			functions?: array<array{function: string, ...}>,
-	 * 			conditions?: array<array{condition: string, ...}>,
-	 * 			...
-	 * 		}>,
+	 * 	rolls?: int|array{min: int, max: int},
+	 * 	entries?: array<array{
+	 * 		type: string,
+	 * 		name?: string,
+	 * 		weight?: int,
+	 * 		quality?: int,
+	 * 		functions?: array<array{function: string, ...}>,
 	 * 		conditions?: array<array{condition: string, ...}>
-	 * 	}>
+	 * 		...
+	 * 	}>,
+	 * 	tiers?: array{
+	 * 		initial_range?: int,
+	 * 		bonus_rolls?: int,
+	 * 		bonus_chance?: float
+	 * 	},
+	 * 	conditions?: array<array{condition: string, ...}>
 	 * }
 	 */
 	public static function serializeLootTable(LootTable $table) : array{
-		$data = [];
-
-		$pools = $table->getPools();
-		foreach($pools as $pool){
-			$data["pools"][] = self::serializeLootPool($pool);
+		if($table instanceof TieredPool){
+			return self::serializeTieredPool($table);
+		}elseif($table instanceof WeightedPool) {
+			return self::serializeWeightedPool($table);
 		}
-
-		return $data;
+		throw new \InvalidArgumentException("Unknown LootTable type: " . $table::class);
 	}
 
 	/**
 	 * @return mixed[]
 	 * @phpstan-return array{
-	 * 	rolls: int|array{min: int, max: int},
+	 * 	tiers: array{
+	 * 		initial_range: int,
+	 * 		bonus_rolls: int,
+	 * 		bonus_chance: float
+	 * 	},
 	 * 	entries?: array<array{
 	 * 		type: string,
 	 * 		name?: string,
@@ -79,12 +85,48 @@ final class LootTableSerializerHelper{
 	 * 	conditions?: array<array{condition: string, ...}>
 	 * }
 	 */
-	public static function serializeLootPool(LootPool $pool) : array{
+	public static function serializeTieredPool(LootPool $pool) : array{
+		$data = [];
+
+		$data["tiers"]["initial_range"] = $pool->getInitialRange();
+		$data["tiers"]["bonus_rolls"] = $pool->getBonusRolls();
+		$data["tiers"]["bonus_chance"] = $pool->getBonusChance();
+
+		foreach($pool->getEntries() as $entry){
+			$data["entries"][] = self::serializeLootEntry($entry);
+		}
+
+		foreach($pool->getConditions() as $condition){
+			$data["conditions"][] = $condition->jsonSerialize();
+		}
+
+		return $data;
+	}
+
+	/**
+	 * @return mixed[]
+	 * @phpstan-return array{
+	 * 	rolls?: int|array{min: int, max: int},
+	 * 	entries?: array<array{
+	 * 		type: string,
+	 * 		name?: string,
+	 * 		weight?: int,
+	 * 		quality?: int,
+	 * 		functions?: array<array{function: string, ...}>,
+	 * 		conditions?: array<array{condition: string, ...}>,
+	 * 		...
+	 * 	}>,
+	 * 	conditions?: array<array{condition: string, ...}>
+	 * }
+	 */
+	public static function serializeWeightedPool(LootPool $pool) : array{
 		$data = [];
 
 		$minRolls = $pool->getMinRolls();
 		$maxRolls = $pool->getMaxRolls();
-		if($minRolls === $maxRolls){
+		if($minRolls === 1 && $maxRolls === 1){
+			//Don't write it
+		}elseif($minRolls === $maxRolls){
 			$data["rolls"] = $minRolls;
 		}else{
 			$data["rolls"] = [
@@ -93,13 +135,11 @@ final class LootTableSerializerHelper{
 			];
 		}
 
-		$entries = $pool->getEntries();
-		foreach($entries as $entry){
+		foreach($pool->getEntries() as $entry){
 			$data["entries"][] = self::serializeLootEntry($entry);
 		}
 
-		$conditions = $pool->getConditions();
-		foreach($conditions as $condition){
+		foreach($pool->getConditions() as $condition){
 			$data["conditions"][] = $condition->jsonSerialize();
 		}
 

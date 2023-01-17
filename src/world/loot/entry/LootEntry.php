@@ -29,8 +29,8 @@ use pocketmine\world\loot\condition\LootCondition;
 use pocketmine\world\loot\condition\LootConditionHandlingTrait;
 use pocketmine\world\loot\entry\function\EntryFunction;
 use pocketmine\world\loot\LootContext;
-use pocketmine\world\loot\LootPool;
 use pocketmine\world\loot\LootTable;
+use pocketmine\world\loot\pool\LootPool;
 
 class LootEntry{
 	use LootConditionHandlingTrait;
