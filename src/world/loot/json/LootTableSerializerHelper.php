@@ -40,7 +40,7 @@ final class LootTableSerializerHelper{
 	 * @return mixed[]
 	 * @phpstan-return array{
 	 * 	pools?: array<array{
-	 * 		rolls: int|array{min: int, max: int},
+	 * 		rolls?: int|array{min: int, max: int},
 	 * 		entries?: array<array{
 	 * 			type: string,
 	 * 			name?: string,
