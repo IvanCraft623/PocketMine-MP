@@ -52,6 +52,11 @@ final class LootTableDeserializerHelper{
 	 * 			conditions?: array<array{condition: string, ...}>,
 	 * 			...
 	 * 		}>,
+	 * 		tiers?: array{
+	 * 			initial_range?: int|float,
+	 * 			bonus_rolls?: int|float,
+	 * 			bonus_chance?: float
+	 * 		},
 	 * 		conditions?: array<array{condition: string, ...}>
 	 * 	}>
 	 * } $data
@@ -78,7 +83,7 @@ final class LootTableDeserializerHelper{
 	 * 		weight?: int|float,
 	 * 		quality?: int|float,
 	 * 		functions?: array<array{function: string, ...}>,
-	 * 		conditions?: array<array{condition: string, ...}>
+	 * 		conditions?: array<array{condition: string, ...}>,
 	 * 		...
 	 * 	}>,
 	 * 	tiers?: array{

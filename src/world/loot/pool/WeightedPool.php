@@ -27,6 +27,7 @@ use pocketmine\item\Item;
 use pocketmine\world\loot\condition\LootCondition;
 use pocketmine\world\loot\entry\LootEntry;
 use pocketmine\world\loot\LootContext;
+use function count;
 
 class WeightedPool extends LootPool{
 

@@ -27,6 +27,7 @@ use pocketmine\world\loot\entry\ItemStackData;
 use pocketmine\world\loot\entry\LootEntry;
 use pocketmine\world\loot\LootTable;
 use pocketmine\world\loot\LootTableFactory;
+use pocketmine\world\loot\pool\LootPool;
 use pocketmine\world\loot\pool\TieredPool;
 use pocketmine\world\loot\pool\WeightedPool;
 
@@ -38,6 +39,40 @@ final class LootTableSerializerHelper{
 	/**
 	 * @return mixed[]
 	 * @phpstan-return array{
+	 * 	pools?: array<array{
+	 * 		rolls: int|array{min: int, max: int},
+	 * 		entries?: array<array{
+	 * 			type: string,
+	 * 			name?: string,
+	 * 			weight?: int,
+	 * 			quality?: int,
+	 * 			functions?: array<array{function: string, ...}>,
+	 * 			conditions?: array<array{condition: string, ...}>,
+	 * 			...
+	 * 		}>,
+	 * 		tiers?: array{
+	 * 			initial_range?: int,
+	 * 			bonus_rolls?: int,
+	 * 			bonus_chance?: float
+	 * 		},
+	 * 		conditions?: array<array{condition: string, ...}>
+	 * 	}>
+	 * }
+	 */
+	public static function serializeLootTable(LootTable $table) : array{
+		$data = [];
+
+		$pools = $table->getPools();
+		foreach($pools as $pool){
+			$data["pools"][] = self::serializeLootPool($pool);
+		}
+
+		return $data;
+	}
+
+	/**
+	 * @return mixed[]
+	 * @phpstan-return array{
 	 * 	rolls?: int|array{min: int, max: int},
 	 * 	entries?: array<array{
 	 * 		type: string,
@@ -45,7 +80,7 @@ final class LootTableSerializerHelper{
 	 * 		weight?: int,
 	 * 		quality?: int,
 	 * 		functions?: array<array{function: string, ...}>,
-	 * 		conditions?: array<array{condition: string, ...}>
+	 * 		conditions?: array<array{condition: string, ...}>,
 	 * 		...
 	 * 	}>,
 	 * 	tiers?: array{
@@ -56,13 +91,13 @@ final class LootTableSerializerHelper{
 	 * 	conditions?: array<array{condition: string, ...}>
 	 * }
 	 */
-	public static function serializeLootTable(LootTable $table) : array{
-		if($table instanceof TieredPool){
-			return self::serializeTieredPool($table);
-		}elseif($table instanceof WeightedPool) {
-			return self::serializeWeightedPool($table);
+	public static function serializeLootPool(LootPool $pool) : array{
+		if($pool instanceof TieredPool){
+			return self::serializeTieredPool($pool);
+		}elseif($pool instanceof WeightedPool) {
+			return self::serializeWeightedPool($pool);
 		}
-		throw new \InvalidArgumentException("Unknown LootTable type: " . $table::class);
+		throw new \InvalidArgumentException("Unknown LootPool type: " . $pool::class);
 	}
 
 	/**
@@ -85,7 +120,7 @@ final class LootTableSerializerHelper{
 	 * 	conditions?: array<array{condition: string, ...}>
 	 * }
 	 */
-	public static function serializeTieredPool(LootPool $pool) : array{
+	public static function serializeTieredPool(TieredPool $pool) : array{
 		$data = [];
 
 		$data["tiers"]["initial_range"] = $pool->getInitialRange();
@@ -119,7 +154,7 @@ final class LootTableSerializerHelper{
 	 * 	conditions?: array<array{condition: string, ...}>
 	 * }
 	 */
-	public static function serializeWeightedPool(LootPool $pool) : array{
+	public static function serializeWeightedPool(WeightedPool $pool) : array{
 		$data = [];
 
 		$minRolls = $pool->getMinRolls();
