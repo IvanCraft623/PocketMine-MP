@@ -56,7 +56,7 @@ class TieredPool extends LootPool{
 	}
 
 	public function getInitialRange() : int{
-		return $this->minRolls;
+		return $this->initialRange;
 	}
 
 	public function getBonusRolls() : int{
@@ -73,9 +73,9 @@ class TieredPool extends LootPool{
 	public function generate(LootContext $context) : array{
 		//tiered pools ignore entry conditions
 		$index = $context->getRandom()->nextRange(1, $this->initialRange);
-		if($bonusRolls > 0){
-			for($i = 0; $i < $bonusRolls; $i++){
-				if($context->getRandom()->nextFloat() <= $bonusChance){
+		if($this->bonusRolls > 0){
+			for($i = 0; $i < $this->bonusRolls; $i++){
+				if($context->getRandom()->nextFloat() <= $this->bonusChance){
 					$index++;
 				}
 			}
