@@ -42,6 +42,7 @@ use function count;
 use function is_array;
 use function is_numeric;
 use function is_string;
+use function reset;
 use function str_replace;
 use function strtolower;
 use function trim;
@@ -69,11 +70,11 @@ final class EntryFunctionFactory{
 				$treasure = false;
 			}
 			return new EnchantRandomly($treasure);
-		}, "enchant_randomly");
+		}, ["enchant_randomly"]);
 
 		$this->register(RandomDye::class, function(array $data) : RandomDye{
 			return new RandomDye();
-		}, "random_dye");
+		}, ["random_dye"]);
 
 		$this->register(SetCount::class, function(array $data) : SetCount{
 			if(!isset($data["count"])){
@@ -101,7 +102,7 @@ final class EntryFunctionFactory{
 				throw new SavedDataLoadingException("Min is larger that max");
 			}
 			return new SetCount($min, $max);
-		}, "set_count");
+		}, ["set_count"]);
 
 		$this->register(SetCustomName::class, function(array $data) : SetCustomName{
 			$name = $data["name"] ?? null;
@@ -109,7 +110,7 @@ final class EntryFunctionFactory{
 				throw new SavedDataLoadingException("Name is not a string or key doesn't exists");
 			}
 			return new SetCustomName($name);
-		}, "set_name");
+		}, ["set_name"]);
 
 		$this->register(SetDamage::class, function(array $data) : SetDamage{
 			if(!isset($data["damage"])){
@@ -137,13 +138,10 @@ final class EntryFunctionFactory{
 				throw new SavedDataLoadingException("Min is larger that max");
 			}
 			return new SetDamage($min, $max);
-		}, "set_damage");
+		}, ["set_damage"]);
 
 		$this->register(SetMeta::class, function(array $data) : SetMeta{
-			if(!isset($data["data"])){
-				throw new SavedDataLoadingException("Key \"data\" doesn't exists");
-			}
-			$meta = $data["data"];
+			$meta = $data["data"] ?? $data["values"] ?? throw new SavedDataLoadingException("Expected keys \"data\" or \"values\"");
 			if(is_numeric($meta)){
 				$min = $max = (int) $meta;
 			}elseif(is_array($meta)){
@@ -165,7 +163,7 @@ final class EntryFunctionFactory{
 				throw new SavedDataLoadingException("Min is larger that max");
 			}
 			return new SetMeta($min, $max);
-		}, "set_data");
+		}, ["set_data", "random_aux_value"]);
 
 		$this->register(SetSuspiciousStewType::class, function(array $data) : SetSuspiciousStewType{
 			if(!isset($data["effects"]) || !is_array($data["effects"])){
@@ -184,27 +182,33 @@ final class EntryFunctionFactory{
 				throw new SavedDataLoadingException("No suspicious stew types found");
 			}
 			return new SetSuspiciousStewType($types);
-		}, "set_stew_effect");
+		}, ["set_stew_effect"]);
 	}
 
 	/**
 	 * Registers an entry function type into the index.
 	 *
 	 * @param string $className Class that extends EntryFunction
+	 * @param string[] $saveNames An array of save names which this entity might be saved under.
 	 * @phpstan-param class-string<EntryFunction> $className
+	 * @phpstan-param list<string> $saveNames
 	 * @phpstan-param \Closure(array<string, mixed> $arguments) : EntryFunction $creationFunc
+	 *
+	 * NOTE: The first save name in the $saveNames array will be used when saving the function.
 	 *
 	 * @throws \InvalidArgumentException
 	 */
-	public function register(string $className, \Closure $creationFunc, string $saveName) : void{
+	public function register(string $className, \Closure $creationFunc, array $saveNames) : void{
 		Utils::testValidInstance($className, EntryFunction::class);
 		Utils::validateCallableSignature(new CallbackType(
 			new ReturnType(EntryFunction::class),
 			new ParameterType("arguments", BuiltInTypes::ARRAY)
 		), $creationFunc);
 
-		$this->creationFuncs[$saveName] = $creationFunc;
-		$this->saveNames[$className] = $saveName;
+		foreach($saveNames as $name){
+			$this->creationFuncs[$name] = $creationFunc;
+		}
+		$this->saveNames[$className] = reset($saveNames);
 	}
 
 	/**
