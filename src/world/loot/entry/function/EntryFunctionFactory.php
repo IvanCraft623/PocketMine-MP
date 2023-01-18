@@ -188,7 +188,7 @@ final class EntryFunctionFactory{
 	/**
 	 * Registers an entry function type into the index.
 	 *
-	 * @param string $className Class that extends EntryFunction
+	 * @param string   $className Class that extends EntryFunction
 	 * @param string[] $saveNames An array of save names which this entity might be saved under.
 	 * @phpstan-param class-string<EntryFunction> $className
 	 * @phpstan-param list<string> $saveNames
@@ -199,6 +199,9 @@ final class EntryFunctionFactory{
 	 * @throws \InvalidArgumentException
 	 */
 	public function register(string $className, \Closure $creationFunc, array $saveNames) : void{
+		if(count($saveNames) === 0){
+			throw new \InvalidArgumentException("At least one save name must be provided");
+		}
 		Utils::testValidInstance($className, EntryFunction::class);
 		Utils::validateCallableSignature(new CallbackType(
 			new ReturnType(EntryFunction::class),
