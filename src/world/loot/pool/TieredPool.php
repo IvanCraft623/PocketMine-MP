@@ -72,7 +72,7 @@ class TieredPool extends LootPool{
 	 */
 	public function generate(LootContext $context) : array{
 		//tiered pools ignore entry conditions
-		$index = $context->getRandom()->nextRange(1, $this->initialRange);
+		$index = $context->getRandom()->nextBoundedInt($this->initialRange);
 		if($this->bonusRolls > 0){
 			for($i = 0; $i < $this->bonusRolls; $i++){
 				if($context->getRandom()->nextFloat() <= $this->bonusChance){
