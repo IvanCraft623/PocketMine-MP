@@ -55,6 +55,7 @@ final class ItemStackData{
 
 		if($count > 0){
 			try{
+				//TODO: This will not deserialize >1.12 blocks
 				$item = GlobalItemDataHandlers::getDeserializer()->deserializeStack(GlobalItemDataHandlers::getUpgrader()->upgradeItemTypeDataString(
 					$this->name,
 					$meta,
