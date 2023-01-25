@@ -23,34 +23,22 @@ declare(strict_types=1);
 
 namespace pocketmine\world\loot\condition\types;
 
+use pocketmine\entity\Entity;
+use pocketmine\event\entity\EntityDamageByEntityEvent;
+use pocketmine\player\Player;
 use pocketmine\world\loot\condition\LootCondition;
 use pocketmine\world\loot\LootContext;
 
-class RandomChance extends LootCondition{
-
-	protected float $chance;
-
-	public function __construct(float $chance) {
-		$this->chance = $chance;
-	}
+class KilledByPlayerOrChildCondition extends LootCondition{
 
 	public function evaluate(LootContext $context) : bool{
-		return $context->getRandom()->nextFloat() <= $this->chance;
-	}
-
-	/**
-	 * Returns an array of properties that can be serialized to json.
-	 *
-	 * @phpstan-return array{
-	 * 	condition: string,
-	 * 	chance: float
-	 * }
-	 */
-	public function jsonSerialize() : array{
-		$data = parent::jsonSerialize();
-
-		$data["chance"] = $this->chance;
-
-		return $data;
+		$origin = $context->getOrigin();
+		if($origin instanceof Entity && ($lastDamage = $origin->getLastDamageCause()) instanceof EntityDamageByEntityEvent){
+			$damager = $lastDamage->getDamager();
+			if($damager !== null){
+				return $damager instanceof Player || $damager->getOwningEntity() instanceof Player;
+			}
+		}
+		return false;
 	}
 }

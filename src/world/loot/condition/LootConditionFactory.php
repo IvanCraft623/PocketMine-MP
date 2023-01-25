@@ -30,9 +30,9 @@ use DaveRandom\CallbackValidator\ReturnType;
 use pocketmine\data\SavedDataLoadingException;
 use pocketmine\utils\SingletonTrait;
 use pocketmine\utils\Utils;
-use pocketmine\world\loot\condition\types\KilledByPlayer;
-use pocketmine\world\loot\condition\types\KilledByPlayerOrChild;
-use pocketmine\world\loot\condition\types\RandomChance;
+use pocketmine\world\loot\condition\types\KilledByPlayerCondition;
+use pocketmine\world\loot\condition\types\KilledByPlayerOrChildCondition;
+use pocketmine\world\loot\condition\types\RandomChanceCondition;
 use function is_float;
 use function str_replace;
 use function strtolower;
@@ -54,15 +54,15 @@ final class LootConditionFactory{
 	private array $saveNames = [];
 
 	public function __construct() {
-		$this->register(KilledByPlayer::class, function(array $data) : KilledByPlayer{
-			return new KilledByPlayer();
+		$this->register(KilledByPlayerCondition::class, function(array $data) : KilledByPlayerCondition{
+			return new KilledByPlayerCondition();
 		}, "killed_by_player");
 
-		$this->register(KilledByPlayerOrChild::class, function(array $data) : KilledByPlayerOrChild{
-			return new KilledByPlayerOrChild();
+		$this->register(KilledByPlayerOrChildCondition::class, function(array $data) : KilledByPlayerOrChildCondition{
+			return new KilledByPlayerOrChildCondition();
 		}, "killed_by_player_or_pets");
 
-		$this->register(RandomChance::class, function(array $data) : RandomChance{
+		$this->register(RandomChanceCondition::class, function(array $data) : RandomChanceCondition{
 			if(!isset($data["chance"])){
 				throw new SavedDataLoadingException("Key \"chance\" doesn't exists");
 			}
@@ -70,7 +70,7 @@ final class LootConditionFactory{
 			if(!is_float($chance)){
 				throw new SavedDataLoadingException("Expected value of type float in key \"chance\"");
 			}
-			return new RandomChance($chance);
+			return new RandomChanceCondition($chance);
 		}, "random_chance");
 	}
 
