@@ -29,7 +29,7 @@ use pocketmine\world\loot\entry\function\EntryFunction;
 use pocketmine\world\loot\LootContext;
 use function ceil;
 
-class SetDamage extends EntryFunction{
+class SetDamageFunction extends EntryFunction{
 
 	public function __construct(private float $min, private float $max){
 		if($min < 0 || $min > 1){

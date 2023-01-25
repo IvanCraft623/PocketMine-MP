@@ -31,13 +31,13 @@ use pocketmine\data\bedrock\SuspiciousStewTypeIdMap;
 use pocketmine\data\SavedDataLoadingException;
 use pocketmine\utils\SingletonTrait;
 use pocketmine\utils\Utils;
-use pocketmine\world\loot\entry\function\types\EnchantRandomly;
-use pocketmine\world\loot\entry\function\types\RandomDye;
-use pocketmine\world\loot\entry\function\types\SetCount;
-use pocketmine\world\loot\entry\function\types\SetCustomName;
-use pocketmine\world\loot\entry\function\types\SetDamage;
-use pocketmine\world\loot\entry\function\types\SetMeta;
-use pocketmine\world\loot\entry\function\types\SetSuspiciousStewType;
+use pocketmine\world\loot\entry\function\types\EnchantRandomlyFunction;
+use pocketmine\world\loot\entry\function\types\RandomDyeFunction;
+use pocketmine\world\loot\entry\function\types\SetCountFunction;
+use pocketmine\world\loot\entry\function\types\SetCustomNameFunction;
+use pocketmine\world\loot\entry\function\types\SetDamageFunction;
+use pocketmine\world\loot\entry\function\types\SetMetaFunction;
+use pocketmine\world\loot\entry\function\types\SetSuspiciousStewTypeFunction;
 use function count;
 use function is_array;
 use function is_numeric;
@@ -63,20 +63,20 @@ final class EntryFunctionFactory{
 	private array $saveNames = [];
 
 	public function __construct() {
-		$this->register(EnchantRandomly::class, function(array $data) : EnchantRandomly{
+		$this->register(EnchantRandomlyFunction::class, function(array $data) : EnchantRandomlyFunction{
 			if(isset($data["treasure"])){
 				$treasure = (bool) $data["treasure"];
 			}else{
 				$treasure = false;
 			}
-			return new EnchantRandomly($treasure);
+			return new EnchantRandomlyFunction($treasure);
 		}, ["enchant_randomly"]);
 
-		$this->register(RandomDye::class, function(array $data) : RandomDye{
-			return new RandomDye();
+		$this->register(RandomDyeFunction::class, function(array $data) : RandomDyeFunction{
+			return new RandomDyeFunction();
 		}, ["random_dye"]);
 
-		$this->register(SetCount::class, function(array $data) : SetCount{
+		$this->register(SetCountFunction::class, function(array $data) : SetCountFunction{
 			if(!isset($data["count"])){
 				throw new SavedDataLoadingException("Key \"count\" doesn't exists");
 			}
@@ -101,18 +101,18 @@ final class EntryFunctionFactory{
 			if($min > $max){
 				throw new SavedDataLoadingException("Min is larger that max");
 			}
-			return new SetCount($min, $max);
+			return new SetCountFunction($min, $max);
 		}, ["set_count"]);
 
-		$this->register(SetCustomName::class, function(array $data) : SetCustomName{
+		$this->register(SetCustomNameFunction::class, function(array $data) : SetCustomNameFunction{
 			$name = $data["name"] ?? null;
 			if(!is_string($name)){
 				throw new SavedDataLoadingException("Name is not a string or key doesn't exists");
 			}
-			return new SetCustomName($name);
+			return new SetCustomNameFunction($name);
 		}, ["set_name"]);
 
-		$this->register(SetDamage::class, function(array $data) : SetDamage{
+		$this->register(SetDamageFunction::class, function(array $data) : SetDamageFunction{
 			if(!isset($data["damage"])){
 				throw new SavedDataLoadingException("Key \"damage\" doesn't exists");
 			}
@@ -137,10 +137,10 @@ final class EntryFunctionFactory{
 			if($min > $max){
 				throw new SavedDataLoadingException("Min is larger that max");
 			}
-			return new SetDamage($min, $max);
+			return new SetDamageFunction($min, $max);
 		}, ["set_damage"]);
 
-		$this->register(SetMeta::class, function(array $data) : SetMeta{
+		$this->register(SetMetaFunction::class, function(array $data) : SetMetaFunction{
 			$meta = $data["data"] ?? $data["values"] ?? throw new SavedDataLoadingException("Expected keys \"data\" or \"values\"");
 			if(is_numeric($meta)){
 				$min = $max = (int) $meta;
@@ -162,10 +162,10 @@ final class EntryFunctionFactory{
 			if($min > $max){
 				throw new SavedDataLoadingException("Min is larger that max");
 			}
-			return new SetMeta($min, $max);
+			return new SetMetaFunction($min, $max);
 		}, ["set_data", "random_aux_value"]);
 
-		$this->register(SetSuspiciousStewType::class, function(array $data) : SetSuspiciousStewType{
+		$this->register(SetSuspiciousStewTypeFunction::class, function(array $data) : SetSuspiciousStewTypeFunction{
 			if(!isset($data["effects"]) || !is_array($data["effects"])){
 				throw new SavedDataLoadingException("\"effects\" isn't an array or doesn't exists");
 			}
@@ -181,7 +181,7 @@ final class EntryFunctionFactory{
 			if(count($types) === 0){
 				throw new SavedDataLoadingException("No suspicious stew types found");
 			}
-			return new SetSuspiciousStewType($types);
+			return new SetSuspiciousStewTypeFunction($types);
 		}, ["set_stew_effect"]);
 	}
 

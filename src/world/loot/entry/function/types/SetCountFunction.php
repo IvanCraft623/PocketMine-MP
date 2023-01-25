@@ -23,29 +23,22 @@ declare(strict_types=1);
 
 namespace pocketmine\world\loot\entry\function\types;
 
-use pocketmine\data\bedrock\SuspiciousStewTypeIdMap;
-use pocketmine\item\Item;
-use pocketmine\item\SuspiciousStew;
-use pocketmine\item\SuspiciousStewType;
-use pocketmine\utils\Utils;
 use pocketmine\world\loot\entry\function\EntryFunction;
 use pocketmine\world\loot\LootContext;
-use function count;
 
-class SetSuspiciousStewType extends EntryFunction{
+class SetCountFunction extends EntryFunction{
 
-	/**
-	 * @param SuspiciousStewType[] $types
-	 * @phpstan-param non-empty-list<SuspiciousStewType> $types
-	 */
-	public function __construct(protected array $types){
-		Utils::validateArrayValueType($types, function(SuspiciousStewType $_) : void{});
+	public function __construct(private int $min, private int $max){
+		if($min < 0){
+			throw new \InvalidArgumentException("Min cannot be less than 0");
+		}
+		if($min > $max){
+			throw new \InvalidArgumentException("Min is larger that max");
+		}
 	}
 
-	public function onCreation(LootContext $context, Item $item) : void{
-		if($item instanceof SuspiciousStew){
-			$item->setType($this->types[$context->getRandom()->nextBoundedInt(count($this->types))]);
-		}
+	public function onPreCreation(LootContext $context, int &$meta, int &$count) : void{
+		$count = $context->getRandom()->nextRange($this->min, $this->max);
 	}
 
 	/**
@@ -53,14 +46,19 @@ class SetSuspiciousStewType extends EntryFunction{
 	 *
 	 * @phpstan-return array{
 	 * 	function: string,
-	 * 	effects: array<array{id: int}>
+	 * 	count: int|array<string, int>
 	 * }
 	 */
 	public function jsonSerialize() : array{
 		$data = parent::jsonSerialize();
 
-		foreach($this->types as $type){
-			$data["effects"][] = ["id" => SuspiciousStewTypeIdMap::getInstance()->toId($type)];
+		if($this->min === $this->max){
+			$data["count"] = $this->min;
+		}else{
+			$data["count"] = [
+				"min" => $this->min,
+				"max" => $this->max
+			];
 		}
 
 		return $data;

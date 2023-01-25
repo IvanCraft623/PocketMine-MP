@@ -32,7 +32,7 @@ use pocketmine\world\loot\LootContext;
 use function array_values;
 use function count;
 
-class RandomDye extends EntryFunction{
+class RandomDyeFunction extends EntryFunction{
 
 	public function onCreation(LootContext $context, Item $item) : void{
 		if(match($item->getTypeId()){

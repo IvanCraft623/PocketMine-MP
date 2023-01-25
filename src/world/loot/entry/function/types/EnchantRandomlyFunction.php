@@ -23,22 +23,24 @@ declare(strict_types=1);
 
 namespace pocketmine\world\loot\entry\function\types;
 
+use pocketmine\item\enchantment\EnchantmentInstance;
+use pocketmine\item\enchantment\VanillaEnchantments;
+use pocketmine\item\Item;
 use pocketmine\world\loot\entry\function\EntryFunction;
 use pocketmine\world\loot\LootContext;
+use function array_values;
+use function count;
 
-class SetCount extends EntryFunction{
+class EnchantRandomlyFunction extends EntryFunction{
 
-	public function __construct(private int $min, private int $max){
-		if($min < 0){
-			throw new \InvalidArgumentException("Min cannot be less than 0");
-		}
-		if($min > $max){
-			throw new \InvalidArgumentException("Min is larger that max");
-		}
+	public function __construct(private bool $treasureEnchants = false){
 	}
 
-	public function onPreCreation(LootContext $context, int &$meta, int &$count) : void{
-		$count = $context->getRandom()->nextRange($this->min, $this->max);
+	public function onCreation(LootContext $context, Item $item) : void{
+		//TODO: treasure enchantments check
+		//TODO: check compatibility
+		$enchants = array_values(VanillaEnchantments::getAll());
+		$item->addEnchantment(new EnchantmentInstance($enchants[$context->getRandom()->nextBoundedInt(count($enchants))]));
 	}
 
 	/**
@@ -46,19 +48,14 @@ class SetCount extends EntryFunction{
 	 *
 	 * @phpstan-return array{
 	 * 	function: string,
-	 * 	count: int|array<string, int>
+	 * 	treasure?: bool
 	 * }
 	 */
 	public function jsonSerialize() : array{
 		$data = parent::jsonSerialize();
 
-		if($this->min === $this->max){
-			$data["count"] = $this->min;
-		}else{
-			$data["count"] = [
-				"min" => $this->min,
-				"max" => $this->max
-			];
+		if($this->treasureEnchants){
+			$data["treasure"] = true;
 		}
 
 		return $data;
