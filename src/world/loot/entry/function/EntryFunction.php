@@ -24,9 +24,21 @@ declare(strict_types=1);
 namespace pocketmine\world\loot\entry\function;
 
 use pocketmine\item\Item;
+use pocketmine\utils\Utils;
+use pocketmine\world\loot\condition\LootCondition;
+use pocketmine\world\loot\condition\LootConditionHandlingTrait;
 use pocketmine\world\loot\LootContext;
 
 abstract class EntryFunction implements \JsonSerializable{
+	use LootConditionHandlingTrait;
+
+	/**
+	 * @param LootCondition[] $conditions
+	 */
+	public function __construct(array $conditions) {
+		Utils::validateArrayValueType($conditions, function(LootCondition $_) : void{});
+		$this->conditions = $conditions;
+	}
 
 	public function onPreCreation(LootContext $context, int &$meta, int &$count) : void{
 	}
@@ -39,18 +51,27 @@ abstract class EntryFunction implements \JsonSerializable{
 	 * Returns an array of an entry function properties that can be serialized to json.
 	 *
 	 * @phpstan-return array{
-	 * 	function: string
+	 * 	function: string,
+	 * 	conditions?: array<array{condition: string, ...}>
 	 * }
 	 */
 	public function jsonSerialize() : array{
-		return ["function" => EntryFunctionFactory::getInstance()->getSaveId($this::class)];
+		$data = [];
+
+		$data["function"] = EntryFunctionFactory::getInstance()->getSaveId($this::class);
+		foreach($this->conditions as $condition){
+			$data["conditions"][] = $condition->jsonSerialize();
+		}
+
+		return $data;
 	}
 
 	/**
 	 * Returns a EntryFunction from properties created in an array by {@link EntryFunction#jsonSerialize}
 	 *
 	 * @phpstan-param array{
-	 * 	function: string
+	 * 	function: string,
+	 * 	conditions?: array<array{condition: string, ...}>
 	 * } $data
 	 */
 	public static function jsonDeserialize(array $data) : EntryFunction{

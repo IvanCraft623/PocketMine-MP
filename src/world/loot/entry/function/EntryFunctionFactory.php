@@ -31,6 +31,7 @@ use pocketmine\data\bedrock\SuspiciousStewTypeIdMap;
 use pocketmine\data\SavedDataLoadingException;
 use pocketmine\utils\SingletonTrait;
 use pocketmine\utils\Utils;
+use pocketmine\world\loot\condition\LootCondition;
 use pocketmine\world\loot\entry\function\types\EnchantRandomlyFunction;
 use pocketmine\world\loot\entry\function\types\FurnaceSmeltFunction;
 use pocketmine\world\loot\entry\function\types\RandomDyeFunction;
@@ -53,7 +54,7 @@ final class EntryFunctionFactory{
 
 	/**
 	 * @var \Closure[] save ID => creator function
-	 * @phpstan-var array<string, \Closure(array<string, mixed>) : EntryFunction>
+	 * @phpstan-var array<string, \Closure(array<string, mixed>, LootCondition[]) : EntryFunction>
 	 */
 	private array $creationFuncs = [];
 
@@ -64,24 +65,24 @@ final class EntryFunctionFactory{
 	private array $saveNames = [];
 
 	public function __construct() {
-		$this->register(EnchantRandomlyFunction::class, function(array $data) : EnchantRandomlyFunction{
+		$this->register(EnchantRandomlyFunction::class, function(array $data, array $conditions) : EnchantRandomlyFunction{
 			if(isset($data["treasure"])){
 				$treasure = (bool) $data["treasure"];
 			}else{
 				$treasure = false;
 			}
-			return new EnchantRandomlyFunction($treasure);
+			return new EnchantRandomlyFunction($treasure, $conditions);
 		}, ["enchant_randomly"]);
 
-		$this->register(FurnaceSmeltFunction::class, function(array $data) : FurnaceSmeltFunction{
-			return new FurnaceSmeltFunction();
+		$this->register(FurnaceSmeltFunction::class, function(array $data, array $conditions) : FurnaceSmeltFunction{
+			return new FurnaceSmeltFunction($conditions);
 		}, ["furnace_smelt"]);
 
-		$this->register(RandomDyeFunction::class, function(array $data) : RandomDyeFunction{
-			return new RandomDyeFunction();
+		$this->register(RandomDyeFunction::class, function(array $data, array $conditions) : RandomDyeFunction{
+			return new RandomDyeFunction($conditions);
 		}, ["random_dye"]);
 
-		$this->register(SetCountFunction::class, function(array $data) : SetCountFunction{
+		$this->register(SetCountFunction::class, function(array $data, array $conditions) : SetCountFunction{
 			if(!isset($data["count"])){
 				throw new SavedDataLoadingException("Key \"count\" doesn't exists");
 			}
@@ -106,18 +107,18 @@ final class EntryFunctionFactory{
 			if($min > $max){
 				throw new SavedDataLoadingException("Min is larger that max");
 			}
-			return new SetCountFunction($min, $max);
+			return new SetCountFunction($min, $max, $conditions);
 		}, ["set_count"]);
 
-		$this->register(SetCustomNameFunction::class, function(array $data) : SetCustomNameFunction{
+		$this->register(SetCustomNameFunction::class, function(array $data, array $conditions) : SetCustomNameFunction{
 			$name = $data["name"] ?? null;
 			if(!is_string($name)){
 				throw new SavedDataLoadingException("Name is not a string or key doesn't exists");
 			}
-			return new SetCustomNameFunction($name);
+			return new SetCustomNameFunction($name, $conditions);
 		}, ["set_name"]);
 
-		$this->register(SetDamageFunction::class, function(array $data) : SetDamageFunction{
+		$this->register(SetDamageFunction::class, function(array $data, array $conditions) : SetDamageFunction{
 			if(!isset($data["damage"])){
 				throw new SavedDataLoadingException("Key \"damage\" doesn't exists");
 			}
@@ -142,10 +143,10 @@ final class EntryFunctionFactory{
 			if($min > $max){
 				throw new SavedDataLoadingException("Min is larger that max");
 			}
-			return new SetDamageFunction($min, $max);
+			return new SetDamageFunction($min, $max, $conditions);
 		}, ["set_damage"]);
 
-		$this->register(SetMetaFunction::class, function(array $data) : SetMetaFunction{
+		$this->register(SetMetaFunction::class, function(array $data, array $conditions) : SetMetaFunction{
 			$meta = $data["data"] ?? $data["values"] ?? throw new SavedDataLoadingException("Expected keys \"data\" or \"values\"");
 			if(is_numeric($meta)){
 				$min = $max = (int) $meta;
@@ -167,10 +168,10 @@ final class EntryFunctionFactory{
 			if($min > $max){
 				throw new SavedDataLoadingException("Min is larger that max");
 			}
-			return new SetMetaFunction($min, $max);
+			return new SetMetaFunction($min, $max, $conditions);
 		}, ["set_data", "random_aux_value"]);
 
-		$this->register(SetSuspiciousStewTypeFunction::class, function(array $data) : SetSuspiciousStewTypeFunction{
+		$this->register(SetSuspiciousStewTypeFunction::class, function(array $data, array $conditions) : SetSuspiciousStewTypeFunction{
 			if(!isset($data["effects"]) || !is_array($data["effects"])){
 				throw new SavedDataLoadingException("\"effects\" isn't an array or doesn't exists");
 			}
@@ -186,7 +187,7 @@ final class EntryFunctionFactory{
 			if(count($types) === 0){
 				throw new SavedDataLoadingException("No suspicious stew types found");
 			}
-			return new SetSuspiciousStewTypeFunction($types);
+			return new SetSuspiciousStewTypeFunction($types, $conditions);
 		}, ["set_stew_effect"]);
 	}
 
@@ -197,7 +198,7 @@ final class EntryFunctionFactory{
 	 * @param string[] $saveNames An array of save names which this entity might be saved under.
 	 * @phpstan-param class-string<EntryFunction> $className
 	 * @phpstan-param list<string> $saveNames
-	 * @phpstan-param \Closure(array<string, mixed> $arguments) : EntryFunction $creationFunc
+	 * @phpstan-param \Closure(array<string, mixed> $arguments, LootCondition[] $conditions) : EntryFunction $creationFunc
 	 *
 	 * NOTE: The first save name in the $saveNames array will be used when saving the function.
 	 *
@@ -210,7 +211,8 @@ final class EntryFunctionFactory{
 		Utils::testValidInstance($className, EntryFunction::class);
 		Utils::validateCallableSignature(new CallbackType(
 			new ReturnType(EntryFunction::class),
-			new ParameterType("arguments", BuiltInTypes::ARRAY)
+			new ParameterType("arguments", BuiltInTypes::ARRAY),
+			new ParameterType("conditions", BuiltInTypes::ARRAY)
 		), $creationFunc);
 
 		foreach($saveNames as $name){
@@ -225,6 +227,7 @@ final class EntryFunctionFactory{
 	 * @param mixed[] $data
 	 * @phpstan-param array{
 	 * 	function: string,
+	 * 	conditions?: array<array{condition: string, ...}>
 	 * 	...
 	 * } $data
 	 *
@@ -238,8 +241,16 @@ final class EntryFunctionFactory{
 		}
 		unset($data["function"]);
 
+		$conditions = [];
+		if(isset($data["conditions"])){
+			foreach($data["conditions"] as $conditionData){
+				$conditions[] = LootCondition::jsonDeserialize($conditionData);
+			}
+		}
+		unset($data["conditions"]);
+
 		/** @var EntryFunction $function */
-		$function = $func($data);
+		$function = $func($data, $conditions);
 
 		return $function;
 	}

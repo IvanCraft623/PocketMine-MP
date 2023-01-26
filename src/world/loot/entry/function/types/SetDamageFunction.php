@@ -25,13 +25,17 @@ namespace pocketmine\world\loot\entry\function\types;
 
 use pocketmine\item\Durable;
 use pocketmine\item\Item;
+use pocketmine\world\loot\condition\LootCondition;
 use pocketmine\world\loot\entry\function\EntryFunction;
 use pocketmine\world\loot\LootContext;
 use function ceil;
 
 class SetDamageFunction extends EntryFunction{
 
-	public function __construct(private float $min, private float $max){
+	/**
+	 * @param LootCondition[] $conditions
+	 */
+	public function __construct(private float $min, private float $max, array $conditions = []){
 		if($min < 0 || $min > 1){
 			throw new \InvalidArgumentException("Min must be between 0.0 and 1.0");
 		}
@@ -41,6 +45,7 @@ class SetDamageFunction extends EntryFunction{
 		if($min > $max){
 			throw new \InvalidArgumentException("Min is larger that max");
 		}
+		parent::__construct($conditions);
 	}
 
 	public function onCreation(LootContext $context, Item $item) : Item{

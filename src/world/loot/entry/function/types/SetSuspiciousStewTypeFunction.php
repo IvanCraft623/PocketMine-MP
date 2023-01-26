@@ -28,6 +28,7 @@ use pocketmine\item\Item;
 use pocketmine\item\SuspiciousStew;
 use pocketmine\item\SuspiciousStewType;
 use pocketmine\utils\Utils;
+use pocketmine\world\loot\condition\LootCondition;
 use pocketmine\world\loot\entry\function\EntryFunction;
 use pocketmine\world\loot\LootContext;
 use function count;
@@ -36,10 +37,12 @@ class SetSuspiciousStewTypeFunction extends EntryFunction{
 
 	/**
 	 * @param SuspiciousStewType[] $types
+	 * @param LootCondition[] $conditions
 	 * @phpstan-param non-empty-list<SuspiciousStewType> $types
 	 */
-	public function __construct(protected array $types){
+	public function __construct(protected array $types, array $conditions = []){
 		Utils::validateArrayValueType($types, function(SuspiciousStewType $_) : void{});
+		parent::__construct($conditions);
 	}
 
 	public function onCreation(LootContext $context, Item $item) : Item{

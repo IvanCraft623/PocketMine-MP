@@ -23,18 +23,23 @@ declare(strict_types=1);
 
 namespace pocketmine\world\loot\entry\function\types;
 
+use pocketmine\world\loot\condition\LootCondition;
 use pocketmine\world\loot\entry\function\EntryFunction;
 use pocketmine\world\loot\LootContext;
 
 class SetCountFunction extends EntryFunction{
 
-	public function __construct(private int $min, private int $max){
+	/**
+	 * @param LootCondition[] $conditions
+	 */
+	public function __construct(private int $min, private int $max, array $conditions = []){
 		if($min < 0){
 			throw new \InvalidArgumentException("Min cannot be less than 0");
 		}
 		if($min > $max){
 			throw new \InvalidArgumentException("Min is larger that max");
 		}
+		parent::__construct($conditions);
 	}
 
 	public function onPreCreation(LootContext $context, int &$meta, int &$count) : void{

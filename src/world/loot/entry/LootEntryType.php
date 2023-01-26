@@ -25,8 +25,10 @@ namespace pocketmine\world\loot\entry;
 
 use pocketmine\item\Item;
 use pocketmine\utils\EnumTrait;
+use pocketmine\world\loot\entry\function\EntryFunction;
 use pocketmine\world\loot\LootContext;
 use pocketmine\world\loot\LootTable;
+use function array_filter;
 
 /**
  * This doc-block is generated automatically, do not modify it manually.
@@ -50,7 +52,9 @@ final class LootEntryType{
 				if(!$stack instanceof ItemStackData){
 					throw new \InvalidArgumentException("Entry should be ItemStackData type");
 				}
-				return $stack->generate($context, $entry->getFunctions());
+				return $stack->generate($context, array_filter($entry->getFunctions(), function(EntryFunction $function) use ($context) {
+					return $function->evaluateConditions($context);
+				}));
 			}),
 			new self("loot_table", function(LootEntry $entry, LootContext $context) : array{
 				$table = $entry->getEntry();

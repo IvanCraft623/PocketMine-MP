@@ -26,6 +26,7 @@ namespace pocketmine\world\loot\entry\function\types;
 use pocketmine\item\enchantment\EnchantmentInstance;
 use pocketmine\item\enchantment\VanillaEnchantments;
 use pocketmine\item\Item;
+use pocketmine\world\loot\condition\LootCondition;
 use pocketmine\world\loot\entry\function\EntryFunction;
 use pocketmine\world\loot\LootContext;
 use function array_values;
@@ -33,7 +34,11 @@ use function count;
 
 class EnchantRandomlyFunction extends EntryFunction{
 
-	public function __construct(private bool $treasureEnchants = false){
+	/**
+	 * @param LootCondition[] $conditions
+	 */
+	public function __construct(private bool $treasureEnchants = false, array $conditions = []){
+		parent::__construct($conditions);
 	}
 
 	public function onCreation(LootContext $context, Item $item) : Item{

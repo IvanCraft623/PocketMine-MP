@@ -24,12 +24,17 @@ declare(strict_types=1);
 namespace pocketmine\world\loot\entry\function\types;
 
 use pocketmine\item\Item;
+use pocketmine\world\loot\condition\LootCondition;
 use pocketmine\world\loot\entry\function\EntryFunction;
 use pocketmine\world\loot\LootContext;
 
 class SetCustomNameFunction extends EntryFunction{
 
-	public function __construct(private string $name){
+	/**
+	 * @param LootCondition[] $conditions
+	 */
+	public function __construct(private string $name, array $conditions = []){
+		parent::__construct($conditions);
 	}
 
 	public function onCreation(LootContext $context, Item $item) : Item{
