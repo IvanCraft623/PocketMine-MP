@@ -43,11 +43,13 @@ class SetDamageFunction extends EntryFunction{
 		}
 	}
 
-	public function onCreation(LootContext $context, Item $item) : void{
+	public function onCreation(LootContext $context, Item $item) : Item{
 		if($item instanceof Durable){
 			$durability = $item->getMaxDurability() - $item->getDamage();
 			$item->setDamage($durability - (int) ceil(($context->getRandom()->nextFloat() * ($this->max - $this->min) + $this->min) * $durability));
 		}
+
+		return parent::onCreation($context, $item);
 	}
 
 	/**

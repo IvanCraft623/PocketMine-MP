@@ -31,7 +31,8 @@ abstract class EntryFunction implements \JsonSerializable{
 	public function onPreCreation(LootContext $context, int &$meta, int &$count) : void{
 	}
 
-	public function onCreation(LootContext $context, Item $item) : void{
+	public function onCreation(LootContext $context, Item $item) : Item{
+		return $item;
 	}
 
 	/**

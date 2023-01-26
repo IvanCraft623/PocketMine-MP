@@ -36,11 +36,13 @@ class EnchantRandomlyFunction extends EntryFunction{
 	public function __construct(private bool $treasureEnchants = false){
 	}
 
-	public function onCreation(LootContext $context, Item $item) : void{
+	public function onCreation(LootContext $context, Item $item) : Item{
 		//TODO: treasure enchantments check
 		//TODO: check compatibility
 		$enchants = array_values(VanillaEnchantments::getAll());
 		$item->addEnchantment(new EnchantmentInstance($enchants[$context->getRandom()->nextBoundedInt(count($enchants))]));
+
+		return parent::onCreation($context, $item);
 	}
 
 	/**

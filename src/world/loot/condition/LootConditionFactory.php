@@ -33,6 +33,8 @@ use pocketmine\utils\Utils;
 use pocketmine\world\loot\condition\types\KilledByPlayerCondition;
 use pocketmine\world\loot\condition\types\KilledByPlayerOrChildCondition;
 use pocketmine\world\loot\condition\types\RandomChanceCondition;
+use pocketmine\world\loot\condition\types\RandomDifficultyChanceCondition;
+use pocketmine\world\World;
 use function is_float;
 use function str_replace;
 use function strtolower;
@@ -72,6 +74,31 @@ final class LootConditionFactory{
 			}
 			return new RandomChanceCondition($chance);
 		}, "random_chance");
+
+		$this->register(RandomDifficultyChanceCondition::class, function(array $data) : RandomDifficultyChanceCondition{
+			if(!isset($data["default_chance"])){
+				throw new SavedDataLoadingException("Key \"default_chance\" doesn't exists");
+			}
+			$defaultChance = $data["default_chance"];
+			if(!is_float($defaultChance)){
+				throw new SavedDataLoadingException("Expected value of type float in key \"default_chance\"");
+			}
+			unset($data["default_chance"]);
+
+			$difficultiesChance = [];
+			foreach($data as $key => $chance){
+				$difficultyName = (string) $key;
+				$difficulty = World::getDifficultyFromString($difficultyName);
+				if($difficulty === -1){
+					throw new SavedDataLoadingException("Unknown difficulty $difficultyName");
+				}
+				if(!is_float($chance)){
+					throw new SavedDataLoadingException("Expected value of type float in key \"key\"");
+				}
+				$difficultiesChance[$difficulty] = $chance;
+			}
+			return new RandomDifficultyChanceCondition($difficultiesChance, $defaultChance);
+		}, "random_difficulty_chance");
 	}
 
 	/**

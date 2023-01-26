@@ -32,6 +32,7 @@ use pocketmine\data\SavedDataLoadingException;
 use pocketmine\utils\SingletonTrait;
 use pocketmine\utils\Utils;
 use pocketmine\world\loot\entry\function\types\EnchantRandomlyFunction;
+use pocketmine\world\loot\entry\function\types\FurnaceSmeltFunction;
 use pocketmine\world\loot\entry\function\types\RandomDyeFunction;
 use pocketmine\world\loot\entry\function\types\SetCountFunction;
 use pocketmine\world\loot\entry\function\types\SetCustomNameFunction;
@@ -71,6 +72,10 @@ final class EntryFunctionFactory{
 			}
 			return new EnchantRandomlyFunction($treasure);
 		}, ["enchant_randomly"]);
+
+		$this->register(FurnaceSmeltFunction::class, function(array $data) : FurnaceSmeltFunction{
+			return new FurnaceSmeltFunction();
+		}, ["furnace_smelt"]);
 
 		$this->register(RandomDyeFunction::class, function(array $data) : RandomDyeFunction{
 			return new RandomDyeFunction();

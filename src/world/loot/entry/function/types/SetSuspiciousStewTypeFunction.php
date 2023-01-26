@@ -42,10 +42,12 @@ class SetSuspiciousStewTypeFunction extends EntryFunction{
 		Utils::validateArrayValueType($types, function(SuspiciousStewType $_) : void{});
 	}
 
-	public function onCreation(LootContext $context, Item $item) : void{
+	public function onCreation(LootContext $context, Item $item) : Item{
 		if($item instanceof SuspiciousStew){
 			$item->setType($this->types[$context->getRandom()->nextBoundedInt(count($this->types))]);
 		}
+
+		return parent::onCreation($context, $item);
 	}
 
 	/**

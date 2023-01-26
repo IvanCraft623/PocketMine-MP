@@ -32,8 +32,10 @@ class SetCustomNameFunction extends EntryFunction{
 	public function __construct(private string $name){
 	}
 
-	public function onCreation(LootContext $context, Item $item) : void{
+	public function onCreation(LootContext $context, Item $item) : Item{
 		$item->setCustomName($this->name);
+
+		return parent::onCreation($context, $item);
 	}
 
 	/**

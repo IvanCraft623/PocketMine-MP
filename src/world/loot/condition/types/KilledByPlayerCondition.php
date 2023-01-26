@@ -29,7 +29,7 @@ use pocketmine\player\Player;
 use pocketmine\world\loot\condition\LootCondition;
 use pocketmine\world\loot\LootContext;
 
-class KilledByPlayer extends LootCondition{
+class KilledByPlayerCondition extends LootCondition{
 
 	public function evaluate(LootContext $context) : bool{
 		$origin = $context->getOrigin();

@@ -23,27 +23,18 @@ declare(strict_types=1);
 
 namespace pocketmine\world\loot\entry\function\types;
 
-use pocketmine\block\utils\DyeColor;
-use pocketmine\item\Armor;
+use pocketmine\crafting\FurnaceRecipe;
+use pocketmine\crafting\FurnaceType;
 use pocketmine\item\Item;
-use pocketmine\item\ItemTypeIds;
 use pocketmine\world\loot\entry\function\EntryFunction;
 use pocketmine\world\loot\LootContext;
-use function array_values;
-use function count;
 
-class RandomDyeFunction extends EntryFunction{
+class FurnaceSmeltFunction extends EntryFunction{
 
 	public function onCreation(LootContext $context, Item $item) : Item{
-		if(match($item->getTypeId()){
-			ItemTypeIds::LEATHER_CAP,
-			ItemTypeIds::LEATHER_TUNIC,
-			ItemTypeIds::LEATHER_PANTS,
-			ItemTypeIds::LEATHER_BOOTS => true,
-			default => false
-		} && $item instanceof Armor){
-			$colors = array_values(DyeColor::getAll());
-			$item->setCustomColor(($colors[$context->getRandom()->nextBoundedInt(count($colors))])->getRgbValue());
+		$smelt = $context->getWorld()->getServer()->getCraftingManager()->getFurnaceRecipeManager(FurnaceType::FURNACE())->match($item);
+		if($smelt instanceof FurnaceRecipe){
+			$item = $smelt->getResult()->setCount($item->getCount());
 		}
 
 		return parent::onCreation($context, $item);

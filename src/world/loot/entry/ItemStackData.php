@@ -64,7 +64,7 @@ final class ItemStackData{
 				));
 
 				foreach($functions as $function){
-					$function->onCreation($context, $item);
+					$item = $function->onCreation($context, $item);
 				}
 
 				//split up stacks
