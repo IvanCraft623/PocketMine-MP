@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace pocketmine\world\loot\condition\types;
 
+use pocketmine\utils\AssumptionFailedError;
 use pocketmine\utils\Utils;
 use pocketmine\world\loot\condition\LootCondition;
 use pocketmine\world\loot\LootContext;
@@ -32,11 +33,10 @@ class RandomDifficultyChanceCondition extends LootCondition{
 
 	/**
 	 * @param array<int, float> $difficultiesChance difficulty => chance
-	 * }
 	 */
 	public function __construct(protected array $difficultiesChance, protected float $defaultChance) {
 		Utils::validateArrayValueType($difficultiesChance, function(float $_) : void{});
-		foreach($difficulties as $difficulty => $chance){
+		foreach($difficultiesChance as $difficulty => $chance){
 			if($difficulty < World::DIFFICULTY_PEACEFUL || $difficulty > World::DIFFICULTY_HARD){
 				throw new \InvalidArgumentException("Invalid difficulty level $difficulty");
 			}
@@ -44,7 +44,7 @@ class RandomDifficultyChanceCondition extends LootCondition{
 	}
 
 	public function evaluate(LootContext $context) : bool{
-		return $context->getRandom()->nextFloat() <= ($difficultiesChance[$context->getWorld()->getDifficulty()] ?? $defaultChance);
+		return $context->getRandom()->nextFloat() <= ($this->difficultiesChance[$context->getWorld()->getDifficulty()] ?? $this->defaultChance);
 	}
 
 	/**
@@ -52,7 +52,8 @@ class RandomDifficultyChanceCondition extends LootCondition{
 	 *
 	 * @phpstan-return array{
 	 * 	condition: string,
-	 * 	chance: float
+	 * 	default_chance: float,
+	 * 	...
 	 * }
 	 */
 	public function jsonSerialize() : array{
@@ -64,7 +65,8 @@ class RandomDifficultyChanceCondition extends LootCondition{
 				World::DIFFICULTY_PEACEFUL => "peaceful",
 				World::DIFFICULTY_EASY => "easy",
 				World::DIFFICULTY_NORMAL => "normal",
-				World::DIFFICULTY_HARD => "hard"
+				World::DIFFICULTY_HARD => "hard",
+				default => throw new AssumptionFailedError("Unknown difficulty $difficulty")
 			};
 			$data[$dName] = $chance;
 		}

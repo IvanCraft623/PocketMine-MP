@@ -37,7 +37,7 @@ class SetSuspiciousStewTypeFunction extends EntryFunction{
 
 	/**
 	 * @param SuspiciousStewType[] $types
-	 * @param LootCondition[] $conditions
+	 * @param LootCondition[]      $conditions
 	 * @phpstan-param non-empty-list<SuspiciousStewType> $types
 	 */
 	public function __construct(protected array $types, array $conditions = []){
@@ -58,7 +58,8 @@ class SetSuspiciousStewTypeFunction extends EntryFunction{
 	 *
 	 * @phpstan-return array{
 	 * 	function: string,
-	 * 	effects: array<array{id: int}>
+	 * 	effects: array<array{id: int}>,
+	 * 	conditions?: array<array{condition: string, ...}>
 	 * }
 	 */
 	public function jsonSerialize() : array{

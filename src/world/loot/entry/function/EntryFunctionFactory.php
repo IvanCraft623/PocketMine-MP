@@ -227,7 +227,7 @@ final class EntryFunctionFactory{
 	 * @param mixed[] $data
 	 * @phpstan-param array{
 	 * 	function: string,
-	 * 	conditions?: array<array{condition: string, ...}>
+	 * 	conditions?: array<array{condition: string, ...}>,
 	 * 	...
 	 * } $data
 	 *

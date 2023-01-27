@@ -51,7 +51,8 @@ class SetCountFunction extends EntryFunction{
 	 *
 	 * @phpstan-return array{
 	 * 	function: string,
-	 * 	count: int|array<string, int>
+	 * 	count: int|array<string, int>,
+	 * 	conditions?: array<array{condition: string, ...}>
 	 * }
 	 */
 	public function jsonSerialize() : array{

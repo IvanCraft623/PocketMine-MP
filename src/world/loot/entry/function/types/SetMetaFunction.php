@@ -51,7 +51,8 @@ class SetMetaFunction extends EntryFunction{
 	 *
 	 * @phpstan-return array{
 	 * 	function: string,
-	 * 	data: int|array<string, int>
+	 * 	data: int|array<string, int>,
+	 * 	conditions?: array<array{condition: string, ...}>
 	 * }
 	 */
 	public function jsonSerialize() : array{

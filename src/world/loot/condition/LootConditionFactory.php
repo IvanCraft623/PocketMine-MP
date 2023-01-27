@@ -86,8 +86,7 @@ final class LootConditionFactory{
 			unset($data["default_chance"]);
 
 			$difficultiesChance = [];
-			foreach($data as $key => $chance){
-				$difficultyName = (string) $key;
+			foreach(Utils::stringifyKeys($data) as $difficultyName => $chance){
 				$difficulty = World::getDifficultyFromString($difficultyName);
 				if($difficulty === -1){
 					throw new SavedDataLoadingException("Unknown difficulty $difficultyName");

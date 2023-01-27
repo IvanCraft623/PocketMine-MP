@@ -55,7 +55,8 @@ class EnchantRandomlyFunction extends EntryFunction{
 	 *
 	 * @phpstan-return array{
 	 * 	function: string,
-	 * 	treasure?: bool
+	 * 	treasure?: bool,
+	 * 	conditions?: array<array{condition: string, ...}>
 	 * }
 	 */
 	public function jsonSerialize() : array{

@@ -62,7 +62,8 @@ class SetDamageFunction extends EntryFunction{
 	 *
 	 * @phpstan-return array{
 	 * 	function: string,
-	 * 	damage: float|array<string, float>
+	 * 	damage: float|array<string, float>,
+	 * 	conditions?: array<array{condition: string, ...}>
 	 * }
 	 */
 	public function jsonSerialize() : array{
