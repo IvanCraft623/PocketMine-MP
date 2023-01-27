@@ -53,7 +53,10 @@ class RandomDifficultyChanceCondition extends LootCondition{
 	 * @phpstan-return array{
 	 * 	condition: string,
 	 * 	default_chance: float,
-	 * 	...
+	 * 	peaceful?: float,
+	 * 	easy?: float,
+	 * 	normal?: float,
+	 * 	hard?: float
 	 * }
 	 */
 	public function jsonSerialize() : array{
