@@ -743,6 +743,10 @@ abstract class Entity{
 		return $this->isAlive();
 	}
 
+	public function canBePushedWith() : bool{
+		return false;
+	}
+
 	protected function updateMovement(bool $teleport = false) : void{
 		$diffPosition = $this->location->distanceSquared($this->lastLocation);
 		$diffRotation = ($this->location->yaw - $this->lastLocation->yaw) ** 2 + ($this->location->pitch - $this->lastLocation->pitch) ** 2;
@@ -1106,6 +1110,10 @@ abstract class Entity{
 	}
 
 	public function onCollideWithPlayer(Player $player) : void{
+
+	}
+
+	public function push(Living $source) : void{
 
 	}
 

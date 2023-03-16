@@ -648,6 +648,14 @@ abstract class Living extends Entity{
 			if($this->doAirSupplyTick($tickDiff)){
 				$hasUpdate = true;
 			}
+
+			if ($this->canPushEntities()) {
+				foreach($this->getWorld()->getNearbyEntities($this->boundingBox, $this) as $entity) {
+					if($entity->canBePushedWith()){
+						$entity->push($this);
+					}
+				}
+			}
 		}
 
 		if($this->attackTime > 0){
@@ -755,6 +763,27 @@ abstract class Living extends Entity{
 	public function onAirExpired() : void{
 		$ev = new EntityDamageEvent($this, EntityDamageEvent::CAUSE_DROWNING, 2);
 		$this->attack($ev);
+	}
+
+	public function canPushEntities() : bool{
+		return $this->isAlive();
+	}
+
+	public function canBePushedWith() : bool{
+		return !$this->justCreated && $this->isAlive();
+	}
+
+	public function push(Living $source) : void{
+		$entityPos = $source->getPosition();
+
+		$distanceX = $this->location->getX() - $entityPos->getX();
+		$distanceZ = $this->location->getZ() - $entityPos->getZ();
+		$maxDistanceSqr = sqrt(max(abs($distanceX), abs($distanceZ)));
+
+		if ($maxDistanceSqr > 0.1) {
+			$this->setMotion($this->motion->add(($distanceX / 20) / $maxDistanceSqr, 0, ($distanceZ / 20) / $maxDistanceSqr));
+		}
+
 	}
 
 	/**

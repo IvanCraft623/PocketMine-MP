@@ -206,6 +206,10 @@ class Human extends Living implements ProjectileSource, InventoryHolder{
 		return parent::consumeObject($consumable);
 	}
 
+	public function canBePushedWith() : bool{
+		return false;
+	}
+
 	protected function applyConsumptionResults(Consumable $consumable) : void{
 		if($consumable instanceof FoodSource){
 			$this->hungerManager->addFood($consumable->getFoodRestore());

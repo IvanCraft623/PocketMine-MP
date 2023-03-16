@@ -551,6 +551,10 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 		return !$this->isSpectator() && parent::canBeCollidedWith();
 	}
 
+	public function canPushEntities() : bool{
+		return !$this->isSpectator() && parent::canPushEntities();
+	}
+
 	public function resetFallDistance() : void{
 		parent::resetFallDistance();
 		$this->inAirTicks = 0;
