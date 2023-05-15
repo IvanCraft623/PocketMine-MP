@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe;
 
+use pocketmine\event\server\DataPacketSendEvent;
 use pocketmine\network\mcpe\protocol\serializer\PacketBatch;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializer;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializerContext;
@@ -30,6 +31,7 @@ use pocketmine\Server;
 use pocketmine\timings\Timings;
 use pocketmine\utils\BinaryStream;
 use function count;
+use function log;
 use function spl_object_id;
 use function strlen;
 
@@ -40,6 +42,15 @@ final class StandardPacketBroadcaster implements PacketBroadcaster{
 	){}
 
 	public function broadcastPackets(array $recipients, array $packets) : void{
+		//TODO: this shouldn't really be called here, since the broadcaster might be replaced by an alternative
+		//implementation that doesn't fire events
+		$ev = new DataPacketSendEvent($recipients, $packets);
+		$ev->call();
+		if($ev->isCancelled()){
+			return;
+		}
+		$packets = $ev->getPackets();
+
 		$compressors = [];
 
 		/** @var NetworkSession[][] $targetsByCompressor */
@@ -60,7 +71,8 @@ final class StandardPacketBroadcaster implements PacketBroadcaster{
 		$packetBuffers = [];
 		foreach($packets as $packet){
 			$buffer = NetworkSession::encodePacketTimed(PacketSerializer::encoder($this->protocolContext), $packet);
-			$totalLength += strlen($buffer);
+			//varint length prefix + packet buffer
+			$totalLength += (((int) log(strlen($buffer), 128)) + 1) + strlen($buffer);
 			$packetBuffers[] = $buffer;
 		}
 

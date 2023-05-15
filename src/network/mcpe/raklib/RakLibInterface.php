@@ -25,14 +25,13 @@ namespace pocketmine\network\mcpe\raklib;
 
 use pocketmine\network\AdvancedNetworkInterface;
 use pocketmine\network\mcpe\compression\ZlibCompressor;
-use pocketmine\network\mcpe\convert\GlobalItemTypeDictionary;
 use pocketmine\network\mcpe\convert\TypeConverter;
+use pocketmine\network\mcpe\EntityEventBroadcaster;
 use pocketmine\network\mcpe\NetworkSession;
 use pocketmine\network\mcpe\PacketBroadcaster;
 use pocketmine\network\mcpe\protocol\PacketPool;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializerContext;
-use pocketmine\network\mcpe\StandardPacketBroadcaster;
 use pocketmine\network\Network;
 use pocketmine\network\NetworkInterfaceStartException;
 use pocketmine\network\PacketHandlingException;
@@ -54,6 +53,7 @@ use function implode;
 use function mt_rand;
 use function random_bytes;
 use function rtrim;
+use function str_split;
 use function substr;
 use const PHP_INT_MAX;
 
@@ -80,11 +80,16 @@ class RakLibInterface implements ServerEventListener, AdvancedNetworkInterface{
 
 	private SleeperNotifier $sleeper;
 
-	private PacketBroadcaster $broadcaster;
+	private PacketBroadcaster $packetBroadcaster;
+	private EntityEventBroadcaster $entityEventBroadcaster;
 	private PacketSerializerContext $packetSerializerContext;
 
-	public function __construct(Server $server, string $ip, int $port, bool $ipV6){
+	public function __construct(Server $server, string $ip, int $port, bool $ipV6, PacketBroadcaster $packetBroadcaster, EntityEventBroadcaster $entityEventBroadcaster, PacketSerializerContext $packetSerializerContext){
 		$this->server = $server;
+		$this->packetBroadcaster = $packetBroadcaster;
+		$this->packetSerializerContext = $packetSerializerContext;
+		$this->entityEventBroadcaster = $entityEventBroadcaster;
+
 		$this->rakServerId = mt_rand(0, PHP_INT_MAX);
 
 		$this->sleeper = new SleeperNotifier();
@@ -108,9 +113,6 @@ class RakLibInterface implements ServerEventListener, AdvancedNetworkInterface{
 		$this->interface = new UserToRakLibThreadMessageSender(
 			new PthreadsChannelWriter($mainToThreadBuffer)
 		);
-
-		$this->packetSerializerContext = new PacketSerializerContext(GlobalItemTypeDictionary::getInstance()->getDictionary());
-		$this->broadcaster = new StandardPacketBroadcaster($this->server, $this->packetSerializerContext);
 	}
 
 	public function start() : void{
@@ -172,7 +174,8 @@ class RakLibInterface implements ServerEventListener, AdvancedNetworkInterface{
 			PacketPool::getInstance(),
 			$this->packetSerializerContext,
 			new RakLibPacketSender($sessionId, $this),
-			$this->broadcaster,
+			$this->packetBroadcaster,
+			$this->entityEventBroadcaster,
 			ZlibCompressor::getInstance(), //TODO: this shouldn't be hardcoded, but we might need the RakNet protocol version to select it
 			$address,
 			$port
@@ -190,10 +193,11 @@ class RakLibInterface implements ServerEventListener, AdvancedNetworkInterface{
 			$session = $this->sessions[$sessionId];
 			$address = $session->getIp();
 			$buf = substr($packet, 1);
+			$name = $session->getDisplayName();
 			try{
 				$session->handleEncoded($buf);
 			}catch(PacketHandlingException $e){
-				$errorId = bin2hex(random_bytes(6));
+				$errorId = implode("-", str_split(bin2hex(random_bytes(6)), 4));
 
 				$logger = $session->getLogger();
 				$logger->error("Bad packet (error ID $errorId): " . $e->getMessage());
@@ -202,6 +206,10 @@ class RakLibInterface implements ServerEventListener, AdvancedNetworkInterface{
 				$logger->debug(implode("\n", Utils::printableExceptionInfo($e)));
 				$session->disconnect("Packet processing error (Error ID: $errorId)");
 				$this->interface->blockAddress($address, 5);
+			}catch(\Throwable $e){
+				//record the name of the player who caused the crash, to make it easier to find the reproducing steps
+				$this->server->getLogger()->emergency("Crash occurred while handling a packet from session: $name");
+				throw $e;
 			}
 		}
 	}

@@ -30,7 +30,6 @@ use pocketmine\event\world\WorldUnloadEvent;
 use pocketmine\lang\KnownTranslationFactory;
 use pocketmine\player\ChunkSelector;
 use pocketmine\Server;
-use pocketmine\timings\Timings;
 use pocketmine\world\format\Chunk;
 use pocketmine\world\format\io\exception\CorruptedWorldException;
 use pocketmine\world\format\io\exception\UnsupportedWorldFormatException;
@@ -286,7 +285,7 @@ class WorldManager{
 			$centerX = $spawnLocation->getFloorX() >> Chunk::COORD_BIT_SIZE;
 			$centerZ = $spawnLocation->getFloorZ() >> Chunk::COORD_BIT_SIZE;
 
-			$selected = iterator_to_array((new ChunkSelector())->selectChunks(8, $centerX, $centerZ));
+			$selected = iterator_to_array((new ChunkSelector())->selectChunks(8, $centerX, $centerZ), preserve_keys: false);
 			$done = 0;
 			$total = count($selected);
 			foreach($selected as $index){
@@ -391,7 +390,6 @@ class WorldManager{
 	}
 
 	private function doAutoSave() : void{
-		Timings::$worldSave->startTiming();
 		foreach($this->worlds as $world){
 			foreach($world->getPlayers() as $player){
 				if($player->spawned){
@@ -400,6 +398,5 @@ class WorldManager{
 			}
 			$world->save(false);
 		}
-		Timings::$worldSave->stopTiming();
 	}
 }
