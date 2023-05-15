@@ -777,10 +777,10 @@ abstract class Living extends Entity{
 
 		$distanceX = $this->location->getX() - $entityPos->getX();
 		$distanceZ = $this->location->getZ() - $entityPos->getZ();
-		$maxDistanceSqr = sqrt(max(abs($distanceX), abs($distanceZ)));
+		$maxDistanceSqrt = sqrt(max(abs($distanceX), abs($distanceZ)));
 
-		if ($maxDistanceSqr > 0.1) {
-			$this->setMotion($this->motion->add(($distanceX / 20) / $maxDistanceSqr, 0, ($distanceZ / 20) / $maxDistanceSqr));
+		if ($maxDistanceSqrt > 0.1) {
+			$this->addMotion(($distanceX / 20) / $maxDistanceSqrt, 0, ($distanceZ / 20) / $maxDistanceSqrt);
 		}
 
 	}
