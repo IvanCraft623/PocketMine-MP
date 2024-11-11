@@ -54,6 +54,10 @@ class GoatHorn extends Item implements Releasable{
 		return 140;
 	}
 
+	public function getCooldownTag() : ?string{
+		return ItemCooldownTags::GOAT_HORN;
+	}
+
 	public function canStartUsingItem(Player $player) : bool{
 		return true;
 	}
