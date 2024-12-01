@@ -1043,6 +1043,9 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 	}
 
 	public function getDeathPosition() : ?Position{
+		if($this->deathPosition !== null && !$this->deathPosition->isValid()){
+			$this->deathPosition = null;
+		}
 		return $this->deathPosition;
 	}
 
@@ -2570,9 +2573,14 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 
 		if($this->deathPosition !== null && $this->deathPosition->world === $this->location->world){
 			$properties->setBlockPos(EntityMetadataProperties::PLAYER_DEATH_POSITION, BlockPosition::fromVector3($this->deathPosition));
+			//TODO: this should be updated when dimensions are implemented
 			$properties->setInt(EntityMetadataProperties::PLAYER_DEATH_DIMENSION, DimensionIds::OVERWORLD);
+			$properties->setByte(EntityMetadataProperties::PLAYER_HAS_DIED, 1);
+		}else{
+			$properties->setBlockPos(EntityMetadataProperties::PLAYER_DEATH_POSITION, new BlockPosition(0, 0, 0));
+			$properties->setInt(EntityMetadataProperties::PLAYER_DEATH_DIMENSION, DimensionIds::OVERWORLD);
+			$properties->setByte(EntityMetadataProperties::PLAYER_HAS_DIED, 0);
 		}
-		$properties->setByte(EntityMetadataProperties::PLAYER_HAS_DIED, ($this->deathPosition !== null && $this->deathPosition->world === $this->location->world) ? 1 : 0); //Hack for multi-world
 	}
 
 	public function sendData(?array $targets, ?array $data = null) : void{
