@@ -149,12 +149,12 @@ final class VanillaEnchantments{
 
 		self::register("FROST_WALKER", new Enchantment(
 			KnownTranslationFactory::enchantment_frostwalker(),
-			Rarity::MYTHIC,
+			Rarity::RARE,
 			0,
 			0,
 			2,
-			fn(int $level) : int => 10 * $level, //TODO: get the real value of this
-			30 //TODO: get the real value of this
+			fn(int $level) : int => 10 * $level,
+			15
 		));
 		self::register("AQUA_AFFINITY", new Enchantment(
 			KnownTranslationFactory::enchantment_waterWorker(),
