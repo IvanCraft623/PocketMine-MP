@@ -2412,7 +2412,7 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 			$nbt->setInt(self::TAG_SPAWN_Z, $spawn->getFloorZ());
 		}
 
-		if($this->deathPosition !== null){
+		if($this->deathPosition !== null && $this->deathPosition->isValid()){
 			$nbt->setString(self::TAG_DEATH_WORLD, $this->deathPosition->getWorld()->getFolderName());
 			$nbt->setInt(self::TAG_DEATH_X, $this->deathPosition->getFloorX());
 			$nbt->setInt(self::TAG_DEATH_Y, $this->deathPosition->getFloorY());
