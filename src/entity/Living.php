@@ -707,7 +707,7 @@ abstract class Living extends Entity{
 
 		parent::move($dx, $dy, $dz);
 
-		$frostWalkerLevel = $this->frostWalkerLevel ??= $this->armorInventory->getBoots()->getEnchantmentLevel(VanillaEnchantments::FROST_WALKER());
+		$frostWalkerLevel = $this->getFrostWalkerLevel();
 		if($frostWalkerLevel > 0 && (abs($this->location->x - $oldX) > self::MOTION_THRESHOLD || abs($this->location->z - $oldZ) > self::MOTION_THRESHOLD)){
 			$this->applyFrostWalker($frostWalkerLevel);
 		}
@@ -736,6 +736,10 @@ abstract class Living extends Entity{
 				$world->setBlockAt($x, $y, $z, $frostedIce);
 			}
 		}
+	}
+
+	public function getFrostWalkerLevel() : int{
+		return $this->frostWalkerLevel ??= $this->armorInventory->getBoots()->getEnchantmentLevel(VanillaEnchantments::FROST_WALKER());
 	}
 
 	/**
