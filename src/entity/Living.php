@@ -707,11 +707,8 @@ abstract class Living extends Entity{
 
 		parent::move($dx, $dy, $dz);
 
-		$diffX = abs($this->location->x - $oldX);
-		$diffZ = abs($this->location->z - $oldZ);
-
 		$frostWalkerLevel = $this->frostWalkerLevel ??= $this->armorInventory->getBoots()->getEnchantmentLevel(VanillaEnchantments::FROST_WALKER());
-		if($frostWalkerLevel > 0 && ($diffX > self::MOTION_THRESHOLD || $diffZ > self::MOTION_THRESHOLD)){
+		if($frostWalkerLevel > 0 && (abs($this->location->x - $oldX) > self::MOTION_THRESHOLD || abs($this->location->z - $oldZ) > self::MOTION_THRESHOLD)){
 			$this->applyFrostWalker($frostWalkerLevel);
 		}
 	}
