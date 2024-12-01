@@ -724,13 +724,12 @@ abstract class Living extends Entity{
 		for($x = -$radius; $x <= $radius; $x++){
 			for($z = -$radius; $z <= $radius; $z++){
 				$block = $world->getBlockAt($x, $y, $z);
-				if(!$block instanceof Water || !$block->isSource()){
-					continue;
-				}
-				if($world->getBlockAt($x, $y + 1, $z)->getTypeId() !== BlockTypeIds::AIR){
-					continue;
-				}
-				if(count($world->getNearbyEntities(AxisAlignedBB::one()->offset($x, $y, $z))) !== 0){
+				if(
+					!$block instanceof Water ||
+					!$block->isSource() ||
+					$world->getBlockAt($x, $y + 1, $z)->getTypeId() !== BlockTypeIds::AIR ||
+					count($world->getNearbyEntities(AxisAlignedBB::one()->offset($x, $y, $z))) !== 0
+				){
 					continue;
 				}
 				$world->setBlockAt($x, $y, $z, $frostedIce);
