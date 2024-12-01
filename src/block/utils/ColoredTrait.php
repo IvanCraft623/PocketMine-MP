@@ -28,11 +28,11 @@ use pocketmine\data\runtime\RuntimeDataDescriber;
 
 trait ColoredTrait{
 	/** @var DyeColor */
-	private $color;
+	private $color = DyeColor::WHITE;
 
-	/** @see Block::describeType() */
-	protected function describeType(RuntimeDataDescriber $w) : void{
-		$w->dyeColor($this->color);
+	/** @see Block::describeBlockItemState() */
+	public function describeBlockItemState(RuntimeDataDescriber $w) : void{
+		$w->enum($this->color);
 	}
 
 	public function getColor() : DyeColor{ return $this->color; }

@@ -76,16 +76,25 @@ class PopulationTask extends AsyncTask{
 
 		$chunk = $this->chunk !== null ? FastChunkSerializer::deserializeTerrain($this->chunk) : null;
 
-		/** @var string[] $serialChunks */
+		/**
+		 * @var string[] $serialChunks
+		 * @phpstan-var array<int, string|null> $serialChunks
+		 */
 		$serialChunks = igbinary_unserialize($this->adjacentChunks);
 		$chunks = array_map(
-			fn(?string $serialized) => $serialized !== null ? FastChunkSerializer::deserializeTerrain($serialized) : null,
+			function(?string $serialized) : ?Chunk{
+				if($serialized === null){
+					return null;
+				}
+				$chunk = FastChunkSerializer::deserializeTerrain($serialized);
+				$chunk->clearTerrainDirtyFlags(); //this allows us to avoid sending existing chunks back to the main thread if they haven't changed during generation
+				return $chunk;
+			},
 			$serialChunks
 		);
 
 		self::setOrGenerateChunk($manager, $generator, $this->chunkX, $this->chunkZ, $chunk);
 
-		/** @var Chunk[] $resultChunks */
 		$resultChunks = []; //this is just to keep phpstan's type inference happy
 		foreach($chunks as $relativeChunkHash => $c){
 			World::getXZ($relativeChunkHash, $relativeX, $relativeZ);
@@ -117,8 +126,6 @@ class PopulationTask extends AsyncTask{
 			if($chunk === null){
 				throw new AssumptionFailedError("We just set this chunk, so it must exist");
 			}
-			$chunk->setTerrainDirtyFlag(Chunk::DIRTY_FLAG_BLOCKS, true);
-			$chunk->setTerrainDirtyFlag(Chunk::DIRTY_FLAG_BIOMES, true);
 		}
 		return $chunk;
 	}

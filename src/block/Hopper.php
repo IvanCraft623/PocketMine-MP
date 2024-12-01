@@ -39,7 +39,7 @@ class Hopper extends Transparent{
 
 	private int $facing = Facing::DOWN;
 
-	protected function describeState(RuntimeDataDescriber $w) : void{
+	protected function describeBlockOnlyState(RuntimeDataDescriber $w) : void{
 		$w->facingExcept($this->facing, Facing::UP);
 		$w->bool($this->powered);
 	}
@@ -68,9 +68,9 @@ class Hopper extends Transparent{
 
 	public function getSupportType(int $facing) : SupportType{
 		return match($facing){
-			Facing::UP => SupportType::FULL(),
-			Facing::DOWN => $this->facing === Facing::DOWN ? SupportType::CENTER() : SupportType::NONE(),
-			default => SupportType::NONE()
+			Facing::UP => SupportType::FULL,
+			Facing::DOWN => $this->facing === Facing::DOWN ? SupportType::CENTER : SupportType::NONE,
+			default => SupportType::NONE
 		};
 	}
 

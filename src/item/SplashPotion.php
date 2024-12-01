@@ -31,15 +31,10 @@ use pocketmine\player\Player;
 
 class SplashPotion extends ProjectileItem{
 
-	private PotionType $potionType;
+	private PotionType $potionType = PotionType::WATER;
 
-	public function __construct(ItemIdentifier $identifier, string $name){
-		$this->potionType = PotionType::WATER();
-		parent::__construct($identifier, $name);
-	}
-
-	protected function describeType(RuntimeDataDescriber $w) : void{
-		$w->potionType($this->potionType);
+	protected function describeState(RuntimeDataDescriber $w) : void{
+		$w->enum($this->potionType);
 	}
 
 	public function getType() : PotionType{ return $this->potionType; }

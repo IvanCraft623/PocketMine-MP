@@ -23,8 +23,6 @@ declare(strict_types=1);
 
 namespace pocketmine\block\utils;
 
-use pocketmine\block\BlockIdentifier;
-use pocketmine\block\BlockTypeInfo;
 use pocketmine\data\runtime\RuntimeDataDescriber;
 use pocketmine\item\Axe;
 use pocketmine\item\Item;
@@ -36,16 +34,11 @@ use pocketmine\world\sound\CopperWaxRemoveSound;
 use pocketmine\world\sound\ScrapeSound;
 
 trait CopperTrait{
-	private CopperOxidation $oxidation;
+	private CopperOxidation $oxidation = CopperOxidation::NONE;
 	private bool $waxed = false;
 
-	public function __construct(BlockIdentifier $identifier, string $name, BlockTypeInfo $typeInfo){
-		$this->oxidation = CopperOxidation::NONE();
-		parent::__construct($identifier, $name, $typeInfo);
-	}
-
-	protected function describeType(RuntimeDataDescriber $w) : void{
-		$w->copperOxidation($this->oxidation);
+	public function describeBlockItemState(RuntimeDataDescriber $w) : void{
+		$w->enum($this->oxidation);
 		$w->bool($this->waxed);
 	}
 

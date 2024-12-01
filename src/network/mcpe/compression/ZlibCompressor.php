@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\compression;
 
+use pocketmine\network\mcpe\protocol\types\CompressionAlgorithm;
 use pocketmine\utils\SingletonTrait;
 use pocketmine\utils\Utils;
 use function function_exists;
@@ -32,12 +33,12 @@ use function zlib_decode;
 use function zlib_encode;
 use const ZLIB_ENCODING_RAW;
 
-final class ZlibCompressor implements ThresholdCompressor{
+final class ZlibCompressor implements Compressor{
 	use SingletonTrait;
 
 	public const DEFAULT_LEVEL = 7;
 	public const DEFAULT_THRESHOLD = 256;
-	public const DEFAULT_MAX_DECOMPRESSION_SIZE = 2 * 1024 * 1024;
+	public const DEFAULT_MAX_DECOMPRESSION_SIZE = 8 * 1024 * 1024;
 
 	/**
 	 * @see SingletonTrait::make()
@@ -56,10 +57,6 @@ final class ZlibCompressor implements ThresholdCompressor{
 		return $this->minCompressionSize;
 	}
 
-	public function willCompress(string $data) : bool{
-		return $this->minCompressionSize !== null && strlen($data) >= $this->minCompressionSize;
-	}
-
 	/**
 	 * @throws DecompressionException
 	 */
@@ -71,16 +68,16 @@ final class ZlibCompressor implements ThresholdCompressor{
 		return $result;
 	}
 
-	private static function zlib_encode(string $data, int $level) : string{
-		return Utils::assumeNotFalse(zlib_encode($data, ZLIB_ENCODING_RAW, $level), "ZLIB compression failed");
+	public function compress(string $payload) : string{
+		$compressible = $this->minCompressionSize !== null && strlen($payload) >= $this->minCompressionSize;
+		$level = $compressible ? $this->level : 0;
+
+		return function_exists('libdeflate_deflate_compress') ?
+			libdeflate_deflate_compress($payload, $level) :
+			Utils::assumeNotFalse(zlib_encode($payload, ZLIB_ENCODING_RAW, $level), "ZLIB compression failed");
 	}
 
-	public function compress(string $payload) : string{
-		if(function_exists('libdeflate_deflate_compress')){
-			return $this->willCompress($payload) ?
-				libdeflate_deflate_compress($payload, $this->level) :
-				self::zlib_encode($payload, 0);
-		}
-		return self::zlib_encode($payload, $this->willCompress($payload) ? $this->level : 0);
+	public function getNetworkId() : int{
+		return CompressionAlgorithm::ZLIB;
 	}
 }

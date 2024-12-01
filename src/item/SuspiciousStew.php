@@ -27,15 +27,10 @@ use pocketmine\data\runtime\RuntimeDataDescriber;
 
 class SuspiciousStew extends Food{
 
-	private SuspiciousStewType $suspiciousStewType;
+	private SuspiciousStewType $suspiciousStewType = SuspiciousStewType::POPPY;
 
-	public function __construct(ItemIdentifier $identifier, string $name){
-		$this->suspiciousStewType = SuspiciousStewType::POPPY();
-		parent::__construct($identifier, $name);
-	}
-
-	protected function describeType(RuntimeDataDescriber $w) : void{
-		$w->suspiciousStewType($this->suspiciousStewType);
+	protected function describeState(RuntimeDataDescriber $w) : void{
+		$w->enum($this->suspiciousStewType);
 	}
 
 	public function getType() : SuspiciousStewType{ return $this->suspiciousStewType; }

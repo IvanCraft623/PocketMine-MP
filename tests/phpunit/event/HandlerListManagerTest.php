@@ -24,6 +24,12 @@ declare(strict_types=1);
 namespace pocketmine\event;
 
 use PHPUnit\Framework\TestCase;
+use pocketmine\event\fixtures\TestAbstractAllowHandleEvent;
+use pocketmine\event\fixtures\TestAbstractEvent;
+use pocketmine\event\fixtures\TestConcreteEvent;
+use pocketmine\event\fixtures\TestConcreteExtendsAbstractEvent;
+use pocketmine\event\fixtures\TestConcreteExtendsAllowHandleEvent;
+use pocketmine\event\fixtures\TestConcreteExtendsConcreteEvent;
 
 class HandlerListManagerTest extends TestCase{
 
@@ -49,7 +55,7 @@ class HandlerListManagerTest extends TestCase{
 	 * @return \Generator|mixed[][]
 	 * @phpstan-return \Generator<int, array{\ReflectionClass<Event>, bool, string}, void, void>
 	 */
-	public function isValidClassProvider() : \Generator{
+	public static function isValidClassProvider() : \Generator{
 		yield [new \ReflectionClass(Event::class), false, "event base should not be handleable"];
 		yield [new \ReflectionClass(TestConcreteEvent::class), true, ""];
 		yield [new \ReflectionClass(TestAbstractEvent::class), false, "abstract event cannot be handled"];
@@ -69,7 +75,7 @@ class HandlerListManagerTest extends TestCase{
 	 * @return \Generator|\ReflectionClass[][]
 	 * @phpstan-return \Generator<int, array{\ReflectionClass<Event>, \ReflectionClass<Event>|null}, void, void>
 	 */
-	public function resolveParentClassProvider() : \Generator{
+	public static function resolveParentClassProvider() : \Generator{
 		yield [new \ReflectionClass(TestConcreteExtendsAllowHandleEvent::class), new \ReflectionClass(TestAbstractAllowHandleEvent::class)];
 		yield [new \ReflectionClass(TestConcreteEvent::class), null];
 		yield [new \ReflectionClass(TestConcreteExtendsAbstractEvent::class), null];

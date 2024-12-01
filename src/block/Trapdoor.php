@@ -40,7 +40,7 @@ class Trapdoor extends Transparent{
 	protected bool $open = false;
 	protected bool $top = false;
 
-	protected function describeState(RuntimeDataDescriber $w) : void{
+	protected function describeBlockOnlyState(RuntimeDataDescriber $w) : void{
 		$w->horizontalFacing($this->facing);
 		$w->bool($this->top);
 		$w->bool($this->open);
@@ -70,7 +70,7 @@ class Trapdoor extends Transparent{
 	}
 
 	public function getSupportType(int $facing) : SupportType{
-		return SupportType::NONE();
+		return SupportType::NONE;
 	}
 
 	public function place(BlockTransaction $tx, Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, ?Player $player = null) : bool{

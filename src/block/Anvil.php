@@ -35,10 +35,10 @@ use pocketmine\math\AxisAlignedBB;
 use pocketmine\math\Facing;
 use pocketmine\math\Vector3;
 use pocketmine\player\Player;
+use pocketmine\utils\Utils;
 use pocketmine\world\BlockTransaction;
 use pocketmine\world\sound\AnvilFallSound;
 use pocketmine\world\sound\Sound;
-use function lcg_value;
 use function round;
 
 class Anvil extends Transparent implements Fallable{
@@ -51,11 +51,11 @@ class Anvil extends Transparent implements Fallable{
 
 	private int $damage = self::UNDAMAGED;
 
-	protected function describeType(RuntimeDataDescriber $w) : void{
-		$w->boundedInt(2, self::UNDAMAGED, self::VERY_DAMAGED, $this->damage);
+	public function describeBlockItemState(RuntimeDataDescriber $w) : void{
+		$w->boundedIntAuto(self::UNDAMAGED, self::VERY_DAMAGED, $this->damage);
 	}
 
-	protected function describeState(RuntimeDataDescriber $w) : void{
+	protected function describeBlockOnlyState(RuntimeDataDescriber $w) : void{
 		$w->horizontalFacing($this->facing);
 	}
 
@@ -78,7 +78,7 @@ class Anvil extends Transparent implements Fallable{
 	}
 
 	public function getSupportType(int $facing) : SupportType{
-		return SupportType::NONE();
+		return SupportType::NONE;
 	}
 
 	public function onInteract(Item $item, int $face, Vector3 $clickVector, ?Player $player = null, array &$returnedItems = []) : bool{
@@ -91,13 +91,13 @@ class Anvil extends Transparent implements Fallable{
 
 	public function place(BlockTransaction $tx, Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, ?Player $player = null) : bool{
 		if($player !== null){
-			$this->facing = Facing::rotateY($player->getHorizontalFacing(), true);
+			$this->facing = Facing::rotateY($player->getHorizontalFacing(), false);
 		}
 		return parent::place($tx, $item, $blockReplace, $blockClicked, $face, $clickVector, $player);
 	}
 
 	public function onHitGround(FallingBlock $blockEntity) : bool{
-		if(lcg_value() < 0.05 + (round($blockEntity->getFallDistance()) - 1) * 0.05){
+		if(Utils::getRandomFloat() < 0.05 + (round($blockEntity->getFallDistance()) - 1) * 0.05){
 			if($this->damage !== self::VERY_DAMAGED){
 				$this->damage = $this->damage + 1;
 			}else{
@@ -105,6 +105,14 @@ class Anvil extends Transparent implements Fallable{
 			}
 		}
 		return true;
+	}
+
+	public function getFallDamagePerBlock() : float{
+		return 2.0;
+	}
+
+	public function getMaxFallDamage() : float{
+		return 40.0;
 	}
 
 	public function getLandSound() : ?Sound{

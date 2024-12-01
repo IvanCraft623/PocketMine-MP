@@ -28,13 +28,10 @@ use pocketmine\event\player\PlayerPreLoginEvent;
 use pocketmine\lang\KnownTranslationFactory;
 use pocketmine\lang\Translatable;
 use pocketmine\network\mcpe\auth\ProcessLoginTask;
-use pocketmine\network\mcpe\convert\SkinAdapterSingleton;
 use pocketmine\network\mcpe\JwtException;
 use pocketmine\network\mcpe\JwtUtils;
 use pocketmine\network\mcpe\NetworkSession;
 use pocketmine\network\mcpe\protocol\LoginPacket;
-use pocketmine\network\mcpe\protocol\PlayStatusPacket;
-use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\types\login\AuthenticationData;
 use pocketmine\network\mcpe\protocol\types\login\ClientData;
 use pocketmine\network\mcpe\protocol\types\login\ClientDataToSkinDataHelper;
@@ -46,7 +43,6 @@ use pocketmine\player\XboxLivePlayerInfo;
 use pocketmine\Server;
 use Ramsey\Uuid\Uuid;
 use function is_array;
-use function preg_match;
 
 /**
  * Handles the initial login phase of the session. This handler is used as the initial state.
@@ -64,12 +60,6 @@ class LoginPacketHandler extends PacketHandler{
 	){}
 
 	public function handleLogin(LoginPacket $packet) : bool{
-		if(!$this->isCompatibleProtocol($packet->protocol)){
-			$this->session->disconnectIncompatibleProtocol($packet->protocol);
-
-			return true;
-		}
-
 		$extraData = $this->fetchAuthData($packet->chainDataJwt);
 
 		if(!Player::isValidUserName($extraData->displayName)){
@@ -80,31 +70,13 @@ class LoginPacketHandler extends PacketHandler{
 
 		$clientData = $this->parseClientData($packet->clientDataJwt);
 
-		//TODO: REMOVE THIS
-		//Mojang forgot to bump the protocol version when they changed protocol in 1.19.62. Check the game version instead.
-		if(preg_match('/^(\d+)\.(\d+)\.(\d+)/', $clientData->GameVersion, $matches) !== 1){
-			throw new PacketHandlingException("Invalid game version format, expected at least 3 digits");
-		}
-		$major = (int) $matches[1];
-		$minor = (int) $matches[2];
-		$patch = (int) $matches[3];
-		if($major === 1 && $minor === 19 && $patch < 62){
-			$this->session->sendDataPacket(PlayStatusPacket::create(PlayStatusPacket::LOGIN_FAILED_CLIENT), true);
-
-			//This pocketmine disconnect message will only be seen by the console (PlayStatusPacket causes the messages to be shown for the client)
-			$this->session->disconnect(
-				KnownTranslationFactory::pocketmine_disconnect_incompatibleProtocol("$packet->protocol (< v1.19.62)"),
-				notify: false
-			);
-
-			return true;
-		}
-
 		try{
-			$skin = SkinAdapterSingleton::get()->fromSkinData(ClientDataToSkinDataHelper::fromClientData($clientData));
+			$skin = $this->session->getTypeConverter()->getSkinAdapter()->fromSkinData(ClientDataToSkinDataHelper::fromClientData($clientData));
 		}catch(\InvalidArgumentException | InvalidSkinException $e){
-			$this->session->getLogger()->debug("Invalid skin: " . $e->getMessage());
-			$this->session->disconnectWithError(KnownTranslationFactory::disconnectionScreen_invalidSkin());
+			$this->session->disconnectWithError(
+				reason: "Invalid skin: " . $e->getMessage(),
+				disconnectScreenMessage: KnownTranslationFactory::disconnectionScreen_invalidSkin()
+			);
 
 			return true;
 		}
@@ -113,6 +85,9 @@ class LoginPacketHandler extends PacketHandler{
 			throw new PacketHandlingException("Invalid login UUID");
 		}
 		$uuid = Uuid::fromString($extraData->identity);
+		$arrClientData = (array) $clientData;
+		$arrClientData["TitleID"] = $extraData->titleId;
+
 		if($extraData->XUID !== ""){
 			$playerInfo = new XboxLivePlayerInfo(
 				$extraData->XUID,
@@ -120,7 +95,7 @@ class LoginPacketHandler extends PacketHandler{
 				$uuid,
 				$skin,
 				$clientData->LanguageCode,
-				(array) $clientData
+				$arrClientData
 			);
 		}else{
 			$playerInfo = new PlayerInfo(
@@ -128,7 +103,7 @@ class LoginPacketHandler extends PacketHandler{
 				$uuid,
 				$skin,
 				$clientData->LanguageCode,
-				(array) $clientData
+				$arrClientData
 			);
 		}
 		($this->playerInfoConsumer)($playerInfo);
@@ -175,7 +150,7 @@ class LoginPacketHandler extends PacketHandler{
 	protected function fetchAuthData(JwtChain $chain) : AuthenticationData{
 		/** @var AuthenticationData|null $extraData */
 		$extraData = null;
-		foreach($chain->chain as $k => $jwt){
+		foreach($chain->chain as $jwt){
 			//validate every chain element
 			try{
 				[, $claims, ] = JwtUtils::parse($jwt);
@@ -194,6 +169,7 @@ class LoginPacketHandler extends PacketHandler{
 				$mapper->bEnforceMapType = false; //TODO: we don't really need this as an array, but right now we don't have enough models
 				$mapper->bExceptionOnMissingData = true;
 				$mapper->bExceptionOnUndefinedProperty = true;
+				$mapper->bStrictObjectTypeChecking = true;
 				try{
 					/** @var AuthenticationData $extraData */
 					$extraData = $mapper->map($claims["extraData"], new AuthenticationData());
@@ -222,6 +198,7 @@ class LoginPacketHandler extends PacketHandler{
 		$mapper->bEnforceMapType = false; //TODO: we don't really need this as an array, but right now we don't have enough models
 		$mapper->bExceptionOnMissingData = true;
 		$mapper->bExceptionOnUndefinedProperty = true;
+		$mapper->bStrictObjectTypeChecking = true;
 		try{
 			$clientData = $mapper->map($clientDataClaims, new ClientData());
 		}catch(\JsonMapper_Exception $e){
@@ -239,9 +216,5 @@ class LoginPacketHandler extends PacketHandler{
 	protected function processLogin(LoginPacket $packet, bool $authRequired) : void{
 		$this->server->getAsyncPool()->submitTask(new ProcessLoginTask($packet->chainDataJwt->chain, $packet->clientDataJwt, $authRequired, $this->authCallback));
 		$this->session->setHandler(null); //drop packets received during login verification
-	}
-
-	protected function isCompatibleProtocol(int $protocolVersion) : bool{
-		return $protocolVersion === ProtocolInfo::CURRENT_PROTOCOL;
 	}
 }

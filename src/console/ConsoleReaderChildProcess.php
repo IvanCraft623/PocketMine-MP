@@ -23,37 +23,36 @@ declare(strict_types=1);
 
 namespace pocketmine\console;
 
+use pmmp\thread\Thread as NativeThread;
+use pmmp\thread\ThreadSafeArray;
 use pocketmine\utils\Process;
 use function cli_set_process_title;
 use function count;
 use function dirname;
-use function feof;
 use function fwrite;
-use function stream_socket_client;
-use const PTHREADS_INHERIT_NONE;
+use function is_numeric;
+use const PHP_EOL;
+use const STDOUT;
+
+if(count($argv) !== 2 || !is_numeric($argv[1])){
+	echo "Usage: " . $argv[0] . " <command token seed>" . PHP_EOL;
+	exit(1);
+}
+
+$commandTokenSeed = (int) $argv[1];
 
 require dirname(__DIR__, 2) . '/vendor/autoload.php';
 
-if(count($argv) !== 2){
-	die("Please provide a server to connect to");
-}
-
 @cli_set_process_title('PocketMine-MP Console Reader');
-$errCode = null;
-$errMessage = null;
-$socket = stream_socket_client($argv[1], $errCode, $errMessage, 15.0);
-if($socket === false){
-	throw new \RuntimeException("Failed to connect to server process ($errCode): $errMessage");
-}
 
-/** @phpstan-var \ThreadedArray<int, string> $channel */
-$channel = new \ThreadedArray();
-$thread = new class($channel) extends \Thread{
+/** @phpstan-var ThreadSafeArray<int, string> $channel */
+$channel = new ThreadSafeArray();
+$thread = new class($channel) extends NativeThread{
 	/**
-	 * @phpstan-param \ThreadedArray<int, string> $channel
+	 * @phpstan-param ThreadSafeArray<int, string> $channel
 	 */
 	public function __construct(
-		private \ThreadedArray $channel,
+		private ThreadSafeArray $channel,
 	){}
 
 	public function run() : void{
@@ -73,16 +72,16 @@ $thread = new class($channel) extends \Thread{
 	}
 };
 
-$thread->start(PTHREADS_INHERIT_NONE);
-while(!feof($socket)){
+$thread->start(NativeThread::INHERIT_NONE);
+while(true){
 	$line = $channel->synchronized(function() use ($channel) : ?string{
 		if(count($channel) === 0){
 			$channel->wait(1_000_000);
 		}
-		$line = $channel->shift();
-		return $line;
+		return $channel->shift();
 	});
-	if(@fwrite($socket, ($line ?? "") . "\n") === false){
+	$message = $line !== null ? ConsoleReaderChildProcessUtils::createMessage($line, $commandTokenSeed) : "";
+	if(@fwrite(STDOUT, $message . "\n") === false){
 		//Always send even if there's no line, to check if the parent is alive
 		//If the parent process was terminated forcibly, it won't close the connection properly, so feof() will return
 		//false even though the connection is actually broken. However, fwrite() will fail.
@@ -93,4 +92,4 @@ while(!feof($socket)){
 //For simplicity's sake, we don't bother with a graceful shutdown here.
 //The parent process would normally forcibly terminate the child process anyway, so we only reach this point if the
 //parent process was terminated forcibly and didn't clean up after itself.
-Process::kill(Process::pid(), false);
+Process::kill(Process::pid());

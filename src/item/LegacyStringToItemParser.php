@@ -29,6 +29,7 @@ use pocketmine\data\bedrock\item\upgrade\ItemDataUpgrader;
 use pocketmine\utils\AssumptionFailedError;
 use pocketmine\utils\Filesystem;
 use pocketmine\utils\SingletonTrait;
+use pocketmine\utils\Utils;
 use pocketmine\world\format\io\GlobalItemDataHandlers;
 use Symfony\Component\Filesystem\Path;
 use function explode;
@@ -49,6 +50,9 @@ use function trim;
  * Avoid using this wherever possible. Unless you need to parse item strings containing meta (e.g. "dye:4", "351:4") or
  * item IDs (e.g. "351"), you should prefer the newer StringToItemParser, which is much more user-friendly, more
  * flexible, and also supports registering custom aliases for any item in any state.
+ *
+ * WARNING: This class does NOT support items added during or after PocketMine-MP 5.0.0. Use StringToItemParser for
+ * modern items.
  */
 final class LegacyStringToItemParser{
 	use SingletonTrait;
@@ -64,7 +68,7 @@ final class LegacyStringToItemParser{
 		$mappings = json_decode($mappingsRaw, true);
 		if(!is_array($mappings)) throw new AssumptionFailedError("Invalid mappings format, expected array");
 
-		foreach($mappings as $name => $id){
+		foreach(Utils::promoteKeys($mappings) as $name => $id){
 			if(!is_string($id)) throw new AssumptionFailedError("Invalid mappings format, expected string values");
 			$result->addMapping((string) $name, $id);
 		}

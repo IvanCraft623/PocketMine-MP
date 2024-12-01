@@ -56,7 +56,9 @@ class Main extends PluginBase implements Listener{
 			}
 		}), 10);
 
-		$this->waitingTests = [];
+		$this->waitingTests = [
+			//Add test objects here
+		];
 	}
 
 	public function onServerCommand(CommandEvent $event) : void{

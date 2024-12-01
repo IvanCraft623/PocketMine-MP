@@ -29,9 +29,13 @@ use pocketmine\block\utils\WallConnectionType;
 use pocketmine\math\Axis;
 use pocketmine\math\Facing;
 use pocketmine\utils\AssumptionFailedError;
+use function get_class;
+use function intdiv;
+use function log;
+use function spl_object_id;
 
 final class RuntimeDataReader implements RuntimeDataDescriber{
-	use RuntimeEnumDeserializerTrait;
+	use LegacyRuntimeEnumDescriberTrait;
 
 	private int $offset = 0;
 
@@ -55,7 +59,20 @@ final class RuntimeDataReader implements RuntimeDataDescriber{
 		$value = $this->readInt($bits);
 	}
 
-	protected function readBoundedInt(int $bits, int $min, int $max) : int{
+	/**
+	 * @deprecated Use {@link self::boundedIntAuto()} instead.
+	 */
+	public function boundedInt(int $bits, int $min, int $max, int &$value) : void{
+		$offset = $this->offset;
+		$this->boundedIntAuto($min, $max, $value);
+		$actualBits = $this->offset - $offset;
+		if($this->offset !== $offset + $bits){
+			throw new \InvalidArgumentException("Bits should be $actualBits for the given bounds, but received $bits. Use boundedIntAuto() for automatic bits calculation.");
+		}
+	}
+
+	private function readBoundedIntAuto(int $min, int $max) : int{
+		$bits = ((int) log($max - $min, 2)) + 1;
 		$result = $this->readInt($bits) + $min;
 		if($result < $min || $result > $max){
 			throw new InvalidSerializedRuntimeDataException("Value is outside the range $min - $max");
@@ -63,8 +80,8 @@ final class RuntimeDataReader implements RuntimeDataDescriber{
 		return $result;
 	}
 
-	public function boundedInt(int $bits, int $min, int $max, int &$value) : void{
-		$value = $this->readBoundedInt($bits, $min, $max);
+	public function boundedIntAuto(int $min, int $max, int &$value) : void{
+		$value = $this->readBoundedIntAuto($min, $max);
 	}
 
 	protected function readBool() : bool{
@@ -83,6 +100,20 @@ final class RuntimeDataReader implements RuntimeDataDescriber{
 			3 => Facing::WEST,
 			default => throw new AssumptionFailedError("Unreachable")
 		};
+	}
+
+	/**
+	 * @param int[] $faces
+	 */
+	public function facingFlags(array &$faces) : void{
+		$result = [];
+		foreach(Facing::ALL as $facing){
+			if($this->readBool()){
+				$result[$facing] = $facing;
+			}
+		}
+
+		$faces = $result;
 	}
 
 	/**
@@ -144,16 +175,18 @@ final class RuntimeDataReader implements RuntimeDataDescriber{
 	 */
 	public function wallConnections(array &$connections) : void{
 		$result = [];
-		//TODO: we can pack this into 7 bits instead of 8
+		$offset = 0;
+		$packed = $this->readBoundedIntAuto(0, (3 ** 4) - 1);
 		foreach(Facing::HORIZONTAL as $facing){
-			$type = $this->readBoundedInt(2, 0, 2);
+			$type = intdiv($packed,  (3 ** $offset)) % 3;
 			if($type !== 0){
 				$result[$facing] = match($type){
-					1 => WallConnectionType::SHORT(),
-					2 => WallConnectionType::TALL(),
+					1 => WallConnectionType::SHORT,
+					2 => WallConnectionType::TALL,
 					default => throw new AssumptionFailedError("Unreachable")
 				};
 			}
+			$offset++;
 		}
 
 		$connections = $result;
@@ -162,20 +195,11 @@ final class RuntimeDataReader implements RuntimeDataDescriber{
 	/**
 	 * @param BrewingStandSlot[] $slots
 	 * @phpstan-param array<int, BrewingStandSlot> $slots
+	 *
+	 * @deprecated Use {@link enumSet()} instead.
 	 */
 	public function brewingStandSlots(array &$slots) : void{
-		$result = [];
-		foreach([
-			BrewingStandSlot::EAST(),
-			BrewingStandSlot::NORTHWEST(),
-			BrewingStandSlot::SOUTHWEST(),
-		] as $member){
-			if($this->readBool()){
-				$result[$member->id()] = $member;
-			}
-		}
-
-		$slots = $result;
+		$this->enumSet($slots, BrewingStandSlot::cases());
 	}
 
 	public function railShape(int &$railShape) : void{
@@ -194,6 +218,27 @@ final class RuntimeDataReader implements RuntimeDataDescriber{
 		}
 
 		$railShape = $result;
+	}
+
+	public function enum(\UnitEnum &$case) : void{
+		$metadata = RuntimeEnumMetadata::from($case);
+		$raw = $this->readInt($metadata->bits);
+		$result = $metadata->intToEnum($raw);
+		if($result === null){
+			throw new InvalidSerializedRuntimeDataException("Invalid serialized value $raw for " . get_class($case));
+		}
+
+		$case = $result;
+	}
+
+	public function enumSet(array &$set, array $allCases) : void{
+		$result = [];
+		foreach($allCases as $case){
+			if($this->readBool()){
+				$result[spl_object_id($case)] = $case;
+			}
+		}
+		$set = $result;
 	}
 
 	public function getOffset() : int{ return $this->offset; }

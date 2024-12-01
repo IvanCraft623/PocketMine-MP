@@ -24,25 +24,43 @@ declare(strict_types=1);
 namespace pocketmine\world\format\io;
 
 use pocketmine\nbt\tag\CompoundTag;
-use pocketmine\world\format\Chunk;
+use pocketmine\world\format\SubChunk;
 
 final class ChunkData{
 
 	/**
+	 * @param SubChunk[]    $subChunks
 	 * @param CompoundTag[] $entityNBT
 	 * @param CompoundTag[] $tileNBT
+	 *
+	 * @phpstan-param array<int, SubChunk> $subChunks
+	 * @phpstan-param list<CompoundTag> $entityNBT
+	 * @phpstan-param list<CompoundTag> $tileNBT
 	 */
 	public function __construct(
-		private Chunk $chunk,
+		private array $subChunks,
+		private bool $populated,
 		private array $entityNBT,
 		private array $tileNBT
 	){}
 
-	public function getChunk() : Chunk{ return $this->chunk; }
+	/**
+	 * @return SubChunk[]
+	 * @phpstan-return array<int, SubChunk>
+	 */
+	public function getSubChunks() : array{ return $this->subChunks; }
 
-	/** @return CompoundTag[] */
+	public function isPopulated() : bool{ return $this->populated; }
+
+	/**
+	 * @return CompoundTag[]
+	 * @phpstan-return list<CompoundTag>
+	 */
 	public function getEntityNBT() : array{ return $this->entityNBT; }
 
-	/** @return CompoundTag[] */
+	/**
+	 * @return CompoundTag[]
+	 * @phpstan-return list<CompoundTag>
+	 */
 	public function getTileNBT() : array{ return $this->tileNBT; }
 }

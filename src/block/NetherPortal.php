@@ -34,7 +34,7 @@ class NetherPortal extends Transparent{
 
 	protected int $axis = Axis::X;
 
-	protected function describeState(RuntimeDataDescriber $w) : void{
+	protected function describeBlockOnlyState(RuntimeDataDescriber $w) : void{
 		$w->horizontalAxis($this->axis);
 	}
 
@@ -70,7 +70,7 @@ class NetherPortal extends Transparent{
 	}
 
 	public function getSupportType(int $facing) : SupportType{
-		return SupportType::NONE();
+		return SupportType::NONE;
 	}
 
 	public function getDrops(Item $item) : array{

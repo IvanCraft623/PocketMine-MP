@@ -25,6 +25,7 @@ namespace pocketmine\block;
 
 use pocketmine\block\tile\ShulkerBox as TileShulkerBox;
 use pocketmine\block\utils\AnyFacingTrait;
+use pocketmine\block\utils\SupportType;
 use pocketmine\data\runtime\RuntimeDataDescriber;
 use pocketmine\item\Item;
 use pocketmine\math\Vector3;
@@ -34,7 +35,7 @@ use pocketmine\world\BlockTransaction;
 class ShulkerBox extends Opaque{
 	use AnyFacingTrait;
 
-	protected function describeState(RuntimeDataDescriber $w) : void{
+	protected function describeBlockOnlyState(RuntimeDataDescriber $w) : void{
 		//NOOP - we don't read or write facing here, because the tile persists it
 	}
 
@@ -109,5 +110,9 @@ class ShulkerBox extends Opaque{
 		}
 
 		return true;
+	}
+
+	public function getSupportType(int $facing) : SupportType{
+		return SupportType::NONE;
 	}
 }

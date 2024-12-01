@@ -27,11 +27,12 @@ use pocketmine\block\utils\BrewingStandSlot;
 use pocketmine\block\utils\WallConnectionType;
 use pocketmine\math\Axis;
 use pocketmine\math\Facing;
-use pocketmine\utils\AssumptionFailedError;
 use function array_flip;
+use function log;
+use function spl_object_id;
 
 final class RuntimeDataWriter implements RuntimeDataDescriber{
-	use RuntimeEnumSerializerTrait;
+	use LegacyRuntimeEnumDescriberTrait;
 
 	private int $value = 0;
 	private int $offset = 0;
@@ -56,15 +57,28 @@ final class RuntimeDataWriter implements RuntimeDataDescriber{
 		$this->writeInt($bits, $value);
 	}
 
-	protected function writeBoundedInt(int $bits, int $min, int $max, int $value) : void{
+	/**
+	 * @deprecated Use {@link self::boundedIntAuto()} instead.
+	 */
+	public function boundedInt(int $bits, int $min, int $max, int &$value) : void{
+		$offset = $this->offset;
+		$this->writeBoundedIntAuto($min, $max, $value);
+		$actualBits = $this->offset - $offset;
+		if($actualBits !== $bits){
+			throw new \InvalidArgumentException("Bits should be $actualBits for the given bounds, but received $bits. Use boundedIntAuto() for automatic bits calculation.");
+		}
+	}
+
+	private function writeBoundedIntAuto(int $min, int $max, int $value) : void{
 		if($value < $min || $value > $max){
 			throw new \InvalidArgumentException("Value $value is outside the range $min - $max");
 		}
+		$bits = ((int) log($max - $min, 2)) + 1;
 		$this->writeInt($bits, $value - $min);
 	}
 
-	public function boundedInt(int $bits, int $min, int $max, int &$value) : void{
-		$this->writeBoundedInt($bits, $min, $max, $value);
+	public function boundedIntAuto(int $min, int $max, int &$value) : void{
+		$this->writeBoundedIntAuto($min, $max, $value);
 	}
 
 	protected function writeBool(bool $value) : void{
@@ -83,6 +97,16 @@ final class RuntimeDataWriter implements RuntimeDataDescriber{
 			Facing::WEST => 3,
 			default => throw new \InvalidArgumentException("Invalid horizontal facing $facing")
 		});
+	}
+
+	/**
+	 * @param int[] $faces
+	 */
+	public function facingFlags(array &$faces) : void{
+		$uniqueFaces = array_flip($faces);
+		foreach(Facing::ALL as $facing){
+			$this->writeBool(isset($uniqueFaces[$facing]));
+		}
 	}
 
 	/**
@@ -133,29 +157,27 @@ final class RuntimeDataWriter implements RuntimeDataDescriber{
 	 * @phpstan-param array<Facing::NORTH|Facing::EAST|Facing::SOUTH|Facing::WEST, WallConnectionType> $connections
 	 */
 	public function wallConnections(array &$connections) : void{
-		//TODO: we can pack this into 7 bits instead of 8
+		$packed = 0;
+		$offset = 0;
 		foreach(Facing::HORIZONTAL as $facing){
-			$this->writeBoundedInt(2, 0, 2, match($connections[$facing] ?? null){
+			$packed += match($connections[$facing] ?? null){
 				null => 0,
-				WallConnectionType::SHORT() => 1,
-				WallConnectionType::TALL() => 2,
-				default => throw new AssumptionFailedError("Unreachable")
-			});
+				WallConnectionType::SHORT => 1,
+				WallConnectionType::TALL => 2,
+			} * (3 ** $offset);
+			$offset++;
 		}
+		$this->writeBoundedIntAuto(0, (3 ** 4) - 1, $packed);
 	}
 
 	/**
 	 * @param BrewingStandSlot[] $slots
 	 * @phpstan-param array<int, BrewingStandSlot> $slots
+	 *
+	 * @deprecated Use {@link enumSet()} instead.
 	 */
 	public function brewingStandSlots(array &$slots) : void{
-		foreach([
-			BrewingStandSlot::EAST(),
-			BrewingStandSlot::NORTHWEST(),
-			BrewingStandSlot::SOUTHWEST(),
-		] as $member){
-			$this->writeBool(isset($slots[$member->id()]));
-		}
+		$this->enumSet($slots, BrewingStandSlot::cases());
 	}
 
 	public function railShape(int &$railShape) : void{
@@ -164,6 +186,17 @@ final class RuntimeDataWriter implements RuntimeDataDescriber{
 
 	public function straightOnlyRailShape(int &$railShape) : void{
 		$this->int(3, $railShape);
+	}
+
+	public function enum(\UnitEnum &$case) : void{
+		$metadata = RuntimeEnumMetadata::from($case);
+		$this->writeInt($metadata->bits, $metadata->enumToInt($case));
+	}
+
+	public function enumSet(array &$set, array $allCases) : void{
+		foreach($allCases as $case){
+			$this->writeBool(isset($set[spl_object_id($case)]));
+		}
 	}
 
 	public function getValue() : int{ return $this->value; }

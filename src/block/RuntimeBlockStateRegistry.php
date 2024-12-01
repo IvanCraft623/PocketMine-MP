@@ -25,11 +25,9 @@ namespace pocketmine\block;
 
 use pocketmine\block\BlockBreakInfo as BreakInfo;
 use pocketmine\block\BlockIdentifier as BID;
-use pocketmine\data\runtime\InvalidSerializedRuntimeDataException;
 use pocketmine\utils\AssumptionFailedError;
 use pocketmine\utils\SingletonTrait;
 use pocketmine\world\light\LightUpdate;
-use function get_class;
 use function min;
 
 /**
@@ -83,55 +81,21 @@ class RuntimeBlockStateRegistry{
 	}
 
 	/**
-	 * Generates all the possible valid blockstates for a given block type.
+	 * Maps a block type's state permutations to its corresponding state IDs. This is necessary for the block to be
+	 * recognized when fetching it by its state ID from chunks at runtime.
 	 *
-	 * @phpstan-return \Generator<int, Block, void, void>
+	 * @throws \InvalidArgumentException if the desired block type ID is already registered
 	 */
-	private static function generateAllStatesForType(Block $block) : \Generator{
-		//TODO: this bruteforce approach to discovering all valid states is very inefficient for larger state data sizes
-		//at some point we'll need to find a better way to do this
-		$bits = $block->getRequiredTypeDataBits() + $block->getRequiredStateDataBits();
-		if($bits > Block::INTERNAL_STATE_DATA_BITS){
-			throw new \InvalidArgumentException("Block state data cannot use more than " . Block::INTERNAL_STATE_DATA_BITS . " bits");
-		}
-		for($stateData = 0; $stateData < (1 << $bits); ++$stateData){
-			$v = clone $block;
-			try{
-				$v->decodeStateData($stateData);
-				if($v->computeStateData() !== $stateData){
-					//TODO: this should probably be a hard error
-					throw new \LogicException(get_class($block) . "::decodeStateData() accepts invalid state data (returned " . $v->computeStateData() . " for input $stateData)");
-				}
-			}catch(InvalidSerializedRuntimeDataException){ //invalid property combination, leave it
-				continue;
-			}
-
-			yield $v;
-		}
-	}
-
-	/**
-	 * Maps a block type to its corresponding type ID. This is necessary for the block to be recognized when loading
-	 * from disk, and also when being read at runtime.
-	 *
-	 * NOTE: If you are registering a new block type, you will need to add it to the creative inventory yourself - it
-	 * will not automatically appear there.
-	 *
-	 * @param bool $override Whether to override existing registrations
-	 *
-	 * @throws \InvalidArgumentException if something attempted to override an already-registered block without specifying the
-	 * $override parameter.
-	 */
-	public function register(Block $block, bool $override = false) : void{
+	public function register(Block $block) : void{
 		$typeId = $block->getTypeId();
 
-		if(!$override && isset($this->typeIndex[$typeId])){
-			throw new \InvalidArgumentException("Block ID $typeId is already used by another block, and override was not requested");
+		if(isset($this->typeIndex[$typeId])){
+			throw new \InvalidArgumentException("Block ID $typeId is already used by another block");
 		}
 
 		$this->typeIndex[$typeId] = clone $block;
 
-		foreach(self::generateAllStatesForType($block) as $v){
+		foreach($block->generateStatePermutations() as $v){
 			$this->fillStaticArrays($v->getStateId(), $v);
 		}
 	}
@@ -151,18 +115,6 @@ class RuntimeBlockStateRegistry{
 		}
 	}
 
-	/**
-	 * @internal
-	 * Returns the default state of the block type associated with the given type ID.
-	 */
-	public function fromTypeId(int $typeId) : Block{
-		if(isset($this->typeIndex[$typeId])){
-			return clone $this->typeIndex[$typeId];
-		}
-
-		throw new \InvalidArgumentException("Block ID $typeId is not registered");
-	}
-
 	public function fromStateId(int $stateId) : Block{
 		if($stateId < 0){
 			throw new \InvalidArgumentException("Block state ID cannot be negative");
@@ -171,7 +123,7 @@ class RuntimeBlockStateRegistry{
 			$block = clone $this->fullList[$stateId];
 		}else{
 			$typeId = $stateId >> Block::INTERNAL_STATE_DATA_BITS;
-			$stateData = $stateId & Block::INTERNAL_STATE_DATA_MASK;
+			$stateData = ($stateId ^ $typeId) & Block::INTERNAL_STATE_DATA_MASK;
 			$block = new UnknownBlock(new BID($typeId), new BlockTypeInfo(BreakInfo::instant()), $stateData);
 		}
 
@@ -179,23 +131,8 @@ class RuntimeBlockStateRegistry{
 	}
 
 	/**
-	 * Returns whether a specified block state is already registered in the block factory.
-	 */
-	public function isRegistered(int $typeId) : bool{
-		$b = $this->typeIndex[$typeId] ?? null;
-		return $b !== null && !($b instanceof UnknownBlock);
-	}
-
-	/**
 	 * @return Block[]
 	 * @phpstan-return array<int, Block>
-	 */
-	public function getAllKnownTypes() : array{
-		return $this->typeIndex;
-	}
-
-	/**
-	 * @return Block[]
 	 */
 	public function getAllKnownStates() : array{
 		return $this->fullList;
