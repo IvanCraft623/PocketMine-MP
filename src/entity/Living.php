@@ -163,7 +163,7 @@ abstract class Living extends Entity{
 					$this->frostWalkerLevel = null;
 				}
 			},
-			onContentChange: fn() => $this->frostWalkerLevel = null
+			onContentChange: function() : void{ $this->frostWalkerLevel = null; }
 		));
 
 		$health = $this->getMaxHealth();
@@ -716,10 +716,14 @@ abstract class Living extends Entity{
 	protected function applyFrostWalker(int $level) : void{
 		$radius = $level + 2;
 		$world = $this->getWorld();
+
+		$baseX = $this->location->getFloorX();
 		$y = $this->location->getFloorY() - 1;
+		$baseZ = $this->location->getFloorZ();
+
 		$frostedIce = VanillaBlocks::FROSTED_ICE();
-		for($x = -$radius; $x <= $radius; $x++){
-			for($z = -$radius; $z <= $radius; $z++){
+		for($x = $baseX - $radius; $x <= $baseX + $radius; $x++){
+			for($z = $baseZ - $radius; $z <= $baseZ + $radius; $z++){
 				$block = $world->getBlockAt($x, $y, $z);
 				if(
 					!$block instanceof Water ||
