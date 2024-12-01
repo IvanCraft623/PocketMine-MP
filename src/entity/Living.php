@@ -132,6 +132,8 @@ abstract class Living extends Entity{
 	protected bool $gliding = false;
 	protected bool $swimming = false;
 
+	private ?int $frostWalkerLevel = null;
+
 	protected function getInitialDragMultiplier() : float{ return 0.02; }
 
 	protected function getInitialGravity() : float{ return 0.08; }
@@ -155,6 +157,14 @@ abstract class Living extends Entity{
 			$this->getViewers(),
 			fn(EntityEventBroadcaster $broadcaster, array $recipients) => $broadcaster->onMobArmorChange($recipients, $this)
 		)));
+		$this->armorInventory->getListeners()->add(new CallbackInventoryListener(
+			onSlotChange: function(Inventory $inventory, int $slot) : void{
+				if($slot === ArmorInventory::SLOT_FEET){
+					$this->frostWalkerLevel = null;
+				}
+			},
+			onContentChange: fn() => $this->frostWalkerLevel = null
+		));
 
 		$health = $this->getMaxHealth();
 
@@ -700,25 +710,29 @@ abstract class Living extends Entity{
 		$diffX = abs($this->location->x - $oldX);
 		$diffZ = abs($this->location->z - $oldZ);
 
-		$frostWalkerLevel = $this->armorInventory->getBoots()->getEnchantmentLevel(VanillaEnchantments::FROST_WALKER());
-		if($frostWalkerLevel > 0 && ($diffX > 0.0001 || $diffZ > 0.0001)){
-			$radius = $frostWalkerLevel + 2;
-			$world = $this->getWorld();
-			for($x = -$radius; $x <= $radius; $x++){
-				for($z = -$radius; $z <= $radius; $z++){
-					$pos = $this->location->add($x, -1, $z)->floor();
-					$block = $world->getBlock($pos);
-					if(!$block instanceof Water || !$block->isSource()){
-						continue;
-					}
-					if($world->getBlock($pos->up())->getTypeId() !== BlockTypeIds::AIR){
-						continue;
-					}
-					if(count($world->getNearbyEntities(AxisAlignedBB::one()->offset($pos->x, $pos->y, $pos->z))) !== 0){
-						continue;
-					}
-					$world->setBlock($pos, VanillaBlocks::FROSTED_ICE());
+		$frostWalkerLevel = $this->frostWalkerLevel ??= $this->armorInventory->getBoots()->getEnchantmentLevel(VanillaEnchantments::FROST_WALKER());
+		if($frostWalkerLevel > 0 && ($diffX > self::MOTION_THRESHOLD || $diffZ > self::MOTION_THRESHOLD)){
+			$this->applyFrostWalker($frostWalkerLevel);
+		}
+	}
+
+	protected function applyFrostWalker(int $level) : void{
+		$radius = $level + 2;
+		$world = $this->getWorld();
+		$y = $this->location->getFloorY() - 1;
+		for($x = -$radius; $x <= $radius; $x++){
+			for($z = -$radius; $z <= $radius; $z++){
+				$block = $world->getBlockAt($x, $y, $z);
+				if(!$block instanceof Water || !$block->isSource()){
+					continue;
 				}
+				if($world->getBlockAt($x, $y + 1, $z)->getTypeId() !== BlockTypeIds::AIR){
+					continue;
+				}
+				if(count($world->getNearbyEntities(AxisAlignedBB::one()->offset($x, $y, $z))) !== 0){
+					continue;
+				}
+				$world->setBlockAt($x, $y, $z, VanillaBlocks::FROSTED_ICE());
 			}
 		}
 	}
