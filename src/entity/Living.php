@@ -720,6 +720,7 @@ abstract class Living extends Entity{
 		$radius = $level + 2;
 		$world = $this->getWorld();
 		$y = $this->location->getFloorY() - 1;
+		$frostedIce = VanillaBlocks::FROSTED_ICE();
 		for($x = -$radius; $x <= $radius; $x++){
 			for($z = -$radius; $z <= $radius; $z++){
 				$block = $world->getBlockAt($x, $y, $z);
@@ -732,7 +733,7 @@ abstract class Living extends Entity{
 				if(count($world->getNearbyEntities(AxisAlignedBB::one()->offset($x, $y, $z))) !== 0){
 					continue;
 				}
-				$world->setBlockAt($x, $y, $z, VanillaBlocks::FROSTED_ICE());
+				$world->setBlockAt($x, $y, $z, $frostedIce);
 			}
 		}
 	}
