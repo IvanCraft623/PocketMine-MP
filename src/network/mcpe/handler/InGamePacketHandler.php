@@ -24,7 +24,6 @@ declare(strict_types=1);
 namespace pocketmine\network\mcpe\handler;
 
 use pocketmine\block\BaseSign;
-use pocketmine\block\ItemFrame;
 use pocketmine\block\Lectern;
 use pocketmine\block\tile\Sign;
 use pocketmine\block\utils\SignText;
@@ -60,7 +59,6 @@ use pocketmine\network\mcpe\protocol\ContainerClosePacket;
 use pocketmine\network\mcpe\protocol\EmotePacket;
 use pocketmine\network\mcpe\protocol\InteractPacket;
 use pocketmine\network\mcpe\protocol\InventoryTransactionPacket;
-use pocketmine\network\mcpe\protocol\ItemFrameDropItemPacket;
 use pocketmine\network\mcpe\protocol\ItemStackRequestPacket;
 use pocketmine\network\mcpe\protocol\ItemStackResponsePacket;
 use pocketmine\network\mcpe\protocol\LabTablePacket;
@@ -253,7 +251,7 @@ class InGamePacketHandler extends PacketHandler{
 			if(count($blockActions) > 100){
 				throw new PacketHandlingException("Too many block actions in PlayerAuthInputPacket");
 			}
-			foreach($blockActions as $k => $blockAction){
+			foreach(Utils::promoteKeys($blockActions) as $k => $blockAction){
 				$actionHandled = false;
 				if($blockAction instanceof PlayerBlockActionStopBreak){
 					$actionHandled = $this->handlePlayerActionFromData($blockAction->getActionType(), new BlockPosition(0, 0, 0), Facing::DOWN);
@@ -444,9 +442,18 @@ class InGamePacketHandler extends PacketHandler{
 			return false;
 		}
 		$serverItemStack = $this->session->getTypeConverter()->coreItemStackToNet($sourceSlotItem);
-		//because the client doesn't tell us the expected itemstack ID, we have to deep-compare our known
-		//itemstack info with the one the client sent. This is costly, but we don't have any other option :(
-		if(!$serverItemStack->equals($clientItemStack)){
+		//Sadly we don't have itemstack IDs here, so we have to compare the basic item properties to ensure that we're
+		//dropping the item the client expects (inventory might be out of sync with the client).
+		if(
+			$serverItemStack->getId() !== $clientItemStack->getId() ||
+			$serverItemStack->getMeta() !== $clientItemStack->getMeta() ||
+			$serverItemStack->getCount() !== $clientItemStack->getCount() ||
+			$serverItemStack->getBlockRuntimeId() !== $clientItemStack->getBlockRuntimeId()
+			//Raw extraData may not match because of TAG_Compound key ordering differences, and decoding it to compare
+			//is costly. Assume that we're in sync if id+meta+count+runtimeId match.
+			//NB: Make sure $clientItemStack isn't used to create the dropped item, as that would allow the client
+			//to change the item NBT since we're not validating it.
+		){
 			return false;
 		}
 
@@ -486,15 +493,18 @@ class InGamePacketHandler extends PacketHandler{
 
 				$blockPos = $data->getBlockPosition();
 				$vBlockPos = new Vector3($blockPos->getX(), $blockPos->getY(), $blockPos->getZ());
-				if(!$this->player->interactBlock($vBlockPos, $data->getFace(), $clickPos)){
-					$this->onFailedBlockAction($vBlockPos, $data->getFace());
-				}
+				$this->player->interactBlock($vBlockPos, $data->getFace(), $clickPos);
+				//always sync this in case plugins caused a different result than the client expected
+				//we *could* try to enhance detection of plugin-altered behaviour, but this would require propagating
+				//more information up the stack. For now I think this is good enough.
+				//if only the client would tell us what blocks it thinks changed...
+				$this->syncBlocksNearby($vBlockPos, $data->getFace());
 				return true;
 			case UseItemTransactionData::ACTION_BREAK_BLOCK:
 				$blockPos = $data->getBlockPosition();
 				$vBlockPos = new Vector3($blockPos->getX(), $blockPos->getY(), $blockPos->getZ());
 				if(!$this->player->breakBlock($vBlockPos)){
-					$this->onFailedBlockAction($vBlockPos, null);
+					$this->syncBlocksNearby($vBlockPos, null);
 				}
 				return true;
 			case UseItemTransactionData::ACTION_CLICK_AIR:
@@ -522,9 +532,9 @@ class InGamePacketHandler extends PacketHandler{
 	}
 
 	/**
-	 * Internal function used to execute rollbacks when an action fails on a block.
+	 * Syncs blocks nearby to ensure that the client and server agree on the world's blocks after a block interaction.
 	 */
-	private function onFailedBlockAction(Vector3 $blockPos, ?int $face) : void{
+	private function syncBlocksNearby(Vector3 $blockPos, ?int $face) : void{
 		if($blockPos->distanceSquared($this->player->getLocation()) < 10000){
 			$blocks = $blockPos->sidesArray();
 			if($face !== null){
@@ -661,7 +671,7 @@ class InGamePacketHandler extends PacketHandler{
 	}
 
 	public function handleActorPickRequest(ActorPickRequestPacket $packet) : bool{
-		return false; //TODO
+		return $this->player->pickEntity($packet->actorUniqueId);
 	}
 
 	public function handlePlayerAction(PlayerActionPacket $packet) : bool{
@@ -675,7 +685,7 @@ class InGamePacketHandler extends PacketHandler{
 			case PlayerAction::START_BREAK:
 				self::validateFacing($face);
 				if(!$this->player->attackBlock($pos, $face)){
-					$this->onFailedBlockAction($pos, $face);
+					$this->syncBlocksNearby($pos, $face);
 				}
 
 				break;
@@ -799,15 +809,6 @@ class InGamePacketHandler extends PacketHandler{
 		return true;
 	}
 
-	public function handleItemFrameDropItem(ItemFrameDropItemPacket $packet) : bool{
-		$blockPosition = $packet->blockPosition;
-		$block = $this->player->getWorld()->getBlockAt($blockPosition->getX(), $blockPosition->getY(), $blockPosition->getZ());
-		if($block instanceof ItemFrame && $block->getFramedItem() !== null){
-			return $this->player->attackBlock(new Vector3($blockPosition->getX(), $blockPosition->getY(), $blockPosition->getZ()), $block->getFacing());
-		}
-		return false;
-	}
-
 	public function handleBossEvent(BossEventPacket $packet) : bool{
 		return false; //TODO
 	}
@@ -869,8 +870,12 @@ class InGamePacketHandler extends PacketHandler{
 	}
 
 	public function handleBookEdit(BookEditPacket $packet) : bool{
+		$inventory = $this->player->getInventory();
+		if(!$inventory->slotExists($packet->inventorySlot)){
+			return false;
+		}
 		//TODO: break this up into book API things
-		$oldBook = $this->player->getInventory()->getItem($packet->inventorySlot);
+		$oldBook = $inventory->getItem($packet->inventorySlot);
 		if(!($oldBook instanceof WritableBook)){
 			return false;
 		}
@@ -985,11 +990,6 @@ class InGamePacketHandler extends PacketHandler{
 	}
 
 	public function handleLecternUpdate(LecternUpdatePacket $packet) : bool{
-		if($packet->dropBook){
-			//Drop book is handled with an interact event on use item transaction
-			return true;
-		}
-
 		$pos = $packet->blockPosition;
 		$chunkX = $pos->getX() >> Chunk::COORD_BIT_SIZE;
 		$chunkZ = $pos->getZ() >> Chunk::COORD_BIT_SIZE;
@@ -1001,7 +1001,7 @@ class InGamePacketHandler extends PacketHandler{
 		$lectern = $world->getBlockAt($pos->getX(), $pos->getY(), $pos->getZ());
 		if($lectern instanceof Lectern && $this->player->canInteract($lectern->getPosition(), 15)){
 			if(!$lectern->onPageTurn($packet->page)){
-				$this->onFailedBlockAction($lectern->getPosition(), null);
+				$this->syncBlocksNearby($lectern->getPosition(), null);
 			}
 			return true;
 		}
