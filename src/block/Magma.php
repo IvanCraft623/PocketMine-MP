@@ -27,7 +27,6 @@ use pocketmine\entity\Entity;
 use pocketmine\entity\Living;
 use pocketmine\event\entity\EntityDamageByBlockEvent;
 use pocketmine\event\entity\EntityDamageEvent;
-use pocketmine\item\enchantment\VanillaEnchantments;
 
 class Magma extends Opaque{
 
