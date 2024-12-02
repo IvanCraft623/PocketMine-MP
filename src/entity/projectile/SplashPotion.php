@@ -177,8 +177,6 @@ class SplashPotion extends Throwable{
 
 	/**
 	 * Sets whether this splash potion will create an area-effect-cloud when it lands.
-	 *
-	 * @return $this
 	 */
 	public function setLinger(bool $value = true) : void{
 		$this->linger = $value;
