@@ -59,7 +59,6 @@ use pocketmine\network\mcpe\EntityEventBroadcaster;
 use pocketmine\network\mcpe\NetworkSession;
 use pocketmine\network\mcpe\PacketBroadcaster;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
-use pocketmine\network\mcpe\protocol\serializer\PacketSerializerContext;
 use pocketmine\network\mcpe\protocol\types\CompressionAlgorithm;
 use pocketmine\network\mcpe\raklib\RakLibInterface;
 use pocketmine\network\mcpe\StandardEntityEventBroadcaster;
@@ -90,6 +89,8 @@ use pocketmine\promise\Promise;
 use pocketmine\promise\PromiseResolver;
 use pocketmine\resourcepacks\ResourcePackManager;
 use pocketmine\scheduler\AsyncPool;
+use pocketmine\scheduler\TimingsCollectionTask;
+use pocketmine\scheduler\TimingsControlTask;
 use pocketmine\snooze\SleeperHandler;
 use pocketmine\stats\SendUsageTask;
 use pocketmine\thread\log\AttachableThreadSafeLogger;
@@ -737,12 +738,15 @@ class Server{
 
 	/**
 	 * @return string[][]
+	 * @phpstan-return array<string, list<string>>
 	 */
 	public function getCommandAliases() : array{
 		$section = $this->configGroup->getProperty(Yml::ALIASES);
 		$result = [];
 		if(is_array($section)){
-			foreach($section as $key => $value){
+			foreach(Utils::promoteKeys($section) as $key => $value){
+				//TODO: more validation needed here
+				//key might not be a string, value might not be list<string>
 				$commands = [];
 				if(is_array($value)){
 					$commands = $value;
@@ -750,7 +754,7 @@ class Server{
 					$commands[] = (string) $value;
 				}
 
-				$result[$key] = $commands;
+				$result[(string) $key] = $commands;
 			}
 		}
 
@@ -892,7 +896,36 @@ class Server{
 				$poolSize = max(1, (int) $poolSize);
 			}
 
+			TimingsHandler::setEnabled($this->configGroup->getPropertyBool(Yml::SETTINGS_ENABLE_PROFILING, false));
+			$this->profilingTickRate = $this->configGroup->getPropertyInt(Yml::SETTINGS_PROFILE_REPORT_TRIGGER, self::TARGET_TICKS_PER_SECOND);
+
 			$this->asyncPool = new AsyncPool($poolSize, max(-1, $this->configGroup->getPropertyInt(Yml::MEMORY_ASYNC_WORKER_HARD_LIMIT, 256)), $this->autoloader, $this->logger, $this->tickSleeper);
+			$this->asyncPool->addWorkerStartHook(function(int $i) : void{
+				if(TimingsHandler::isEnabled()){
+					$this->asyncPool->submitTaskToWorker(TimingsControlTask::setEnabled(true), $i);
+				}
+			});
+			TimingsHandler::getToggleCallbacks()->add(function(bool $enable) : void{
+				foreach($this->asyncPool->getRunningWorkers() as $workerId){
+					$this->asyncPool->submitTaskToWorker(TimingsControlTask::setEnabled($enable), $workerId);
+				}
+			});
+			TimingsHandler::getReloadCallbacks()->add(function() : void{
+				foreach($this->asyncPool->getRunningWorkers() as $workerId){
+					$this->asyncPool->submitTaskToWorker(TimingsControlTask::reload(), $workerId);
+				}
+			});
+			TimingsHandler::getCollectCallbacks()->add(function() : array{
+				$promises = [];
+				foreach($this->asyncPool->getRunningWorkers() as $workerId){
+					$resolver = new PromiseResolver();
+					$this->asyncPool->submitTaskToWorker(new TimingsCollectionTask($resolver), $workerId);
+
+					$promises[] = $resolver->getPromise();
+				}
+
+				return $promises;
+			});
 
 			$netCompressionThreshold = -1;
 			if($this->configGroup->getPropertyInt(Yml::NETWORK_BATCH_THRESHOLD, 256) >= 0){
@@ -965,9 +998,6 @@ class Server{
 				(VersionInfo::IS_DEVELOPMENT_BUILD ? TextFormat::YELLOW : "") . $this->getPocketMineVersion() . TextFormat::RESET
 			)));
 			$this->logger->info($this->language->translate(KnownTranslationFactory::pocketmine_server_license($this->getName())));
-
-			TimingsHandler::setEnabled($this->configGroup->getPropertyBool(Yml::SETTINGS_ENABLE_PROFILING, false));
-			$this->profilingTickRate = $this->configGroup->getPropertyInt(Yml::SETTINGS_PROFILE_REPORT_TRIGGER, self::TARGET_TICKS_PER_SECOND);
 
 			DefaultPermissions::registerCorePermissions();
 
@@ -1095,7 +1125,11 @@ class Server{
 
 		$anyWorldFailedToLoad = false;
 
-		foreach((array) $this->configGroup->getProperty(Yml::WORLDS, []) as $name => $options){
+		foreach(Utils::promoteKeys((array) $this->configGroup->getProperty(Yml::WORLDS, [])) as $name => $options){
+			if(!is_string($name)){
+				//TODO: this probably should be an error
+				continue;
+			}
 			if($options === null){
 				$options = [];
 			}elseif(!is_array($options)){
@@ -1187,12 +1221,11 @@ class Server{
 		bool $useQuery,
 		PacketBroadcaster $packetBroadcaster,
 		EntityEventBroadcaster $entityEventBroadcaster,
-		PacketSerializerContext $packetSerializerContext,
 		TypeConverter $typeConverter
 	) : bool{
 		$prettyIp = $ipV6 ? "[$ip]" : $ip;
 		try{
-			$rakLibRegistered = $this->network->registerInterface(new RakLibInterface($this, $ip, $port, $ipV6, $packetBroadcaster, $entityEventBroadcaster, $packetSerializerContext, $typeConverter));
+			$rakLibRegistered = $this->network->registerInterface(new RakLibInterface($this, $ip, $port, $ipV6, $packetBroadcaster, $entityEventBroadcaster, $typeConverter));
 		}catch(NetworkInterfaceStartException $e){
 			$this->logger->emergency($this->language->translate(KnownTranslationFactory::pocketmine_server_networkStartFailed(
 				$ip,
@@ -1219,15 +1252,14 @@ class Server{
 		$useQuery = $this->configGroup->getConfigBool(ServerProperties::ENABLE_QUERY, true);
 
 		$typeConverter = TypeConverter::getInstance();
-		$packetSerializerContext = new PacketSerializerContext($typeConverter->getItemTypeDictionary());
-		$packetBroadcaster = new StandardPacketBroadcaster($this, $packetSerializerContext);
+		$packetBroadcaster = new StandardPacketBroadcaster($this);
 		$entityEventBroadcaster = new StandardEntityEventBroadcaster($packetBroadcaster, $typeConverter);
 
 		if(
-			!$this->startupPrepareConnectableNetworkInterfaces($this->getIp(), $this->getPort(), false, $useQuery, $packetBroadcaster, $entityEventBroadcaster, $packetSerializerContext, $typeConverter) ||
+			!$this->startupPrepareConnectableNetworkInterfaces($this->getIp(), $this->getPort(), false, $useQuery, $packetBroadcaster, $entityEventBroadcaster, $typeConverter) ||
 			(
 				$this->configGroup->getConfigBool(ServerProperties::ENABLE_IPV6, true) &&
-				!$this->startupPrepareConnectableNetworkInterfaces($this->getIpV6(), $this->getPortV6(), true, $useQuery, $packetBroadcaster, $entityEventBroadcaster, $packetSerializerContext, $typeConverter)
+				!$this->startupPrepareConnectableNetworkInterfaces($this->getIpV6(), $this->getPortV6(), true, $useQuery, $packetBroadcaster, $entityEventBroadcaster, $typeConverter)
 			)
 		){
 			return false;
@@ -1669,9 +1701,11 @@ class Server{
 		$this->isRunning = false;
 
 		//Force minimum uptime to be >= 120 seconds, to reduce the impact of spammy crash loops
-		$spacing = ((int) $this->startTime) - time() + 120;
+		$uptime = time() - ((int) $this->startTime);
+		$minUptime = 120;
+		$spacing = $minUptime - $uptime;
 		if($spacing > 0){
-			echo "--- Waiting $spacing seconds to throttle automatic restart (you can kill the process safely now) ---" . PHP_EOL;
+			echo "--- Uptime {$uptime}s - waiting {$spacing}s to throttle automatic restart (you can kill the process safely now) ---" . PHP_EOL;
 			sleep($spacing);
 		}
 		@Process::kill(Process::pid());
