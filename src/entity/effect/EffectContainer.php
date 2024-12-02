@@ -146,12 +146,12 @@ class EffectContainer{
 
 	/**
 	 * Adds an effect.
-	 * If the force parameter it's true or {@link EffectContainer::canAdd()} conditions are met.
+	 * If {@link EffectContainer::canAdd()} conditions are met.
 	 *
 	 * @return bool whether the effect has been successfully applied.
 	 */
-	public function add(EffectInstance $effect, bool $force = false) : bool{
-		if($force || $this->canAdd($effect)){
+	public function add(EffectInstance $effect) : bool{
+		if($this->canAdd($effect)){
 			$index = spl_object_id($effect->getType());
 			$replacesOldEffect = isset($this->effects[$index]);
 

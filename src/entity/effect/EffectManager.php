@@ -58,13 +58,6 @@ class EffectManager extends EffectContainer{
 		}
 	}
 
-	/**
-	 * Adds an effect to the mob.
-	 * If a weaker effect of the same type is already applied, it will be replaced.
-	 * If a weaker or equal-strength effect is already applied but has a shorter duration, it will be replaced.
-	 *
-	 * @return bool whether the effect has been successfully applied.
-	 */
 	public function add(EffectInstance $effect) : bool{
 		$index = spl_object_id($effect->getType());
 		$oldEffect = $this->effects[$index] ?? null;
@@ -85,7 +78,7 @@ class EffectManager extends EffectContainer{
 
 		$effect->getType()->add($this->entity, $effect);
 
-		return parent::add($effect, true);
+		return parent::add($effect);
 	}
 
 	public function tick(int $tickDiff = 1) : bool{
