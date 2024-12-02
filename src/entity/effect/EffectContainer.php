@@ -146,6 +146,7 @@ class EffectContainer{
 
 	/**
 	 * Adds an effect.
+	 * If the force parameter it's true or {@link EffectContainer::canAdd()} conditions are met.
 	 *
 	 * @return bool whether the effect has been successfully applied.
 	 */

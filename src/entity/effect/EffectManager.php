@@ -65,7 +65,7 @@ class EffectManager extends EffectContainer{
 	 *
 	 * @return bool whether the effect has been successfully applied.
 	 */
-	public function add(EffectInstance $effect, bool $force = false) : bool{
+	public function add(EffectInstance $effect) : bool{
 		$index = spl_object_id($effect->getType());
 		$oldEffect = $this->effects[$index] ?? null;
 
@@ -75,7 +75,7 @@ class EffectManager extends EffectContainer{
 		}
 
 		$ev->call();
-		if(!$force && $ev->isCancelled()){
+		if($ev->isCancelled()){
 			return false;
 		}
 
