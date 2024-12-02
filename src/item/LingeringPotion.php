@@ -58,7 +58,9 @@ class LingeringPotion extends ProjectileItem{
 	}
 
 	protected function createEntity(Location $location, Player $thrower) : Throwable{
-		return (new SplashPotionEntity($location, $thrower, $this->potionType))->setLinger();
+		$projectile = new SplashPotionEntity($location, $thrower, $this->potionType);
+		$projectile->setLinger();
+		return $projectile;
 	}
 
 	public function getThrowForce() : float{

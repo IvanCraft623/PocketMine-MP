@@ -180,10 +180,9 @@ class SplashPotion extends Throwable{
 	 *
 	 * @return $this
 	 */
-	public function setLinger(bool $value = true) : self{
+	public function setLinger(bool $value = true) : void{
 		$this->linger = $value;
 		$this->networkPropertiesDirty = true;
-		return $this;
 	}
 
 	/**
