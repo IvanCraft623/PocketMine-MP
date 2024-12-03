@@ -1202,7 +1202,7 @@ final class StringToItemParser extends StringToTParser{
 
 			$result->register($prefix("potion"), fn() => Items::POTION()->setType($potionType));
 			$result->register($prefix("splash_potion"), fn() => Items::SPLASH_POTION()->setType($potionType));
-			$result->register($prefix("lingering_potion"), fn() => Items::SPLASH_POTION()->setType($potionType));
+			$result->register($prefix("lingering_potion"), fn() => Items::LINGERING_POTION()->setType($potionType));
 		}
 	}
 
