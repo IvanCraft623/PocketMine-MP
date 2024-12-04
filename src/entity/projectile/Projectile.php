@@ -310,7 +310,7 @@ abstract class Projectile extends Entity{
 			}
 		}
 
-		if ($this->despawnsOnEntityHit()) {
+		if($this->despawnsOnEntityHit()){
 			$this->flagForDespawn();
 		}
 	}
