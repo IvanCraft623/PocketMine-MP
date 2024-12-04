@@ -38,8 +38,8 @@ use pocketmine\network\mcpe\protocol\types\entity\EntityIds;
 use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataCollection;
 use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataFlags;
 use pocketmine\player\Player;
-use pocketmine\world\sound\TridentHitGroundSound;
 use pocketmine\world\sound\TridentHitEntitySound;
+use pocketmine\world\sound\TridentHitGroundSound;
 
 class Trident extends Projectile{
 
