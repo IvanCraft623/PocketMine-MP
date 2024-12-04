@@ -39,7 +39,7 @@ use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataCollection;
 use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataFlags;
 use pocketmine\player\Player;
 use pocketmine\world\sound\TridentHitGroundSound;
-use pocketmine\world\sound\TridentHitSound;
+use pocketmine\world\sound\TridentHitEntitySound;
 
 class Trident extends Projectile{
 
@@ -109,7 +109,7 @@ class Trident extends Projectile{
 		parent::onHitEntity($entityHit, $hitResult);
 
 		$this->canCollide = false;
-		$this->broadcastSound(new TridentHitSound());
+		$this->broadcastSound(new TridentHitEntitySound());
 		$this->setMotion(new Vector3($this->motion->x * -0.01, $this->motion->y * -0.1, $this->motion->z * -0.01));
 	}
 
