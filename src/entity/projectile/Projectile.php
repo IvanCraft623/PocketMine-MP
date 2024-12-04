@@ -246,7 +246,7 @@ abstract class Projectile extends Entity{
 			}
 
 			$this->isCollided = $this->onGround = true;
-			if ($motionBeforeOnHit->equals($this->motion)) {
+			if($motionBeforeOnHit->equals($this->motion)){
 				$this->motion = Vector3::zero();
 			}
 		}else{
