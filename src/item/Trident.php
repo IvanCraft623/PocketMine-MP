@@ -46,12 +46,16 @@ class Trident extends Tool implements Releasable{
 			return ItemUseResult::FAIL;
 		}
 
+		$item = $this->pop();
+		if($player->hasFiniteResources()){
+			$item->applyDamage(1);
+		}
 		$entity = new TridentEntity(Location::fromObject(
 			$player->getEyePos(),
 			$player->getWorld(),
 			($location->yaw > 180 ? 360 : 0) - $location->yaw,
 			-$location->pitch
-		), $this->pop(), $player);
+		), $item, $player);
 		$p = $diff / 20;
 		$baseForce = min((($p ** 2) + $p * 2) / 3, 1) * 2.4;
 		$entity->setMotion($player->getDirectionVector()->multiply($baseForce));
@@ -65,11 +69,6 @@ class Trident extends Tool implements Releasable{
 		$ev->getEntity()->spawnToAll();
 		$location->getWorld()->addSound($location, new TridentThrowSound());
 
-		if($player->hasFiniteResources()){
-			$item = $entity->getItem();
-			$item->applyDamage(1);
-			$entity->setItem($item);
-		}
 		return ItemUseResult::SUCCESS;
 	}
 
