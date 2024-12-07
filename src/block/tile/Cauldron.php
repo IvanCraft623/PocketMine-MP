@@ -31,7 +31,6 @@ use pocketmine\data\bedrock\PotionTypeIdMap;
 use pocketmine\data\SavedDataLoadingException;
 use pocketmine\item\Item;
 use pocketmine\item\ItemTypeIds;
-use pocketmine\item\LingeringPotion;
 use pocketmine\item\Potion;
 use pocketmine\item\SplashPotion;
 use pocketmine\item\VanillaItems;
@@ -77,7 +76,7 @@ final class Cauldron extends Spawnable{
 			default => throw new AssumptionFailedError("Unexpected potion item type")
 		});
 
-		$type = $this->potionItem instanceof LingeringPotion || $this->potionItem instanceof Potion || $this->potionItem instanceof SplashPotion ? $this->potionItem->getType() : null;
+		$type = $this->potionItem instanceof Potion || $this->potionItem instanceof SplashPotion ? $this->potionItem->getType() : null;
 		$nbt->setShort(self::TAG_POTION_ID, $type === null ? self::POTION_ID_NONE : PotionTypeIdMap::getInstance()->toId($type));
 
 		if($this->customWaterColor !== null){
@@ -115,7 +114,7 @@ final class Cauldron extends Spawnable{
 			default => throw new AssumptionFailedError("Unexpected potion item type")
 		});
 
-		$type = $this->potionItem instanceof LingeringPotion || $this->potionItem instanceof Potion || $this->potionItem instanceof SplashPotion ? $this->potionItem->getType() : null;
+		$type = $this->potionItem instanceof Potion || $this->potionItem instanceof SplashPotion ? $this->potionItem->getType() : null;
 		$nbt->setShort(self::TAG_POTION_ID, $type === null ? self::POTION_ID_NONE : PotionTypeIdMap::getInstance()->toId($type));
 
 		if($this->customWaterColor !== null){
