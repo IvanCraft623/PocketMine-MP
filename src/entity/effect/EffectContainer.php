@@ -127,8 +127,6 @@ class EffectContainer{
 	 * In the following cases it will return true:
 	 * - if the effect type is not already applied
 	 * - if an existing effect of the same type can be replaced (due to shorter duration or lower level)
-	 *
-	 * @return bool whether the effect can been applied.
 	 */
 	public function canAdd(EffectInstance $effect) : bool{
 		$index = spl_object_id($effect->getType());
