@@ -118,7 +118,7 @@ class AreaEffectCloud extends Entity{
 		$this->effectContainer->setDefaultBubbleColor(PotionSplashParticle::DEFAULT_COLOR());
 		$this->effectContainer->getEffectAddHooks()->add(function() : void{ $this->networkPropertiesDirty = true; });
 		$this->effectContainer->getEffectRemoveHooks()->add(function() : void{ $this->networkPropertiesDirty = true; });
-		$this->effectContainer->setEffectValidatorForBubbles(function(EffectInstance $effect) : bool{
+		$this->effectContainer->setEffectFilterForBubbles(function(EffectInstance $effect) : bool{
 			return $effect->isVisible();
 		});
 

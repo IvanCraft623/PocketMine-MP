@@ -69,7 +69,7 @@ class EffectContainer{
 		$this->effectAddHooks = new ObjectSet();
 		$this->effectRemoveHooks = new ObjectSet();
 
-		$this->setEffectValidatorForBubbles(function(EffectInstance $effect) : bool{
+		$this->setEffectFilterForBubbles(function(EffectInstance $effect) : bool{
 			return $effect->isVisible() && $effect->getType()->hasBubbles();
 		});
 	}
@@ -166,9 +166,11 @@ class EffectContainer{
 	}
 
 	/**
+	 * Sets the filter that determines which effects will be displayed in the bubbles.
+	 *
 	 * @phpstan-param \Closure(EffectInstance) : bool $effectValidator
 	 */
-	public function setEffectValidatorForBubbles(\Closure $effectValidator) : void{
+	public function setEffectFilterForBubbles(\Closure $effectValidator) : void{
 		Utils::validateCallableSignature(new CallbackType(new ReturnType(BuiltInTypes::BOOL), new ParameterType("effect", EffectInstance::class)), $effectValidator);
 		$this->effectValidatorForBubbles = $effectValidator;
 	}
