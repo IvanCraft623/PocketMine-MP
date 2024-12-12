@@ -60,7 +60,7 @@ class EffectContainer{
 	 *
 	 * @phpstan-var \Closure(EffectInstance) : bool
 	 */
-	protected \Closure $effectValidatorForBubbles;
+	protected \Closure $effectFilterForBubbles;
 
 	public function __construct(){
 		$this->bubbleColor = new Color(0, 0, 0, 0);
@@ -170,7 +170,7 @@ class EffectContainer{
 	 */
 	public function setEffectFilterForBubbles(\Closure $effectValidator) : void{
 		Utils::validateCallableSignature(new CallbackType(new ReturnType(BuiltInTypes::BOOL), new ParameterType("effect", EffectInstance::class)), $effectValidator);
-		$this->effectValidatorForBubbles = $effectValidator;
+		$this->effectFilterForBubbles = $effectValidator;
 	}
 
 	/**
@@ -181,7 +181,7 @@ class EffectContainer{
 		$colors = [];
 		$ambient = true;
 		foreach($this->effects as $effect){
-			if(($this->effectValidatorForBubbles)($effect)){
+			if(($this->effectFilterForBubbles)($effect)){
 				$level = $effect->getEffectLevel();
 				$color = $effect->getColor();
 				for($i = 0; $i < $level; ++$i){
