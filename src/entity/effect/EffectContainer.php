@@ -51,9 +51,7 @@ class EffectContainer{
 	 */
 	protected ObjectSet $effectRemoveHooks;
 
-	protected Color $defaultBubbleColor;
-
-	protected ?Color $bubbleColor = null;
+	protected Color $bubbleColor;
 
 	protected bool $onlyAmbientEffects = false;
 
@@ -65,7 +63,7 @@ class EffectContainer{
 	protected \Closure $effectValidatorForBubbles;
 
 	public function __construct(){
-		$this->defaultBubbleColor = new Color(0, 0, 0, 0);
+		$this->bubbleColor = new Color(0, 0, 0, 0);
 		$this->effectAddHooks = new ObjectSet();
 		$this->effectRemoveHooks = new ObjectSet();
 
@@ -200,21 +198,13 @@ class EffectContainer{
 			$this->bubbleColor = Color::mix(...$colors);
 			$this->onlyAmbientEffects = $ambient;
 		}else{
-			$this->bubbleColor = null;
+			$this->bubbleColor = new Color(0, 0, 0, 0);
 			$this->onlyAmbientEffects = false;
 		}
 	}
 
-	public function getDefaultBubbleColor() : Color{
-		return $this->defaultBubbleColor;
-	}
-
-	public function setDefaultBubbleColor(Color $color) : void{
-		$this->defaultBubbleColor = $color;
-	}
-
 	public function getBubbleColor() : Color{
-		return $this->bubbleColor ?? $this->defaultBubbleColor;
+		return $this->bubbleColor;
 	}
 
 	public function hasOnlyAmbientEffects() : bool{

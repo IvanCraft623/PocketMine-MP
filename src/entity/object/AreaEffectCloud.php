@@ -115,7 +115,6 @@ class AreaEffectCloud extends Entity{
 		parent::initEntity($nbt);
 
 		$this->effectContainer = new EffectContainer();
-		$this->effectContainer->setDefaultBubbleColor(PotionSplashParticle::DEFAULT_COLOR());
 		$this->effectContainer->getEffectAddHooks()->add(function() : void{ $this->networkPropertiesDirty = true; });
 		$this->effectContainer->getEffectRemoveHooks()->add(function() : void{ $this->networkPropertiesDirty = true; });
 		$this->effectContainer->setEffectFilterForBubbles(function(EffectInstance $effect) : bool{
@@ -452,7 +451,9 @@ class AreaEffectCloud extends Entity{
 		$properties->setFloat(EntityMetadataProperties::AREA_EFFECT_CLOUD_RADIUS, $this->radius);
 		$properties->setFloat(EntityMetadataProperties::AREA_EFFECT_CLOUD_PICKUP_COUNT, $this->pickupCount);
 		$properties->setInt(EntityMetadataProperties::AREA_EFFECT_CLOUD_WAITING, $spawnTime + $this->waiting);
-		$properties->setInt(EntityMetadataProperties::POTION_COLOR, Binary::signInt($this->effectContainer->getBubbleColor()->toARGB()));
+		$properties->setInt(EntityMetadataProperties::POTION_COLOR, Binary::signInt((
+			count($this->effectContainer->all()) === 0 ? PotionSplashParticle::DEFAULT_COLOR() : $this->effectContainer->getBubbleColor()
+		)->toARGB()));
 		$properties->setByte(EntityMetadataProperties::POTION_AMBIENT, $this->effectContainer->hasOnlyAmbientEffects() ? 1 : 0);
 
 		//TODO: HACK! we purposely fill these in with invalid values to disable the client-sided radius calculation.
