@@ -72,7 +72,7 @@ class SplashPotion extends ProjectileItem{
 	}
 
 	/**
-	 * Returns whether this splash potion will create an area-effect cloud when it lands on it's projectile form.
+	 * Returns whether this splash potion will create an area-effect cloud on impact.
 	 */
 	public function willLinger() : bool{
 		return $this->linger;
