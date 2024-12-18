@@ -82,7 +82,11 @@ class RakLibServer extends Thread{
 	}
 
 	protected function onRun() : void{
+		//TODO: switch to manually triggered GC
+		//the best time to do it is between ticks when the server would otherwise be sleeping, but RakLib's current
+		//design doesn't allow this as of 1.1.1
 		gc_enable();
+
 		ini_set("display_errors", '1');
 		ini_set("display_startup_errors", '1');
 		\GlobalLogger::set($this->logger);
