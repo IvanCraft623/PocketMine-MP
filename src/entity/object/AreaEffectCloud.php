@@ -347,7 +347,6 @@ class AreaEffectCloud extends Entity{
 				return true;
 			}
 			$this->nextUpdateAge = $this->age + self::UPDATE_DELAY;
-			$this->networkPropertiesDirty = true;
 
 			foreach($this->victims as $entityId => $expiration){
 				if($this->age >= $expiration){
