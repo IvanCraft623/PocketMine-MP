@@ -391,7 +391,8 @@ class AreaEffectCloud extends Entity{
 			}
 
 			foreach($ev->getAffectedEntities() as $entity){
-				foreach($this->getCloudEffects() as $effect){
+				foreach($this->effectContainer->all() as $effect){
+					$effect = clone $effect; //avoid accidental modification
 					if($effect->getType() instanceof InstantEffect){
 						$effect->getType()->applyEffect($entity, $effect, 0.5, $this);
 					}else{
@@ -415,20 +416,6 @@ class AreaEffectCloud extends Entity{
 		}
 
 		return $hasUpdate;
-	}
-
-	/**
-	 * Returns the effects the area effect cloud provides.
-	 *
-	 * Used to get COPIES to avoid accidentally modifying the same effect instance
-	 * already applied to another entity.
-	 *
-	 * @return EffectInstance[]
-	 */
-	public function getCloudEffects() : array{
-		return array_map(function(EffectInstance $effect) : EffectInstance{
-			return clone $effect;
-		}, $this->effectContainer->all());
 	}
 
 	protected function syncNetworkData(EntityMetadataCollection $properties) : void{
