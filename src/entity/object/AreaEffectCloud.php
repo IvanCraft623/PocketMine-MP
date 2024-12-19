@@ -81,7 +81,6 @@ class AreaEffectCloud extends Entity{
 	/** @var array<int, int> entity ID => expiration */
 	protected array $victims = [];
 
-	protected int $nextUpdateAge = self::UPDATE_DELAY;
 	protected int $maxAge = self::DEFAULT_DURATION;
 	protected int $maxAgeChangeOnUse = self::DEFAULT_DURATION_CHANGE_ON_USE;
 
@@ -151,7 +150,7 @@ class AreaEffectCloud extends Entity{
 			}
 		}else{
 			foreach($this->potionType->getEffects() as $effect){
-				$this->effectContainer->add($effect);
+				$this->effectContainer->add($effect->setDuration((int) round($effect->getDuration() / 4)));
 				if($effect->getType() instanceof InstantEffect){
 					$this->setReapplicationDelay(0);
 				}
@@ -341,12 +340,11 @@ class AreaEffectCloud extends Entity{
 			return true;
 		}
 		$this->setRadius($radius);
-		if($this->age >= $this->nextUpdateAge){
+		if($this->age >= self::UPDATE_DELAY && ($this->age % self::UPDATE_DELAY) === 0){
 			if($this->age > $this->maxAge){
 				$this->flagForDespawn();
 				return true;
 			}
-			$this->nextUpdateAge = $this->age + self::UPDATE_DELAY;
 
 			foreach($this->victims as $entityId => $expiration){
 				if($this->age >= $expiration){
@@ -397,7 +395,7 @@ class AreaEffectCloud extends Entity{
 					if($effect->getType() instanceof InstantEffect){
 						$effect->getType()->applyEffect($entity, $effect, 0.5, $this);
 					}else{
-						$entity->getEffects()->add($effect->setDuration((int) round($effect->getDuration() / 4)));
+						$entity->getEffects()->add($effect);
 					}
 				}
 				if($this->reapplicationDelay !== 0){
