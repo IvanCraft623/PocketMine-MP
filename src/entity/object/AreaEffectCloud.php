@@ -299,7 +299,6 @@ class AreaEffectCloud extends Entity{
 	 */
 	public function setMaxAge(int $maxAge) : void{
 		$this->maxAge = $maxAge;
-		$this->networkPropertiesDirty = true;
 	}
 
 	/**
@@ -330,7 +329,6 @@ class AreaEffectCloud extends Entity{
 	 */
 	public function setReapplicationDelay(int $delay) : void{
 		$this->reapplicationDelay = $delay;
-		$this->networkPropertiesDirty = true;
 	}
 
 	protected function entityBaseTick(int $tickDiff = 1) : bool{
@@ -439,19 +437,19 @@ class AreaEffectCloud extends Entity{
 	protected function syncNetworkData(EntityMetadataCollection $properties) : void{
 		parent::syncNetworkData($properties);
 
-		$spawnTime = $this->getWorld()->getTime() - $this->age;
-		$properties->setInt(EntityMetadataProperties::AREA_EFFECT_CLOUD_SPAWN_TIME, $spawnTime);
-		$properties->setInt(EntityMetadataProperties::AREA_EFFECT_CLOUD_DURATION, $this->duration);
+		//visual properties
 		$properties->setFloat(EntityMetadataProperties::AREA_EFFECT_CLOUD_RADIUS, $this->radius);
-		$properties->setFloat(EntityMetadataProperties::AREA_EFFECT_CLOUD_PICKUP_COUNT, $this->pickupCount);
-		$properties->setInt(EntityMetadataProperties::AREA_EFFECT_CLOUD_WAITING, $spawnTime + $this->waiting);
 		$properties->setInt(EntityMetadataProperties::POTION_COLOR, Binary::signInt((
 			count($this->effectContainer->all()) === 0 ? PotionSplashParticle::DEFAULT_COLOR() : $this->effectContainer->getBubbleColor()
 		)->toARGB()));
-		$properties->setByte(EntityMetadataProperties::POTION_AMBIENT, $this->effectContainer->hasOnlyAmbientEffects() ? 1 : 0);
 
-		//TODO: HACK! we purposely fill these in with invalid values to disable the client-sided radius calculation.
+		//these are properties the client expects, and are used for client-sided logic, which we don't want
+		$properties->setByte(EntityMetadataProperties::POTION_AMBIENT, 0);
+		$properties->setInt(EntityMetadataProperties::AREA_EFFECT_CLOUD_DURATION, -1);
 		$properties->setFloat(EntityMetadataProperties::AREA_EFFECT_CLOUD_RADIUS_CHANGE_ON_PICKUP, 0);
 		$properties->setFloat(EntityMetadataProperties::AREA_EFFECT_CLOUD_RADIUS_PER_TICK, 0);
+		$properties->setInt(EntityMetadataProperties::AREA_EFFECT_CLOUD_SPAWN_TIME, 0);
+		$properties->setFloat(EntityMetadataProperties::AREA_EFFECT_CLOUD_PICKUP_COUNT, 0);
+		$properties->setInt(EntityMetadataProperties::AREA_EFFECT_CLOUD_WAITING, 0);
 	}
 }
