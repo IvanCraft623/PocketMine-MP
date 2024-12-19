@@ -167,6 +167,9 @@ class World implements ChunkManager{
 
 	public const DEFAULT_TICKED_BLOCKS_PER_SUBCHUNK_PER_TICK = 3;
 
+	//TODO: this could probably do with being a lot bigger
+	private const BLOCK_CACHE_SIZE_CAP = 2048;
+
 	/**
 	 * @var Player[] entity runtime ID => Player
 	 * @phpstan-var array<int, Player>
@@ -202,6 +205,7 @@ class World implements ChunkManager{
 	 * @phpstan-var array<ChunkPosHash, array<ChunkBlockPosHash, Block>>
 	 */
 	private array $blockCache = [];
+	private int $blockCacheSize = 0;
 	/**
 	 * @var AxisAlignedBB[][][] chunkHash => [relativeBlockHash => AxisAlignedBB[]]
 	 * @phpstan-var array<ChunkPosHash, array<ChunkBlockPosHash, list<AxisAlignedBB>>>
@@ -653,6 +657,7 @@ class World implements ChunkManager{
 
 		$this->provider->close();
 		$this->blockCache = [];
+		$this->blockCacheSize = 0;
 		$this->blockCollisionBoxCache = [];
 
 		$this->unloaded = true;
@@ -1138,13 +1143,16 @@ class World implements ChunkManager{
 	public function clearCache(bool $force = false) : void{
 		if($force){
 			$this->blockCache = [];
+			$this->blockCacheSize = 0;
 			$this->blockCollisionBoxCache = [];
 		}else{
-			$count = 0;
+			//Recalculate this when we're asked - blockCacheSize may be higher than the real size
+			$this->blockCacheSize = 0;
 			foreach($this->blockCache as $list){
-				$count += count($list);
-				if($count > 2048){
+				$this->blockCacheSize += count($list);
+				if($this->blockCacheSize > self::BLOCK_CACHE_SIZE_CAP){
 					$this->blockCache = [];
+					$this->blockCacheSize = 0;
 					break;
 				}
 			}
@@ -1152,11 +1160,24 @@ class World implements ChunkManager{
 			$count = 0;
 			foreach($this->blockCollisionBoxCache as $list){
 				$count += count($list);
-				if($count > 2048){
+				if($count > self::BLOCK_CACHE_SIZE_CAP){
 					//TODO: Is this really the best logic?
 					$this->blockCollisionBoxCache = [];
 					break;
 				}
+			}
+		}
+	}
+
+	private function trimBlockCache() : void{
+		$before = $this->blockCacheSize;
+		//Since PHP maintains key order, earliest in foreach should be the oldest entries
+		//Older entries are less likely to be hot, so destroying these should usually have the lowest impact on performance
+		foreach($this->blockCache as $chunkHash => $blocks){
+			unset($this->blockCache[$chunkHash]);
+			$this->blockCacheSize -= count($blocks);
+			if($this->blockCacheSize < self::BLOCK_CACHE_SIZE_CAP){
+				break;
 			}
 		}
 	}
@@ -1921,6 +1942,10 @@ class World implements ChunkManager{
 
 		if($addToCache && $relativeBlockHash !== null){
 			$this->blockCache[$chunkHash][$relativeBlockHash] = $block;
+
+			if(++$this->blockCacheSize >= self::BLOCK_CACHE_SIZE_CAP){
+				$this->trimBlockCache();
+			}
 		}
 
 		return $block;
@@ -1967,6 +1992,7 @@ class World implements ChunkManager{
 		$relativeBlockHash = World::chunkBlockHash($x, $y, $z);
 
 		unset($this->blockCache[$chunkHash][$relativeBlockHash]);
+		$this->blockCacheSize--;
 		unset($this->blockCollisionBoxCache[$chunkHash][$relativeBlockHash]);
 		//blocks like fences have collision boxes that reach into neighbouring blocks, so we need to invalidate the
 		//caches for those blocks as well
@@ -2570,6 +2596,7 @@ class World implements ChunkManager{
 
 		$this->chunks[$chunkHash] = $chunk;
 
+		$this->blockCacheSize -= count($this->blockCache[$chunkHash] ?? []);
 		unset($this->blockCache[$chunkHash]);
 		unset($this->blockCollisionBoxCache[$chunkHash]);
 		unset($this->changedBlocks[$chunkHash]);
@@ -2854,6 +2881,8 @@ class World implements ChunkManager{
 			$this->logger->debug("Chunk $x $z has been upgraded, will be saved at the next autosave opportunity");
 		}
 		$this->chunks[$chunkHash] = $chunk;
+
+		$this->blockCacheSize -= count($this->blockCache[$chunkHash] ?? []);
 		unset($this->blockCache[$chunkHash]);
 		unset($this->blockCollisionBoxCache[$chunkHash]);
 
@@ -3013,6 +3042,7 @@ class World implements ChunkManager{
 		}
 
 		unset($this->chunks[$chunkHash]);
+		$this->blockCacheSize -= count($this->blockCache[$chunkHash] ?? []);
 		unset($this->blockCache[$chunkHash]);
 		unset($this->blockCollisionBoxCache[$chunkHash]);
 		unset($this->changedBlocks[$chunkHash]);

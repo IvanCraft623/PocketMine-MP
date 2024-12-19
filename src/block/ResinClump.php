@@ -21,24 +21,34 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\plugin;
+namespace pocketmine\block;
 
-/**
- * @deprecated
- */
-interface ResourceProvider{
-	/**
-	 * Gets an embedded resource on the plugin file.
-	 * WARNING: You must close the resource given using fclose()
-	 *
-	 * @return null|resource Resource data, or null
-	 */
-	public function getResource(string $filename);
+use pocketmine\block\utils\MultiAnySupportTrait;
+use pocketmine\block\utils\SupportType;
+
+final class ResinClump extends Transparent{
+	use MultiAnySupportTrait;
+
+	public function isSolid() : bool{
+		return false;
+	}
+
+	public function getSupportType(int $facing) : SupportType{
+		return SupportType::NONE;
+	}
+
+	public function canBeReplaced() : bool{
+		return true;
+	}
 
 	/**
-	 * Returns all the resources packaged with the plugin in the form ["path/in/resources" => SplFileInfo]
-	 *
-	 * @return \SplFileInfo[]
+	 * @return int[]
 	 */
-	public function getResources() : array;
+	protected function getInitialPlaceFaces(Block $blockReplace) : array{
+		return $blockReplace instanceof ResinClump ? $blockReplace->faces : [];
+	}
+
+	protected function recalculateCollisionBoxes() : array{
+		return [];
+	}
 }
