@@ -41,7 +41,6 @@ use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataCollection;
 use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataProperties;
 use pocketmine\utils\Binary;
 use pocketmine\world\particle\PotionSplashParticle;
-use function array_map;
 use function count;
 use function max;
 use function round;
