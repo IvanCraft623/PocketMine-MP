@@ -48,16 +48,16 @@ use function round;
 
 class AreaEffectCloud extends Entity{
 
-	public const DURATION = 600; // in ticks
-	public const DURATION_ON_USE = 0; // in ticks
+	public const DEFAULT_DURATION = 600; // in ticks
+	public const DEFAULT_DURATION_CHANGE_ON_USE = 0; // in ticks
 
-	public const WAIT_TIME = 10; // in ticks
+	public const UPDATE_DELAY = 10; // in ticks
 	public const REAPPLICATION_DELAY = 40; // in ticks
 
 	public const DEFAULT_RADIUS = 3.0; // in blocks
-	public const RADIUS_CHANGE_ON_PICKUP = -0.5; // in blocks
-	public const RADIUS_ON_USE = -0.5; // in blocks
-	public const RADIUS_PER_TICK = -0.005; // in blocks
+	public const DEFAULT_RADIUS_CHANGE_ON_PICKUP = -0.5; // in blocks
+	public const DEFAULT_RADIUS_CHANGE_ON_USE = -0.5; // in blocks
+	public const DEFAULT_RADIUS_CHANGE_PER_TICK = -(self::DEFAULT_RADIUS / self::DEFAULT_DURATION); // in blocks
 
 	public const TAG_POTION_ID = "PotionId"; //TAG_Short
 	protected const TAG_SPAWN_TICK = "SpawnTick"; //TAG_Long
@@ -65,7 +65,7 @@ class AreaEffectCloud extends Entity{
 	protected const TAG_PICKUP_COUNT = "PickupCount"; //TAG_Int
 	protected const TAG_DURATION_ON_USE = "DurationOnUse"; //TAG_Int
 	protected const TAG_REAPPLICATION_DELAY = "ReapplicationDelay"; //TAG_Int
-	public const TAG_INITIAL_RADIUS = "InitialRadius"; //TAG_Float
+	protected const TAG_INITIAL_RADIUS = "InitialRadius"; //TAG_Float
 	protected const TAG_RADIUS = "Radius"; //TAG_Float
 	protected const TAG_RADIUS_CHANGE_ON_PICKUP = "RadiusChangeOnPickup"; //TAG_Float
 	protected const TAG_RADIUS_ON_USE = "RadiusOnUse"; //TAG_Float
@@ -81,25 +81,23 @@ class AreaEffectCloud extends Entity{
 	/** @var array<int, int> entity ID => expiration */
 	protected array $victims = [];
 
-	protected int $waiting = self::WAIT_TIME;
-	protected int $duration = self::DURATION;
-	protected int $durationChangeOnUse = self::DURATION_ON_USE;
+	protected int $nextUpdateAge = self::UPDATE_DELAY;
+	protected int $maxAge = self::DEFAULT_DURATION;
+	protected int $maxAgeChangeOnUse = self::DEFAULT_DURATION_CHANGE_ON_USE;
 
 	protected int $reapplicationDelay = self::REAPPLICATION_DELAY;
 
 	protected int $pickupCount = 0;
-	protected float $radiusChangeOnPickup = self::RADIUS_CHANGE_ON_PICKUP;
+	protected float $radiusChangeOnPickup = self::DEFAULT_RADIUS_CHANGE_ON_PICKUP;
 
+	protected float $initialRadius = self::DEFAULT_RADIUS;
 	protected float $radius = self::DEFAULT_RADIUS;
-	protected float $radiusChangeOnUse = self::RADIUS_ON_USE;
-	protected float $radiusChangePerTick = self::RADIUS_PER_TICK;
-
-	//TODO: Custom particle.
+	protected float $radiusChangeOnUse = self::DEFAULT_RADIUS_CHANGE_ON_USE;
+	protected float $radiusChangePerTick = self::DEFAULT_RADIUS_CHANGE_PER_TICK;
 
 	public function __construct(
 		Location $location,
 		protected PotionType $potionType,
-		protected float $initialRadius = self::DEFAULT_RADIUS,
 		?CompoundTag $nbt = null
 	){
 		parent::__construct($location, $nbt);
@@ -123,14 +121,16 @@ class AreaEffectCloud extends Entity{
 
 		$worldTime = $this->getWorld()->getTime();
 		$this->age = max($worldTime - $nbt->getLong(self::TAG_SPAWN_TICK, $worldTime), 0);
-		$this->duration = $nbt->getInt(self::TAG_DURATION, self::DURATION);
-		$this->durationChangeOnUse = $nbt->getInt(self::TAG_DURATION_ON_USE, self::DURATION_ON_USE);
+		$this->maxAge = $nbt->getInt(self::TAG_DURATION, self::DEFAULT_DURATION);
+		$this->maxAgeChangeOnUse = $nbt->getInt(self::TAG_DURATION_ON_USE, self::DEFAULT_DURATION_CHANGE_ON_USE);
 		$this->pickupCount = $nbt->getInt(self::TAG_PICKUP_COUNT, 0);
 		$this->reapplicationDelay = $nbt->getInt(self::TAG_REAPPLICATION_DELAY, self::REAPPLICATION_DELAY);
+
+		$this->initialRadius = $nbt->getFloat(self::TAG_INITIAL_RADIUS, self::DEFAULT_RADIUS);
 		$this->setRadius($nbt->getFloat(self::TAG_RADIUS, $this->initialRadius));
-		$this->radiusChangeOnPickup = $nbt->getFloat(self::TAG_RADIUS_CHANGE_ON_PICKUP, self::RADIUS_CHANGE_ON_PICKUP);
-		$this->radiusChangeOnUse = $nbt->getFloat(self::TAG_RADIUS_ON_USE, self::RADIUS_ON_USE);
-		$this->radiusChangePerTick = $nbt->getFloat(self::TAG_RADIUS_PER_TICK, self::RADIUS_PER_TICK);
+		$this->radiusChangeOnPickup = $nbt->getFloat(self::TAG_RADIUS_CHANGE_ON_PICKUP, self::DEFAULT_RADIUS_CHANGE_ON_PICKUP);
+		$this->radiusChangeOnUse = $nbt->getFloat(self::TAG_RADIUS_ON_USE, self::DEFAULT_RADIUS_CHANGE_ON_USE);
+		$this->radiusChangePerTick = $nbt->getFloat(self::TAG_RADIUS_PER_TICK, self::DEFAULT_RADIUS_CHANGE_PER_TICK);
 
 		/** @var CompoundTag[]|ListTag|null $effectsTag */
 		$effectsTag = $nbt->getListTag(self::TAG_EFFECTS);
@@ -149,6 +149,13 @@ class AreaEffectCloud extends Entity{
 					$e->getByte("Ambient", 0) !== 0
 				));
 			}
+		}else{
+			foreach($this->potionType->getEffects() as $effect){
+				$this->effectContainer->add($effect);
+				if($effect->getType() instanceof InstantEffect){
+					$this->setReapplicationDelay(0);
+				}
+			}
 		}
 	}
 
@@ -157,8 +164,8 @@ class AreaEffectCloud extends Entity{
 
 		$nbt->setLong(self::TAG_SPAWN_TICK, $this->getWorld()->getTime() - $this->age);
 		$nbt->setShort(self::TAG_POTION_ID, PotionTypeIdMap::getInstance()->toId($this->potionType));
-		$nbt->setInt(self::TAG_DURATION, $this->duration);
-		$nbt->setInt(self::TAG_DURATION_ON_USE, $this->durationChangeOnUse);
+		$nbt->setInt(self::TAG_DURATION, $this->maxAge);
+		$nbt->setInt(self::TAG_DURATION_ON_USE, $this->maxAgeChangeOnUse);
 		$nbt->setInt(self::TAG_PICKUP_COUNT, $this->pickupCount);
 		$nbt->setInt(self::TAG_REAPPLICATION_DELAY, $this->reapplicationDelay);
 		$nbt->setFloat(self::TAG_INITIAL_RADIUS, $this->initialRadius);
@@ -192,7 +199,7 @@ class AreaEffectCloud extends Entity{
 	}
 
 	/**
-	 * Returns the time it have lived (in ticks).
+	 * Returns the current age of the cloud (in ticks).
 	 */
 	public function getAge() : int{
 		return $this->age;
@@ -221,7 +228,7 @@ class AreaEffectCloud extends Entity{
 	}
 
 	/**
-	 * Sets the radius (in blocks).
+	 * Sets the current radius (in blocks).
 	 */
 	protected function setRadius(float $radius) : void{
 		$this->radius = $radius;
@@ -281,49 +288,34 @@ class AreaEffectCloud extends Entity{
 	}
 
 	/**
-	 * Returns the value that must be reached by age to perform an update (in ticks).
+	 * Returns the age at which the cloud will despawn.
 	 */
-	public function getWaiting() : int{
-		return $this->waiting;
+	public function getMaxAge() : int{
+		return $this->maxAge;
 	}
 
 	/**
-	 * Sets the value that must be reached by age to perform an update (in ticks).
+	 * Sets the age at which the cloud will despawn.
 	 */
-	public function setWaiting(int $time) : void{
-		$this->waiting = $time;
+	public function setMaxAge(int $maxAge) : void{
+		$this->maxAge = $maxAge;
 		$this->networkPropertiesDirty = true;
 	}
 
 	/**
-	 * Returns the duration which this cloud will exist for (in ticks).
-	 */
-	public function getDuration() : int{
-		return $this->duration;
-	}
-
-	/**
-	 * Sets the duration which this cloud will exist for (in ticks).
-	 */
-	public function setDuration(int $duration) : void{
-		$this->duration = $duration;
-		$this->networkPropertiesDirty = true;
-	}
-
-	/**
-	 * Returns the amount that the duration of this cloud will add by when it
+	 * Returns the amount that the max age of this cloud will change by when it
 	 * applies an effect to an entity (in ticks).
 	 */
-	public function getDurationChangeOnUse() : int{
-		return $this->durationChangeOnUse;
+	public function getMaxAgeChangeOnUse() : int{
+		return $this->maxAgeChangeOnUse;
 	}
 
 	/**
-	 * Sets the amount that the duration of this cloud will add by when it
+	 * Sets the amount that the max age of this cloud will change by when it
 	 * applies an effect to an entity (in ticks).
 	 */
-	public function setDurationChangeOnUse(int $durationChangeOnUse) : void{
-		$this->durationChangeOnUse = $durationChangeOnUse;
+	public function setMaxAgeChangeOnUse(int $maxAgeChangeOnUse) : void{
+		$this->maxAgeChangeOnUse = $maxAgeChangeOnUse;
 	}
 
 	/**
@@ -351,22 +343,24 @@ class AreaEffectCloud extends Entity{
 			return true;
 		}
 		$this->setRadius($radius);
-		if($this->age >= $this->waiting){
-			if($this->age > $this->duration){
+		if($this->age >= $this->nextUpdateAge){
+			if($this->age > $this->maxAge){
 				$this->flagForDespawn();
 				return true;
 			}
+			$this->nextUpdateAge = $this->age + self::UPDATE_DELAY;
+			$this->networkPropertiesDirty = true;
+
 			foreach($this->victims as $entityId => $expiration){
 				if($this->age >= $expiration){
 					unset($this->victims[$entityId]);
 				}
 			}
-			$this->setWaiting($this->age + self::WAIT_TIME);
 
 			/** @var Living[] $entities */
 			$entities = [];
 			$radiusChange = 0.0;
-			$durationChange = 0;
+			$maxAgeChange = 0;
 			foreach($this->getWorld()->getCollidingEntities($this->getBoundingBox(), $this) as $entity){
 				if(!$entity instanceof Living || isset($this->victims[$entity->getId()])){
 					continue;
@@ -384,9 +378,9 @@ class AreaEffectCloud extends Entity{
 						break;
 					}
 				}
-				if($this->durationChangeOnUse !== 0){
-					$durationChange += $this->durationChangeOnUse;
-					if($this->duration + $durationChange <= 0){
+				if($this->maxAgeChangeOnUse !== 0){
+					$maxAgeChange += $this->maxAgeChangeOnUse;
+					if($this->maxAge + $maxAgeChange <= 0){
 						break;
 					}
 				}
@@ -415,13 +409,13 @@ class AreaEffectCloud extends Entity{
 			}
 
 			$radius = $this->radius + $radiusChange;
-			$duration = $this->duration + $durationChange;
-			if($radius <= 0 || $duration <= 0){
+			$maxAge = $this->maxAge + $maxAgeChange;
+			if($radius <= 0 || $maxAge <= 0){
 				$this->flagForDespawn();
 				return true;
 			}
 			$this->setRadius($radius);
-			$this->setDuration($duration);
+			$this->setMaxAge($maxAge);
 			$hasUpdate = true;
 		}
 

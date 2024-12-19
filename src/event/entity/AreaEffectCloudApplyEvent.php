@@ -29,8 +29,7 @@ use pocketmine\event\Cancellable;
 use pocketmine\event\CancellableTrait;
 
 /**
- * Called when a area effect cloud applies it's effects. Happens once
- * every {@link AreaEffectCloud::getWaiting()} is reached and there are affected entities.
+ * Called when an area effect cloud applies effects to entities.
  *
  * @phpstan-extends EntityEvent<AreaEffectCloud>
  */

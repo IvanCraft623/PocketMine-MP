@@ -95,7 +95,6 @@ final class EntityFactory{
 			return new AreaEffectCloud(
 				Helper::parseLocation($nbt, $world),
 				$potionType,
-				$nbt->getFloat(AreaEffectCloud::TAG_INITIAL_RADIUS, AreaEffectCloud::DEFAULT_RADIUS),
 				$nbt
 			);
 		}, ['AreaEffectCloud', 'minecraft:area_effect_cloud']);
