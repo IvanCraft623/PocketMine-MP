@@ -150,7 +150,7 @@ class AreaEffectCloud extends Entity{
 			}
 		}else{
 			foreach($this->potionType->getEffects() as $effect){
-				$this->effectContainer->add($effect->setDuration((int) round($effect->getDuration() / 4)));
+				$this->effectContainer->add($effect);
 				if($effect->getType() instanceof InstantEffect){
 					$this->setReapplicationDelay(0);
 				}
@@ -395,7 +395,7 @@ class AreaEffectCloud extends Entity{
 					if($effect->getType() instanceof InstantEffect){
 						$effect->getType()->applyEffect($entity, $effect, 0.5, $this);
 					}else{
-						$entity->getEffects()->add($effect);
+						$entity->getEffects()->add($effect->setDuration((int) round($effect->getDuration() / 4)));
 					}
 				}
 				if($this->reapplicationDelay !== 0){
