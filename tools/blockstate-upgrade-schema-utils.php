@@ -901,6 +901,7 @@ function cmdDumpTable(array $argv) : int{
 	}
 
 	$table = loadUpgradeTableFromFile($tableFile, reverse: false);
+	ksort($table, SORT_STRING);
 
 	foreach(Utils::stringifyKeys($table) as $oldName => $mappings){
 		fwrite($output, "---------- MAPPING LIST: $oldName ----------\n");
