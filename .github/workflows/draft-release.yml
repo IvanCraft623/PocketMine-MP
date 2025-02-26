@@ -182,6 +182,8 @@ jobs:
 
             :information_source: Download the recommended PHP binary [here](${{ steps.php-binary-url.outputs.PHP_BINARY_URL }}).
 
+            :warning: Found a bug? Report it on our [issue tracker](${{ github.server_url }}/${{ github.repository }}/issues). **We can't fix bugs if you don't report them.**
+
       - name: Post draft release URL on PR
         if: github.event_name == 'pull_request_target'
         uses: thollander/actions-comment-pull-request@v3
