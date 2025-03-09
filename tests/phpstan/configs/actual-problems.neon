@@ -20,7 +20,7 @@ parameters:
 
 		-
 			message: '#^Dynamic new is not allowed\.$#'
-			identifier: pocketmine.new.noDynamic
+			identifier: pocketmine.new.dynamic
 			count: 1
 			path: ../../../src/Server.php
 
@@ -62,7 +62,7 @@ parameters:
 
 		-
 			message: '#^Dynamic new is not allowed\.$#'
-			identifier: pocketmine.new.noDynamic
+			identifier: pocketmine.new.dynamic
 			count: 1
 			path: ../../../src/block/Block.php
 
@@ -524,7 +524,7 @@ parameters:
 
 		-
 			message: '#^Dynamic new is not allowed\.$#'
-			identifier: pocketmine.new.noDynamic
+			identifier: pocketmine.new.dynamic
 			count: 1
 			path: ../../../src/block/tile/TileFactory.php
 
@@ -956,7 +956,7 @@ parameters:
 
 		-
 			message: '#^Dynamic new is not allowed\.$#'
-			identifier: pocketmine.new.noDynamic
+			identifier: pocketmine.new.dynamic
 			count: 1
 			path: ../../../src/plugin/PluginManager.php
 
@@ -1274,7 +1274,7 @@ parameters:
 
 		-
 			message: '#^Dynamic new is not allowed\.$#'
-			identifier: pocketmine.new.noDynamic
+			identifier: pocketmine.new.dynamic
 			count: 1
 			path: ../../../src/world/generator/GeneratorRegisterTask.php
 

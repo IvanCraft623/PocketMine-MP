@@ -45,7 +45,7 @@ final class DisallowDynamicNewRule implements Rule{
 			return [
 				RuleErrorBuilder::message("Dynamic new is not allowed.")
 					->tip("For factories, use closures instead. Closures can implement custom logic, are statically analyzable, and don't restrict the constructor signature.")
-					->identifier("pocketmine.new.noDynamic")
+					->identifier("pocketmine.new.dynamic")
 					->build()
 			];
 		}
