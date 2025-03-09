@@ -36,6 +36,7 @@ use pocketmine\crafting\CraftingManager;
 use pocketmine\crafting\CraftingManagerFromDataHelper;
 use pocketmine\crash\CrashDump;
 use pocketmine\crash\CrashDumpRenderer;
+use pocketmine\data\bedrock\BedrockDataFiles;
 use pocketmine\entity\EntityDataHelper;
 use pocketmine\entity\Location;
 use pocketmine\event\HandlerListManager;
@@ -138,6 +139,7 @@ use function file_put_contents;
 use function filemtime;
 use function fopen;
 use function get_class;
+use function gettype;
 use function ini_set;
 use function is_array;
 use function is_dir;
@@ -697,7 +699,7 @@ class Server{
 
 	public function removeOp(string $name) : void{
 		$lowercaseName = strtolower($name);
-		foreach($this->operators->getAll() as $operatorName => $_){
+		foreach(Utils::promoteKeys($this->operators->getAll()) as $operatorName => $_){
 			$operatorName = (string) $operatorName;
 			if($lowercaseName === strtolower($operatorName)){
 				$this->operators->remove($operatorName);
@@ -918,6 +920,7 @@ class Server{
 			TimingsHandler::getCollectCallbacks()->add(function() : array{
 				$promises = [];
 				foreach($this->asyncPool->getRunningWorkers() as $workerId){
+					/** @phpstan-var PromiseResolver<list<string>> $resolver */
 					$resolver = new PromiseResolver();
 					$this->asyncPool->submitTaskToWorker(new TimingsCollectionTask($resolver), $workerId);
 
@@ -1003,7 +1006,7 @@ class Server{
 
 			$this->commandMap = new SimpleCommandMap($this);
 
-			$this->craftingManager = CraftingManagerFromDataHelper::make(Path::join(\pocketmine\BEDROCK_DATA_PATH, "recipes"));
+			$this->craftingManager = CraftingManagerFromDataHelper::make(BedrockDataFiles::RECIPES);
 
 			$this->resourceManager = new ResourcePackManager(Path::join($this->dataPath, "resource_packs"), $this->logger);
 
@@ -1013,7 +1016,11 @@ class Server{
 				copy(Path::join(\pocketmine\RESOURCE_PATH, 'plugin_list.yml'), $graylistFile);
 			}
 			try{
-				$pluginGraylist = PluginGraylist::fromArray(yaml_parse(Filesystem::fileGetContents($graylistFile)));
+				$array = yaml_parse(Filesystem::fileGetContents($graylistFile));
+				if(!is_array($array)){
+					throw new \InvalidArgumentException("Expected array for root, but have " . gettype($array));
+				}
+				$pluginGraylist = PluginGraylist::fromArray($array);
 			}catch(\InvalidArgumentException $e){
 				$this->logger->emergency("Failed to load $graylistFile: " . $e->getMessage());
 				$this->forceShutdownExit();
@@ -1174,7 +1181,7 @@ class Server{
 
 		if($this->worldManager->getDefaultWorld() === null){
 			$default = $this->configGroup->getConfigString(ServerProperties::DEFAULT_WORLD_NAME, "world");
-			if(trim($default) == ""){
+			if(trim($default) === ""){
 				$this->logger->warning("level-name cannot be null, using default");
 				$default = "world";
 				$this->configGroup->setConfigString(ServerProperties::DEFAULT_WORLD_NAME, "world");
