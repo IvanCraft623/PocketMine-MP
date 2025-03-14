@@ -833,7 +833,7 @@ final class BlockStateToObjectDeserializer implements BlockStateDeserializer{
 			Ids::WAXED_WEATHERED_CHISELED_COPPER,
 			Ids::OXIDIZED_CHISELED_COPPER,
 			Ids::WAXED_OXIDIZED_CHISELED_COPPER,
-			Blocks::CHISELED_COPPER(...)
+			fn(Reader $in) => Blocks::CHISELED_COPPER()
 		);
 		$this->mapCopper(
 			Ids::COPPER_GRATE,
@@ -844,7 +844,7 @@ final class BlockStateToObjectDeserializer implements BlockStateDeserializer{
 			Ids::WAXED_WEATHERED_COPPER_GRATE,
 			Ids::OXIDIZED_COPPER_GRATE,
 			Ids::WAXED_OXIDIZED_COPPER_GRATE,
-			Blocks::COPPER_GRATE(...)
+			fn(Reader $in) => Blocks::COPPER_GRATE()
 		);
 		$this->mapCopper(
 			Ids::CUT_COPPER,
@@ -855,7 +855,7 @@ final class BlockStateToObjectDeserializer implements BlockStateDeserializer{
 			Ids::WAXED_WEATHERED_CUT_COPPER,
 			Ids::OXIDIZED_CUT_COPPER,
 			Ids::WAXED_OXIDIZED_CUT_COPPER,
-			Blocks::CUT_COPPER(...)
+			fn(Reader $in) => Blocks::CUT_COPPER()
 		);
 		$this->mapCopper(
 			Ids::CUT_COPPER_STAIRS,
