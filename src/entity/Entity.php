@@ -77,6 +77,7 @@ use function floatval;
 use function floor;
 use function fmod;
 use function get_class;
+use function min;
 use function sin;
 use function spl_object_id;
 use const M_PI_2;
