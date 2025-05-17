@@ -43,7 +43,6 @@ final class WorldDataVersions{
 		(60 << 8) | //patch
 		(33); //revision
 
-
 	public const CHUNK = ChunkVersion::v1_21_40;
 	public const SUBCHUNK = SubChunkVersion::PALETTED_MULTI;
 
