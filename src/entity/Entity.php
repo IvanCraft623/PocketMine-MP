@@ -1187,14 +1187,12 @@ abstract class Entity{
 
 			$moveBB->offset(0, 0, $dz);
 
-			$stepHeight = $this->getStepHeight();
-
-			if($stepHeight > 0 && $fallingFlag && ($wantedX !== $dx || $wantedZ !== $dz)){
+			if($this->stepHeight > 0 && $fallingFlag && ($wantedX !== $dx || $wantedZ !== $dz)){
 				$cx = $dx;
 				$cy = $dy;
 				$cz = $dz;
 				$dx = $wantedX;
-				$dy = $stepHeight;
+				$dy = $this->stepHeight;
 				$dz = $wantedZ;
 
 				$stepBB = clone $this->boundingBox;
@@ -1262,14 +1260,6 @@ abstract class Entity{
 		//TODO: vehicle collision events (first we need to spawn them!)
 
 		Timings::$entityMove->stopTiming();
-	}
-
-	public function setStepHeight(float $stepHeight) : void{
-		$this->stepHeight = $stepHeight;
-	}
-
-	public function getStepHeight() : float{
-		return $this->stepHeight;
 	}
 
 	protected function checkGroundState(float $wantedX, float $wantedY, float $wantedZ, float $dx, float $dy, float $dz) : void{
