@@ -19,12 +19,6 @@ parameters:
 			path: ../../../src/Server.php
 
 		-
-			message: '#^Method pocketmine\\block\\Block\:\:readStateFromWorld\(\) is marked as impure but does not have any side effects\.$#'
-			identifier: impureMethod.pure
-			count: 1
-			path: ../../../src/block/Block.php
-
-		-
 			message: '#^Method pocketmine\\block\\DoubleTallGrass\:\:traitGetDropsForIncompatibleTool\(\) return type has no value type specified in iterable type array\.$#'
 			identifier: missingType.iterableValue
 			count: 1
@@ -251,10 +245,4 @@ parameters:
 			identifier: staticMethod.impossibleType
 			count: 2
 			path: ../../phpunit/promise/PromiseTest.php
-
-		-
-			message: '#^Strict comparison using \=\=\= between 0 and 0 will always evaluate to true\.$#'
-			identifier: identical.alwaysTrue
-			count: 1
-			path: ../rules/UnsafeForeachArrayOfStringRule.php
 
