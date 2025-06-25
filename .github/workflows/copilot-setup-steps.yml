@@ -33,7 +33,7 @@ jobs:
           path: |
             ~/.cache/composer/files
             ~/.cache/composer/vcs
-          key: "composer-v2-cache-${{ inputs.php }}-${{ hashFiles('./composer.lock') }}"
+          key: "composer-v2-cache-8.3-${{ hashFiles('./composer.lock') }}"
           restore-keys: |
             composer-v2-cache-
 
