@@ -278,26 +278,12 @@ final class BlockStateToObjectDeserializer implements BlockStateDeserializer{
 			fn(DyeColor $color) => Blocks::CONCRETE_POWDER()->setColor($color)
 		);
 
-		foreach([
-			Ids::BLACK_TERRACOTTA => DyeColor::BLACK,
-			Ids::BLUE_TERRACOTTA => DyeColor::BLUE,
-			Ids::BROWN_TERRACOTTA => DyeColor::BROWN,
-			Ids::CYAN_TERRACOTTA => DyeColor::CYAN,
-			Ids::GRAY_TERRACOTTA => DyeColor::GRAY,
-			Ids::GREEN_TERRACOTTA => DyeColor::GREEN,
-			Ids::LIGHT_BLUE_TERRACOTTA => DyeColor::LIGHT_BLUE,
-			Ids::LIGHT_GRAY_TERRACOTTA => DyeColor::LIGHT_GRAY,
-			Ids::LIME_TERRACOTTA => DyeColor::LIME,
-			Ids::MAGENTA_TERRACOTTA => DyeColor::MAGENTA,
-			Ids::ORANGE_TERRACOTTA => DyeColor::ORANGE,
-			Ids::PINK_TERRACOTTA => DyeColor::PINK,
-			Ids::PURPLE_TERRACOTTA => DyeColor::PURPLE,
-			Ids::RED_TERRACOTTA => DyeColor::RED,
-			Ids::WHITE_TERRACOTTA => DyeColor::WHITE,
-			Ids::YELLOW_TERRACOTTA => DyeColor::YELLOW,
-		] as $id => $color){
-			$this->mapSimple($id, fn() => Blocks::STAINED_CLAY()->setColor($color));
-		}
+		$this->mapFlattenedEnum(
+			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
+			"minecraft:",
+			"_terracotta",
+			fn(DyeColor $color) => Blocks::STAINED_CLAY()->setColor($color)
+		);
 
 		$this->mapFlattenedEnum(
 			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
