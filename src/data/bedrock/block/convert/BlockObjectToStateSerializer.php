@@ -195,8 +195,8 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 	 * These callables actually accept Block, but for the sake of type completeness, it has to be never, since we can't
 	 * describe the bottom type of a type hierarchy only containing Block.
 	 *
-	 * @var \Closure[]
-	 * @phpstan-var array<int, \Closure(never) : Writer>
+	 * @var (\Closure|BlockStateData)[]
+	 * @phpstan-var array<int, \Closure(never) : (Writer|BlockStateData)|BlockStateData>
 	 */
 	private array $serializers = [];
 
@@ -233,17 +233,18 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 	/**
 	 * @phpstan-template TBlockType of Block
 	 * @phpstan-param TBlockType $block
-	 * @phpstan-param \Closure(TBlockType) : Writer $serializer
+	 * @phpstan-param \Closure(TBlockType) : (Writer|BlockStateData)|Writer|BlockStateData $serializer
 	 */
-	public function map(Block $block, \Closure $serializer) : void{
+	public function map(Block $block, \Closure|Writer|BlockStateData $serializer) : void{
 		if(isset($this->serializers[$block->getTypeId()])){
 			throw new \InvalidArgumentException("Block type ID " . $block->getTypeId() . " already has a serializer registered");
 		}
-		$this->serializers[$block->getTypeId()] = $serializer;
+		//writer accepted for convenience only
+		$this->serializers[$block->getTypeId()] = $serializer instanceof Writer ? $serializer->getBlockStateData() : $serializer;
 	}
 
 	public function mapSimple(Block $block, string $id) : void{
-		$this->map($block, fn() => Writer::create($id));
+		$this->map($block, BlockStateData::current($id, []));
 	}
 
 	public function mapSlab(Slab $block, string $singleId, string $doubleId) : void{
@@ -272,19 +273,21 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 			throw new BlockStateSerializeException("No serializer registered for " . get_class($blockState) . " with type ID $typeId");
 		}
 
+		if($locatedSerializer instanceof BlockStateData){ //static data, not dependent on state
+			return $locatedSerializer;
+		}
+
 		/**
 		 * TODO: there is no guarantee that this type actually matches that of $blockState - a plugin may have stolen
 		 * the type ID of the block (which never makes sense, even in a world where overriding block types is a thing).
 		 * In the future we'll need some way to guarantee that type IDs are never reused (perhaps spl_object_id()?)
 		 *
-		 * @var \Closure $serializer
-		 * @phpstan-var \Closure(TBlockType) : Writer $serializer
+		 * @var \Closure $locatedSerializer
+		 * @phpstan-var \Closure(TBlockType) : (Writer|BlockStateData) $locatedSerializer
 		 */
-		$serializer = $locatedSerializer;
+		$result = $locatedSerializer($blockState);
 
-		/** @var Writer $writer */
-		$writer = $serializer($blockState);
-		return $writer->getBlockStateData();
+		return $result instanceof Writer ? $result->getBlockStateData() : $result;
 	}
 
 	private function registerCandleSerializers() : void{
@@ -330,7 +333,7 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 	}
 
 	public function registerFlatColorBlockSerializers() : void{
-		$this->map(Blocks::STAINED_HARDENED_GLASS(), fn(StainedHardenedGlass $block) => Writer::create(match($block->getColor()){
+		$this->map(Blocks::STAINED_HARDENED_GLASS(), fn(StainedHardenedGlass $block) => BlockStateData::current(match($block->getColor()){
 			DyeColor::BLACK => Ids::HARD_BLACK_STAINED_GLASS,
 			DyeColor::BLUE => Ids::HARD_BLUE_STAINED_GLASS,
 			DyeColor::BROWN => Ids::HARD_BROWN_STAINED_GLASS,
@@ -347,9 +350,9 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 			DyeColor::RED => Ids::HARD_RED_STAINED_GLASS,
 			DyeColor::WHITE => Ids::HARD_WHITE_STAINED_GLASS,
 			DyeColor::YELLOW => Ids::HARD_YELLOW_STAINED_GLASS,
-		}));
+		}, []));
 
-		$this->map(Blocks::STAINED_HARDENED_GLASS_PANE(), fn(StainedHardenedGlassPane $block) => Writer::create(match($block->getColor()){
+		$this->map(Blocks::STAINED_HARDENED_GLASS_PANE(), fn(StainedHardenedGlassPane $block) => BlockStateData::current(match($block->getColor()){
 			DyeColor::BLACK => Ids::HARD_BLACK_STAINED_GLASS_PANE,
 			DyeColor::BLUE => Ids::HARD_BLUE_STAINED_GLASS_PANE,
 			DyeColor::BROWN => Ids::HARD_BROWN_STAINED_GLASS_PANE,
@@ -366,7 +369,7 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 			DyeColor::RED => Ids::HARD_RED_STAINED_GLASS_PANE,
 			DyeColor::WHITE => Ids::HARD_WHITE_STAINED_GLASS_PANE,
 			DyeColor::YELLOW => Ids::HARD_YELLOW_STAINED_GLASS_PANE,
-		}));
+		}, []));
 
 		$this->map(Blocks::GLAZED_TERRACOTTA(), function(GlazedTerracotta $block) : Writer{
 			return Writer::create(match($block->getColor()){
@@ -390,7 +393,7 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 				->writeHorizontalFacing($block->getFacing());
 		});
 
-		$this->map(Blocks::WOOL(), fn(Wool $block) => Writer::create(match($block->getColor()){
+		$this->map(Blocks::WOOL(), fn(Wool $block) => BlockStateData::current(match($block->getColor()){
 			DyeColor::BLACK => Ids::BLACK_WOOL,
 			DyeColor::BLUE => Ids::BLUE_WOOL,
 			DyeColor::BROWN => Ids::BROWN_WOOL,
@@ -407,9 +410,9 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 			DyeColor::RED => Ids::RED_WOOL,
 			DyeColor::WHITE => Ids::WHITE_WOOL,
 			DyeColor::YELLOW => Ids::YELLOW_WOOL,
-		}));
+		}, []));
 
-		$this->map(Blocks::CARPET(), fn(Carpet $block) => Writer::create(match($block->getColor()){
+		$this->map(Blocks::CARPET(), fn(Carpet $block) => BlockStateData::current(match($block->getColor()){
 			DyeColor::BLACK => Ids::BLACK_CARPET,
 			DyeColor::BLUE => Ids::BLUE_CARPET,
 			DyeColor::BROWN => Ids::BROWN_CARPET,
@@ -426,9 +429,9 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 			DyeColor::RED => Ids::RED_CARPET,
 			DyeColor::WHITE => Ids::WHITE_CARPET,
 			DyeColor::YELLOW => Ids::YELLOW_CARPET,
-		}));
+		}, []));
 
-		$this->map(Blocks::DYED_SHULKER_BOX(), fn(DyedShulkerBox $block) => Writer::create(match($block->getColor()){
+		$this->map(Blocks::DYED_SHULKER_BOX(), fn(DyedShulkerBox $block) => BlockStateData::current(match($block->getColor()){
 			DyeColor::BLACK => Ids::BLACK_SHULKER_BOX,
 			DyeColor::BLUE => Ids::BLUE_SHULKER_BOX,
 			DyeColor::BROWN => Ids::BROWN_SHULKER_BOX,
@@ -445,9 +448,9 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 			DyeColor::RED => Ids::RED_SHULKER_BOX,
 			DyeColor::WHITE => Ids::WHITE_SHULKER_BOX,
 			DyeColor::YELLOW => Ids::YELLOW_SHULKER_BOX,
-		}));
+		}, []));
 
-		$this->map(Blocks::CONCRETE(), fn(Concrete $block) => Writer::create(match($block->getColor()){
+		$this->map(Blocks::CONCRETE(), fn(Concrete $block) => BlockStateData::current(match($block->getColor()){
 			DyeColor::BLACK => Ids::BLACK_CONCRETE,
 			DyeColor::BLUE => Ids::BLUE_CONCRETE,
 			DyeColor::BROWN => Ids::BROWN_CONCRETE,
@@ -464,9 +467,9 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 			DyeColor::RED => Ids::RED_CONCRETE,
 			DyeColor::WHITE => Ids::WHITE_CONCRETE,
 			DyeColor::YELLOW => Ids::YELLOW_CONCRETE,
-		}));
+		}, []));
 
-		$this->map(Blocks::CONCRETE_POWDER(), fn(ConcretePowder $block) => Writer::create(match($block->getColor()){
+		$this->map(Blocks::CONCRETE_POWDER(), fn(ConcretePowder $block) => BlockStateData::current(match($block->getColor()){
 			DyeColor::BLACK => Ids::BLACK_CONCRETE_POWDER,
 			DyeColor::BLUE => Ids::BLUE_CONCRETE_POWDER,
 			DyeColor::BROWN => Ids::BROWN_CONCRETE_POWDER,
@@ -483,9 +486,9 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 			DyeColor::RED => Ids::RED_CONCRETE_POWDER,
 			DyeColor::WHITE => Ids::WHITE_CONCRETE_POWDER,
 			DyeColor::YELLOW => Ids::YELLOW_CONCRETE_POWDER,
-		}));
+		}, []));
 
-		$this->map(Blocks::STAINED_CLAY(), fn(StainedHardenedClay $block) => Writer::create(match($block->getColor()){
+		$this->map(Blocks::STAINED_CLAY(), fn(StainedHardenedClay $block) => BlockStateData::current(match($block->getColor()){
 			DyeColor::BLACK => Ids::BLACK_TERRACOTTA,
 			DyeColor::BLUE => Ids::BLUE_TERRACOTTA,
 			DyeColor::BROWN => Ids::BROWN_TERRACOTTA,
@@ -502,9 +505,9 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 			DyeColor::RED => Ids::RED_TERRACOTTA,
 			DyeColor::WHITE => Ids::WHITE_TERRACOTTA,
 			DyeColor::YELLOW => Ids::YELLOW_TERRACOTTA,
-		}));
+		}, []));
 
-		$this->map(Blocks::STAINED_GLASS(), fn(StainedGlass $block) => Writer::create(match($block->getColor()){
+		$this->map(Blocks::STAINED_GLASS(), fn(StainedGlass $block) => BlockStateData::current(match($block->getColor()){
 			DyeColor::BLACK => Ids::BLACK_STAINED_GLASS,
 			DyeColor::BLUE => Ids::BLUE_STAINED_GLASS,
 			DyeColor::BROWN => Ids::BROWN_STAINED_GLASS,
@@ -521,9 +524,9 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 			DyeColor::RED => Ids::RED_STAINED_GLASS,
 			DyeColor::WHITE => Ids::WHITE_STAINED_GLASS,
 			DyeColor::YELLOW => Ids::YELLOW_STAINED_GLASS,
-		}));
+		}, []));
 
-		$this->map(Blocks::STAINED_GLASS_PANE(), fn(StainedGlassPane $block) => Writer::create(match($block->getColor()){
+		$this->map(Blocks::STAINED_GLASS_PANE(), fn(StainedGlassPane $block) => BlockStateData::current(match($block->getColor()){
 			DyeColor::BLACK => Ids::BLACK_STAINED_GLASS_PANE,
 			DyeColor::BLUE => Ids::BLUE_STAINED_GLASS_PANE,
 			DyeColor::BROWN => Ids::BROWN_STAINED_GLASS_PANE,
@@ -540,19 +543,17 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 			DyeColor::RED => Ids::RED_STAINED_GLASS_PANE,
 			DyeColor::WHITE => Ids::WHITE_STAINED_GLASS_PANE,
 			DyeColor::YELLOW => Ids::YELLOW_STAINED_GLASS_PANE,
-		}));
+		}, []));
 	}
 
 	private function registerFlatCoralSerializers() : void{
-		$this->map(Blocks::CORAL(), fn(Coral $block) => Writer::create(
-			match($block->getCoralType()){
-				CoralType::BRAIN => $block->isDead() ? Ids::DEAD_BRAIN_CORAL : Ids::BRAIN_CORAL,
-				CoralType::BUBBLE => $block->isDead() ? Ids::DEAD_BUBBLE_CORAL : Ids::BUBBLE_CORAL,
-				CoralType::FIRE => $block->isDead() ? Ids::DEAD_FIRE_CORAL : Ids::FIRE_CORAL,
-				CoralType::HORN => $block->isDead() ? Ids::DEAD_HORN_CORAL : Ids::HORN_CORAL,
-				CoralType::TUBE => $block->isDead() ? Ids::DEAD_TUBE_CORAL : Ids::TUBE_CORAL,
-			}
-		));
+		$this->map(Blocks::CORAL(), fn(Coral $block) => BlockStateData::current(match($block->getCoralType()){
+			CoralType::BRAIN => $block->isDead() ? Ids::DEAD_BRAIN_CORAL : Ids::BRAIN_CORAL,
+			CoralType::BUBBLE => $block->isDead() ? Ids::DEAD_BUBBLE_CORAL : Ids::BUBBLE_CORAL,
+			CoralType::FIRE => $block->isDead() ? Ids::DEAD_FIRE_CORAL : Ids::FIRE_CORAL,
+			CoralType::HORN => $block->isDead() ? Ids::DEAD_HORN_CORAL : Ids::HORN_CORAL,
+			CoralType::TUBE => $block->isDead() ? Ids::DEAD_TUBE_CORAL : Ids::TUBE_CORAL,
+		}, []));
 
 		$this->map(Blocks::CORAL_FAN(), fn(FloorCoralFan $block) => Writer::create(
 			match($block->getCoralType()){
@@ -568,15 +569,13 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 				default => throw new BlockStateSerializeException("Invalid axis {$axis}"),
 			}));
 
-		$this->map(Blocks::CORAL_BLOCK(), fn(CoralBlock $block) => Writer::create(
-			match($block->getCoralType()){
-				CoralType::BRAIN => $block->isDead() ? Ids::DEAD_BRAIN_CORAL_BLOCK : Ids::BRAIN_CORAL_BLOCK,
-				CoralType::BUBBLE => $block->isDead() ? Ids::DEAD_BUBBLE_CORAL_BLOCK : Ids::BUBBLE_CORAL_BLOCK,
-				CoralType::FIRE => $block->isDead() ? Ids::DEAD_FIRE_CORAL_BLOCK : Ids::FIRE_CORAL_BLOCK,
-				CoralType::HORN => $block->isDead() ? Ids::DEAD_HORN_CORAL_BLOCK : Ids::HORN_CORAL_BLOCK,
-				CoralType::TUBE => $block->isDead() ? Ids::DEAD_TUBE_CORAL_BLOCK : Ids::TUBE_CORAL_BLOCK,
-			}
-		));
+		$this->map(Blocks::CORAL_BLOCK(), fn(CoralBlock $block) => BlockStateData::current(match($block->getCoralType()){
+			CoralType::BRAIN => $block->isDead() ? Ids::DEAD_BRAIN_CORAL_BLOCK : Ids::BRAIN_CORAL_BLOCK,
+			CoralType::BUBBLE => $block->isDead() ? Ids::DEAD_BUBBLE_CORAL_BLOCK : Ids::BUBBLE_CORAL_BLOCK,
+			CoralType::FIRE => $block->isDead() ? Ids::DEAD_FIRE_CORAL_BLOCK : Ids::FIRE_CORAL_BLOCK,
+			CoralType::HORN => $block->isDead() ? Ids::DEAD_HORN_CORAL_BLOCK : Ids::HORN_CORAL_BLOCK,
+			CoralType::TUBE => $block->isDead() ? Ids::DEAD_TUBE_CORAL_BLOCK : Ids::TUBE_CORAL_BLOCK,
+		}, []));
 
 		$this->map(Blocks::WALL_CORAL_FAN(), fn(WallCoralFan $block) => Writer::create(
 			match($block->getCoralType()){
@@ -591,7 +590,7 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 	}
 
 	private function registerCauldronSerializers() : void{
-		$this->map(Blocks::CAULDRON(), fn() => Helper::encodeCauldron(StringValues::CAULDRON_LIQUID_WATER, 0));
+		$this->map(Blocks::CAULDRON(), Helper::encodeCauldron(StringValues::CAULDRON_LIQUID_WATER, 0));
 		$this->map(Blocks::LAVA_CAULDRON(), fn(FillableCauldron $b) => Helper::encodeCauldron(StringValues::CAULDRON_LIQUID_LAVA, $b->getFillLevel()));
 		//potion cauldrons store their real information in the block actor data
 		$this->map(Blocks::POTION_CAULDRON(), fn(FillableCauldron $b) => Helper::encodeCauldron(StringValues::CAULDRON_LIQUID_WATER, $b->getFillLevel()));
@@ -798,52 +797,60 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 	}
 
 	private function registerCopperSerializers() : void{
-		$this->map(Blocks::COPPER(), function(Copper $block) : Writer{
+		$this->map(Blocks::COPPER(), function(Copper $block) : BlockStateData{
 			$oxidation = $block->getOxidation();
-			return new Writer($block->isWaxed() ?
-				Helper::selectCopperId($oxidation, Ids::WAXED_COPPER, Ids::WAXED_EXPOSED_COPPER, Ids::WAXED_WEATHERED_COPPER, Ids::WAXED_OXIDIZED_COPPER) :
-				Helper::selectCopperId($oxidation, Ids::COPPER_BLOCK, Ids::EXPOSED_COPPER, Ids::WEATHERED_COPPER, Ids::OXIDIZED_COPPER)
+			return BlockStateData::current(
+				$block->isWaxed() ?
+					Helper::selectCopperId($oxidation, Ids::WAXED_COPPER, Ids::WAXED_EXPOSED_COPPER, Ids::WAXED_WEATHERED_COPPER, Ids::WAXED_OXIDIZED_COPPER) :
+					Helper::selectCopperId($oxidation, Ids::COPPER_BLOCK, Ids::EXPOSED_COPPER, Ids::WEATHERED_COPPER, Ids::OXIDIZED_COPPER),
+				[]
 			);
 		});
-		$this->map(Blocks::CHISELED_COPPER(), function(Copper $block) : Writer{
+		$this->map(Blocks::CHISELED_COPPER(), function(Copper $block) : BlockStateData{
 			$oxidation = $block->getOxidation();
-			return new Writer($block->isWaxed() ?
-				Helper::selectCopperId($oxidation,
-					Ids::WAXED_CHISELED_COPPER,
-					Ids::WAXED_EXPOSED_CHISELED_COPPER,
-					Ids::WAXED_WEATHERED_CHISELED_COPPER,
-					Ids::WAXED_OXIDIZED_CHISELED_COPPER
-				) :
-				Helper::selectCopperId($oxidation,
-					Ids::CHISELED_COPPER,
-					Ids::EXPOSED_CHISELED_COPPER,
-					Ids::WEATHERED_CHISELED_COPPER,
-					Ids::OXIDIZED_CHISELED_COPPER
-				)
+			return BlockStateData::current(
+				$block->isWaxed() ?
+					Helper::selectCopperId($oxidation,
+						Ids::WAXED_CHISELED_COPPER,
+						Ids::WAXED_EXPOSED_CHISELED_COPPER,
+						Ids::WAXED_WEATHERED_CHISELED_COPPER,
+						Ids::WAXED_OXIDIZED_CHISELED_COPPER
+					) :
+					Helper::selectCopperId($oxidation,
+						Ids::CHISELED_COPPER,
+						Ids::EXPOSED_CHISELED_COPPER,
+						Ids::WEATHERED_CHISELED_COPPER,
+						Ids::OXIDIZED_CHISELED_COPPER
+					),
+				[]
 			);
 		});
-		$this->map(Blocks::COPPER_GRATE(), function(CopperGrate $block) : Writer{
+		$this->map(Blocks::COPPER_GRATE(), function(CopperGrate $block) : BlockStateData{
 			$oxidation = $block->getOxidation();
-			return new Writer($block->isWaxed() ?
-				Helper::selectCopperId($oxidation,
-					Ids::WAXED_COPPER_GRATE,
-					Ids::WAXED_EXPOSED_COPPER_GRATE,
-					Ids::WAXED_WEATHERED_COPPER_GRATE,
-					Ids::WAXED_OXIDIZED_COPPER_GRATE
-				) :
-				Helper::selectCopperId($oxidation,
-					Ids::COPPER_GRATE,
-					Ids::EXPOSED_COPPER_GRATE,
-					Ids::WEATHERED_COPPER_GRATE,
-					Ids::OXIDIZED_COPPER_GRATE
-				)
+			return BlockStateData::current(
+				$block->isWaxed() ?
+					Helper::selectCopperId($oxidation,
+						Ids::WAXED_COPPER_GRATE,
+						Ids::WAXED_EXPOSED_COPPER_GRATE,
+						Ids::WAXED_WEATHERED_COPPER_GRATE,
+						Ids::WAXED_OXIDIZED_COPPER_GRATE
+					) :
+					Helper::selectCopperId($oxidation,
+						Ids::COPPER_GRATE,
+						Ids::EXPOSED_COPPER_GRATE,
+						Ids::WEATHERED_COPPER_GRATE,
+						Ids::OXIDIZED_COPPER_GRATE
+					),
+				[]
 			);
 		});
-		$this->map(Blocks::CUT_COPPER(), function(Copper $block) : Writer{
+		$this->map(Blocks::CUT_COPPER(), function(Copper $block) : BlockStateData{
 			$oxidation = $block->getOxidation();
-			return new Writer($block->isWaxed() ?
-				Helper::selectCopperId($oxidation, Ids::WAXED_CUT_COPPER, Ids::WAXED_EXPOSED_CUT_COPPER, Ids::WAXED_WEATHERED_CUT_COPPER, Ids::WAXED_OXIDIZED_CUT_COPPER) :
-				Helper::selectCopperId($oxidation, Ids::CUT_COPPER, Ids::EXPOSED_CUT_COPPER, Ids::WEATHERED_CUT_COPPER, Ids::OXIDIZED_CUT_COPPER)
+			return BlockStateData::current(
+				$block->isWaxed() ?
+					Helper::selectCopperId($oxidation, Ids::WAXED_CUT_COPPER, Ids::WAXED_EXPOSED_CUT_COPPER, Ids::WAXED_WEATHERED_CUT_COPPER, Ids::WAXED_OXIDIZED_CUT_COPPER) :
+					Helper::selectCopperId($oxidation, Ids::CUT_COPPER, Ids::EXPOSED_CUT_COPPER, Ids::WEATHERED_CUT_COPPER, Ids::OXIDIZED_CUT_COPPER),
+				[]
 			);
 		});
 		$this->map(Blocks::CUT_COPPER_SLAB(), function(CopperSlab $block) : Writer{
@@ -1279,7 +1286,7 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 				->writeBool(StateNames::RAIL_DATA_BIT, $block->isPowered())
 				->writeInt(StateNames::RAIL_DIRECTION, $block->getShape());
 		});
-		$this->map(Blocks::ALL_SIDED_MUSHROOM_STEM(), fn() => Writer::create(Ids::MUSHROOM_STEM)
+		$this->map(Blocks::ALL_SIDED_MUSHROOM_STEM(), Writer::create(Ids::MUSHROOM_STEM)
 				->writeInt(StateNames::HUGE_MUSHROOM_BITS, BlockLegacyMetadata::MUSHROOM_BLOCK_ALL_STEM));
 		$this->map(Blocks::AMETHYST_CLUSTER(), fn(AmethystCluster $block) => Writer::create(
 			match($stage = $block->getStage()){
@@ -1476,13 +1483,11 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 		$this->mapSlab(Blocks::DIORITE_SLAB(), Ids::DIORITE_SLAB, Ids::DIORITE_DOUBLE_SLAB);
 		$this->mapStairs(Blocks::DIORITE_STAIRS(), Ids::DIORITE_STAIRS);
 		$this->map(Blocks::DIORITE_WALL(), fn(Wall $block) => Helper::encodeWall($block, Writer::create(Ids::DIORITE_WALL)));
-		$this->map(Blocks::DIRT(), function(Dirt $block) : Writer{
-			return Writer::create(match($block->getDirtType()){
-				DirtType::NORMAL => Ids::DIRT,
-				DirtType::COARSE => Ids::COARSE_DIRT,
-				DirtType::ROOTED => Ids::DIRT_WITH_ROOTS,
-			});
-		});
+		$this->map(Blocks::DIRT(), fn(Dirt $block) => BlockStateData::current(match($block->getDirtType()){
+			DirtType::NORMAL => Ids::DIRT,
+			DirtType::COARSE => Ids::COARSE_DIRT,
+			DirtType::ROOTED => Ids::DIRT_WITH_ROOTS,
+		}, []));
 		$this->map(Blocks::DOUBLE_TALLGRASS(), fn(DoubleTallGrass $block) => Helper::encodeDoublePlant($block, Writer::create(Ids::TALL_GRASS)));
 		$this->map(Blocks::ELEMENT_CONSTRUCTOR(), fn(ChemistryTable $block) => Helper::encodeChemistryTable($block, Writer::create(Ids::ELEMENT_CONSTRUCTOR)));
 		$this->map(Blocks::ENDER_CHEST(), function(EnderChest $block) : Writer{
@@ -1510,10 +1515,9 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 			return Writer::create(Ids::FIRE)
 				->writeInt(StateNames::AGE, $block->getAge());
 		});
-		$this->map(Blocks::FLOWER_POT(), function() : Writer{
-			return Writer::create(Ids::FLOWER_POT)
-				->writeBool(StateNames::UPDATE_BIT, false); //to keep MCPE happy
-		});
+		$this->map(Blocks::FLOWER_POT(), Writer::create(Ids::FLOWER_POT)
+				->writeBool(StateNames::UPDATE_BIT, false) //to keep MCPE happy
+		);
 		$this->map(Blocks::FROGLIGHT(), function(Froglight $block){
 			return Writer::create(match($block->getFroglightType()){
 				FroglightType::OCHRE => Ids::OCHRE_FROGLIGHT,
@@ -1579,27 +1583,25 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 					LeverFacing::EAST => StringValues::LEVER_DIRECTION_EAST,
 				});
 		});
-		$this->map(Blocks::LIGHT(), function(Light $block) : Writer{
-			return Writer::create(match($block->getLightLevel()){
-				0 => Ids::LIGHT_BLOCK_0,
-				1 => Ids::LIGHT_BLOCK_1,
-				2 => Ids::LIGHT_BLOCK_2,
-				3 => Ids::LIGHT_BLOCK_3,
-				4 => Ids::LIGHT_BLOCK_4,
-				5 => Ids::LIGHT_BLOCK_5,
-				6 => Ids::LIGHT_BLOCK_6,
-				7 => Ids::LIGHT_BLOCK_7,
-				8 => Ids::LIGHT_BLOCK_8,
-				9 => Ids::LIGHT_BLOCK_9,
-				10 => Ids::LIGHT_BLOCK_10,
-				11 => Ids::LIGHT_BLOCK_11,
-				12 => Ids::LIGHT_BLOCK_12,
-				13 => Ids::LIGHT_BLOCK_13,
-				14 => Ids::LIGHT_BLOCK_14,
-				15 => Ids::LIGHT_BLOCK_15,
-				default => throw new BlockStateSerializeException("Invalid light level " . $block->getLightLevel()),
-			});
-		});
+		$this->map(Blocks::LIGHT(), fn(Light $block) => BlockStateData::current(match($block->getLightLevel()){
+			0 => Ids::LIGHT_BLOCK_0,
+			1 => Ids::LIGHT_BLOCK_1,
+			2 => Ids::LIGHT_BLOCK_2,
+			3 => Ids::LIGHT_BLOCK_3,
+			4 => Ids::LIGHT_BLOCK_4,
+			5 => Ids::LIGHT_BLOCK_5,
+			6 => Ids::LIGHT_BLOCK_6,
+			7 => Ids::LIGHT_BLOCK_7,
+			8 => Ids::LIGHT_BLOCK_8,
+			9 => Ids::LIGHT_BLOCK_9,
+			10 => Ids::LIGHT_BLOCK_10,
+			11 => Ids::LIGHT_BLOCK_11,
+			12 => Ids::LIGHT_BLOCK_12,
+			13 => Ids::LIGHT_BLOCK_13,
+			14 => Ids::LIGHT_BLOCK_14,
+			15 => Ids::LIGHT_BLOCK_15,
+			default => throw new BlockStateSerializeException("Invalid light level " . $block->getLightLevel()),
+		}, []));
 		$this->map(Blocks::LIGHTNING_ROD(), function(LightningRod $block) : Writer{
 			return Writer::create(Ids::LIGHTNING_ROD)
 				->writeFacingDirection($block->getFacing());
@@ -1626,7 +1628,7 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 		$this->map(Blocks::MUD_BRICK_WALL(), fn(Wall $block) => Helper::encodeWall($block, new Writer(Ids::MUD_BRICK_WALL)));
 		$this->map(Blocks::MUDDY_MANGROVE_ROOTS(), fn(SimplePillar $block) => Writer::create(Ids::MUDDY_MANGROVE_ROOTS)
 				->writePillarAxis($block->getAxis()));
-		$this->map(Blocks::MUSHROOM_STEM(), fn() => Writer::create(Ids::MUSHROOM_STEM)
+		$this->map(Blocks::MUSHROOM_STEM(), Writer::create(Ids::MUSHROOM_STEM)
 				->writeInt(StateNames::HUGE_MUSHROOM_BITS, BlockLegacyMetadata::MUSHROOM_BLOCK_STEM));
 		$this->mapSlab(Blocks::NETHER_BRICK_SLAB(), Ids::NETHER_BRICK_SLAB, Ids::NETHER_BRICK_DOUBLE_SLAB);
 		$this->mapStairs(Blocks::NETHER_BRICK_STAIRS(), Ids::NETHER_BRICK_STAIRS);
@@ -1698,12 +1700,11 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 		$this->mapSlab(Blocks::PRISMARINE_SLAB(), Ids::PRISMARINE_SLAB, Ids::PRISMARINE_DOUBLE_SLAB);
 		$this->mapStairs(Blocks::PRISMARINE_STAIRS(), Ids::PRISMARINE_STAIRS);
 		$this->map(Blocks::PRISMARINE_WALL(), fn(Wall $block) => Helper::encodeWall($block, Writer::create(Ids::PRISMARINE_WALL)));
-		$this->map(Blocks::PUMPKIN(), function() : Writer{
-			return Writer::create(Ids::PUMPKIN)
-				->writeCardinalHorizontalFacing(Facing::SOUTH); //no longer used
-		});
+		$this->map(Blocks::PUMPKIN(), Writer::create(Ids::PUMPKIN)
+				->writeCardinalHorizontalFacing(Facing::SOUTH) //no longer used
+		);
 		$this->map(Blocks::PUMPKIN_STEM(), fn(PumpkinStem $block) => Helper::encodeStem($block, new Writer(Ids::PUMPKIN_STEM)));
-		$this->map(Blocks::PURPUR(), fn() => Writer::create(Ids::PURPUR_BLOCK)->writePillarAxis(Axis::Y));
+		$this->map(Blocks::PURPUR(), Writer::create(Ids::PURPUR_BLOCK)->writePillarAxis(Axis::Y));
 		$this->map(Blocks::PURPLE_TORCH(), fn(Torch $block) => Helper::encodeTorch($block, Writer::create(Ids::COLORED_TORCH_PURPLE)));
 		$this->map(Blocks::PURPUR_PILLAR(), function(SimplePillar $block) : Writer{
 			return Writer::create(Ids::PURPUR_PILLAR)
@@ -1711,7 +1712,7 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 		});
 		$this->mapSlab(Blocks::PURPUR_SLAB(), Ids::PURPUR_SLAB, Ids::PURPUR_DOUBLE_SLAB);
 		$this->mapStairs(Blocks::PURPUR_STAIRS(), Ids::PURPUR_STAIRS);
-		$this->map(Blocks::QUARTZ(), fn() => Helper::encodeQuartz(Axis::Y, Writer::create(Ids::QUARTZ_BLOCK)));
+		$this->map(Blocks::QUARTZ(), Helper::encodeQuartz(Axis::Y, Writer::create(Ids::QUARTZ_BLOCK)));
 		$this->map(Blocks::QUARTZ_PILLAR(), fn(SimplePillar $block) => Helper::encodeQuartz($block->getAxis(), Writer::create(Ids::QUARTZ_PILLAR)));
 		$this->mapSlab(Blocks::QUARTZ_SLAB(), Ids::QUARTZ_SLAB, Ids::QUARTZ_DOUBLE_SLAB);
 		$this->mapStairs(Blocks::QUARTZ_STAIRS(), Ids::QUARTZ_STAIRS);
@@ -1774,7 +1775,7 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 				->writeBool(StateNames::UPPER_BLOCK_BIT, $block->isTop());
 		});
 		$this->map(Blocks::SMOKER(), fn(Furnace $block) => Helper::encodeFurnace($block, Ids::SMOKER, Ids::LIT_SMOKER));
-		$this->map(Blocks::SMOOTH_QUARTZ(), fn() => Helper::encodeQuartz(Axis::Y, Writer::create(Ids::SMOOTH_QUARTZ)));
+		$this->map(Blocks::SMOOTH_QUARTZ(), Helper::encodeQuartz(Axis::Y, Writer::create(Ids::SMOOTH_QUARTZ)));
 		$this->mapSlab(Blocks::SMOOTH_QUARTZ_SLAB(), Ids::SMOOTH_QUARTZ_SLAB, Ids::SMOOTH_QUARTZ_DOUBLE_SLAB);
 		$this->mapStairs(Blocks::SMOOTH_QUARTZ_STAIRS(), Ids::SMOOTH_QUARTZ_STAIRS);
 		$this->mapSlab(Blocks::SMOOTH_RED_SANDSTONE_SLAB(), Ids::SMOOTH_RED_SANDSTONE_SLAB, Ids::SMOOTH_RED_SANDSTONE_DOUBLE_SLAB);
@@ -1792,10 +1793,9 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 				->writeCardinalHorizontalFacing($block->getFacing())
 				->writeBool(StateNames::EXTINGUISHED, !$block->isLit());
 		});
-		$this->map(Blocks::SOUL_FIRE(), function() : Writer{
-			return Writer::create(Ids::SOUL_FIRE)
-				->writeInt(StateNames::AGE, 0); //useless for soul fire, we don't track it
-		});
+		$this->map(Blocks::SOUL_FIRE(), Writer::create(Ids::SOUL_FIRE)
+				->writeInt(StateNames::AGE, 0) //useless for soul fire, we don't track it
+		);
 		$this->map(Blocks::SOUL_LANTERN(), function(Lantern $block) : Writer{
 			return Writer::create(Ids::SOUL_LANTERN)
 				->writeBool(StateNames::HANGING, $block->isHanging());
