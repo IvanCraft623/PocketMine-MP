@@ -70,7 +70,13 @@ final class BlockStateDeserializerHelper{
 			->setPressed($in->readBool(BlockStateNames::BUTTON_PRESSED_BIT));
 	}
 
-	/** @throws BlockStateDeserializeException */
+	/**
+	 * @phpstan-template TCandle of Candle
+	 * @phpstan-param TCandle $block
+	 * @phpstan-return TCandle
+	 *
+	 * @throws BlockStateDeserializeException
+	 */
 	public static function decodeCandle(Candle $block, BlockStateReader $in) : Candle{
 		return $block
 			->setCount($in->readBoundedInt(StateNames::CANDLES, 0, 3) + 1)

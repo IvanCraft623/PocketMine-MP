@@ -40,6 +40,7 @@ use pocketmine\block\Stair;
 use pocketmine\block\SweetBerryBush;
 use pocketmine\block\utils\BrewingStandSlot;
 use pocketmine\block\utils\ChiseledBookshelfSlot;
+use pocketmine\block\utils\Colored;
 use pocketmine\block\utils\CopperMaterial;
 use pocketmine\block\utils\CopperOxidation;
 use pocketmine\block\utils\CoralType;
@@ -187,39 +188,52 @@ final class BlockStateToObjectDeserializer implements BlockStateDeserializer{
 		}
 	}
 
-	private function registerCandleDeserializers() : void{
-		$this->map(Ids::CANDLE, fn(Reader $in) => Helper::decodeCandle(Blocks::CANDLE(), $in));
+	/**
+	 * @phpstan-template TBlock of Block&Colored
+	 * @phpstan-param \Closure() : TBlock $getBlock
+	 * @phpstan-param ?\Closure(TBlock, Reader) : TBlock $extra
+	 */
+	public function mapColored(string $prefix, string $suffix, \Closure $getBlock, ?\Closure $extra = null) : void{
 		$this->mapFlattenedEnum(
 			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
+			$prefix,
+			$suffix,
+			fn(DyeColor $color) => $getBlock()->setColor($color),
+			$extra
+		);
+	}
+
+	private function registerCandleDeserializers() : void{
+		$this->map(Ids::CANDLE, fn(Reader $in) => Helper::decodeCandle(Blocks::CANDLE(), $in));
+		$this->mapColored(
 			"minecraft:",
 			"_candle",
-			fn(DyeColor $color) => Blocks::DYED_CANDLE()->setColor($color),
+			fn() => Blocks::DYED_CANDLE(),
 			Helper::decodeCandle(...)
 		);
 
 		$this->map(Ids::CANDLE_CAKE, fn(Reader $in) => Blocks::CAKE_WITH_CANDLE()->setLit($in->readBool(StateNames::LIT)));
-		$this->mapFlattenedEnum(
-			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
+
+		$this->mapColored(
 			"minecraft:",
 			"_candle_cake",
-			fn(DyeColor $color) => Blocks::CAKE_WITH_DYED_CANDLE()->setColor($color),
+			fn() => Blocks::CAKE_WITH_DYED_CANDLE(),
 			fn(CakeWithDyedCandle $block, Reader $in) => $block->setLit($in->readBool(StateNames::LIT))
 		);
 	}
 
 	private function registerFlatColorBlockDeserializers() : void{
-		$this->mapFlattenedEnum(
-			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
-			"minecraft:hard_",
-			"_stained_glass",
-			fn(DyeColor $color) => Blocks::STAINED_HARDENED_GLASS()->setColor($color)
-		);
-		$this->mapFlattenedEnum(
-			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
-			"minecraft:hard_",
-			"_stained_glass_pane",
-			fn(DyeColor $color) => Blocks::STAINED_HARDENED_GLASS_PANE()->setColor($color)
-		);
+		$this->mapColored("minecraft:hard_", "_stained_glass", fn() => Blocks::STAINED_HARDENED_GLASS());
+		$this->mapColored("minecraft:hard_", "_stained_glass_pane", fn() => Blocks::STAINED_HARDENED_GLASS_PANE());
+
+		$this->mapColored("minecraft:", "_carpet", fn() => Blocks::CARPET());
+		$this->mapColored("minecraft:", "_concrete", fn() => Blocks::CONCRETE());
+		$this->mapColored("minecraft:", "_concrete_powder", fn() => Blocks::CONCRETE_POWDER());
+		$this->mapColored("minecraft:", "_shulker_box", fn() => Blocks::DYED_SHULKER_BOX());
+		$this->mapColored("minecraft:", "_stained_glass", fn() => Blocks::STAINED_GLASS());
+		$this->mapColored("minecraft:", "_stained_glass_pane", fn() => Blocks::STAINED_GLASS_PANE());
+		$this->mapColored("minecraft:", "_terracotta", fn() => Blocks::STAINED_CLAY());
+		$this->mapColored("minecraft:", "_wool", fn() => Blocks::WOOL());
 
 		foreach([
 			Ids::BLACK_GLAZED_TERRACOTTA => DyeColor::BLACK,
@@ -229,7 +243,7 @@ final class BlockStateToObjectDeserializer implements BlockStateDeserializer{
 			Ids::GRAY_GLAZED_TERRACOTTA => DyeColor::GRAY,
 			Ids::GREEN_GLAZED_TERRACOTTA => DyeColor::GREEN,
 			Ids::LIGHT_BLUE_GLAZED_TERRACOTTA => DyeColor::LIGHT_BLUE,
-			Ids::SILVER_GLAZED_TERRACOTTA => DyeColor::LIGHT_GRAY,
+			Ids::SILVER_GLAZED_TERRACOTTA => DyeColor::LIGHT_GRAY, //minecraft sadness
 			Ids::LIME_GLAZED_TERRACOTTA => DyeColor::LIME,
 			Ids::MAGENTA_GLAZED_TERRACOTTA => DyeColor::MAGENTA,
 			Ids::ORANGE_GLAZED_TERRACOTTA => DyeColor::ORANGE,
@@ -244,60 +258,6 @@ final class BlockStateToObjectDeserializer implements BlockStateDeserializer{
 				->setFacing($in->readHorizontalFacing())
 			);
 		}
-
-		$this->mapFlattenedEnum(
-			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
-			"minecraft:",
-			"_wool",
-			fn(DyeColor $color) => Blocks::WOOL()->setColor($color)
-		);
-		$this->mapFlattenedEnum(
-			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
-			"minecraft:",
-			"_carpet",
-			fn(DyeColor $color) => Blocks::CARPET()->setColor($color)
-		);
-
-		$this->mapFlattenedEnum(
-			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
-			"minecraft:",
-			"_shulker_box",
-			fn(DyeColor $color) => Blocks::DYED_SHULKER_BOX()->setColor($color)
-		);
-
-		$this->mapFlattenedEnum(
-			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
-			"minecraft:",
-			"_concrete",
-			fn(DyeColor $color) => Blocks::CONCRETE()->setColor($color)
-		);
-		$this->mapFlattenedEnum(
-			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
-			"minecraft:",
-			"_concrete_powder",
-			fn(DyeColor $color) => Blocks::CONCRETE_POWDER()->setColor($color)
-		);
-
-		$this->mapFlattenedEnum(
-			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
-			"minecraft:",
-			"_terracotta",
-			fn(DyeColor $color) => Blocks::STAINED_CLAY()->setColor($color)
-		);
-
-		$this->mapFlattenedEnum(
-			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
-			"minecraft:",
-			"_stained_glass",
-			fn(DyeColor $color) => Blocks::STAINED_GLASS()->setColor($color)
-		);
-
-		$this->mapFlattenedEnum(
-			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
-			"minecraft:",
-			"_stained_glass_pane",
-			fn(DyeColor $color) => Blocks::STAINED_GLASS_PANE()->setColor($color)
-		);
 	}
 
 	private function registerFlatCoralDeserializers() : void{

@@ -45,7 +45,6 @@ use pocketmine\block\CakeWithCandle;
 use pocketmine\block\CakeWithDyedCandle;
 use pocketmine\block\Campfire;
 use pocketmine\block\Candle;
-use pocketmine\block\Carpet;
 use pocketmine\block\Carrot;
 use pocketmine\block\CarvedPumpkin;
 use pocketmine\block\CaveVines;
@@ -55,8 +54,6 @@ use pocketmine\block\Chest;
 use pocketmine\block\ChiseledBookshelf;
 use pocketmine\block\ChorusFlower;
 use pocketmine\block\CocoaBlock;
-use pocketmine\block\Concrete;
-use pocketmine\block\ConcretePowder;
 use pocketmine\block\Copper;
 use pocketmine\block\CopperBulb;
 use pocketmine\block\CopperDoor;
@@ -73,8 +70,6 @@ use pocketmine\block\Door;
 use pocketmine\block\DoublePitcherCrop;
 use pocketmine\block\DoublePlant;
 use pocketmine\block\DoubleTallGrass;
-use pocketmine\block\DyedCandle;
-use pocketmine\block\DyedShulkerBox;
 use pocketmine\block\EnderChest;
 use pocketmine\block\EndPortalFrame;
 use pocketmine\block\EndRod;
@@ -133,11 +128,6 @@ use pocketmine\block\SmallDripleaf;
 use pocketmine\block\SnowLayer;
 use pocketmine\block\SoulCampfire;
 use pocketmine\block\Sponge;
-use pocketmine\block\StainedGlass;
-use pocketmine\block\StainedGlassPane;
-use pocketmine\block\StainedHardenedClay;
-use pocketmine\block\StainedHardenedGlass;
-use pocketmine\block\StainedHardenedGlassPane;
 use pocketmine\block\Stair;
 use pocketmine\block\StoneButton;
 use pocketmine\block\Stonecutter;
@@ -153,6 +143,7 @@ use pocketmine\block\Tripwire;
 use pocketmine\block\TripwireHook;
 use pocketmine\block\UnderwaterTorch;
 use pocketmine\block\utils\BrewingStandSlot;
+use pocketmine\block\utils\Colored;
 use pocketmine\block\utils\CoralType;
 use pocketmine\block\utils\DirtType;
 use pocketmine\block\utils\DripleafState;
@@ -176,7 +167,6 @@ use pocketmine\block\WoodenDoor;
 use pocketmine\block\WoodenPressurePlate;
 use pocketmine\block\WoodenStairs;
 use pocketmine\block\WoodenTrapdoor;
-use pocketmine\block\Wool;
 use pocketmine\data\bedrock\block\BlockLegacyMetadata;
 use pocketmine\data\bedrock\block\BlockStateData;
 use pocketmine\data\bedrock\block\BlockStateNames as StateNames;
@@ -319,43 +309,57 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 		});
 	}
 
+	/**
+	 * @phpstan-template TBlock of Block&Colored
+	 * @phpstan-param TBlock $block
+	 * @phpstan-param ?\Closure(TBlock, Writer) : Writer $extra
+	 */
+	public function mapColored(
+		Block $block,
+		string $prefix,
+		string $suffix,
+		?\Closure $extra = null
+	) : void{
+		$this->mapFlattenedEnum(
+			$block,
+			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
+			$prefix,
+			$suffix,
+			fn(Colored $block) => $block->getColor(),
+			$extra
+		);
+	}
+
 	private function registerCandleSerializers() : void{
 		$this->map(Blocks::CANDLE(), fn(Candle $block) => Helper::encodeCandle($block, new Writer(Ids::CANDLE)));
-		$this->mapFlattenedEnum(
+		$this->mapColored(
 			Blocks::DYED_CANDLE(),
-			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
 			"minecraft:",
 			"_candle",
-			fn(DyedCandle $block) => $block->getColor(),
 			Helper::encodeCandle(...)
 		);
 		$this->map(Blocks::CAKE_WITH_CANDLE(), fn(CakeWithCandle $block) => Writer::create(Ids::CANDLE_CAKE)
 			->writeBool(StateNames::LIT, $block->isLit()));
-		$this->mapFlattenedEnum(
+		$this->mapColored(
 			Blocks::CAKE_WITH_DYED_CANDLE(),
-			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
 			"minecraft:",
 			"_candle_cake",
-			fn(CakeWithDyedCandle $block) => $block->getColor(),
 			fn(CakeWithDyedCandle $block, Writer $writer) => $writer->writeBool(StateNames::LIT, $block->isLit())
 		);
 	}
 
 	public function registerFlatColorBlockSerializers() : void{
-		$this->mapFlattenedEnum(
-			Blocks::STAINED_HARDENED_GLASS(),
-			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
-			"minecraft:hard_",
-			"_stained_glass",
-			fn(StainedHardenedGlass $block) => $block->getColor()
-		);
-		$this->mapFlattenedEnum(
-			Blocks::STAINED_HARDENED_GLASS_PANE(),
-			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
-			"minecraft:hard_",
-			"_stained_glass_pane",
-			fn(StainedHardenedGlassPane $block) => $block->getColor(),
-		);
+		$this->mapColored(Blocks::STAINED_HARDENED_GLASS(), "minecraft:hard_", "_stained_glass");
+		$this->mapColored(Blocks::STAINED_HARDENED_GLASS_PANE(), "minecraft:hard_", "_stained_glass_pane");
+
+		$this->mapColored(Blocks::CARPET(), "minecraft:", "_carpet");
+		$this->mapColored(Blocks::CONCRETE(), "minecraft:", "_concrete");
+		$this->mapColored(Blocks::CONCRETE_POWDER(), "minecraft:", "_concrete_powder");
+		$this->mapColored(Blocks::DYED_SHULKER_BOX(), "minecraft:", "_shulker_box");
+		$this->mapColored(Blocks::STAINED_CLAY(), "minecraft:", "_terracotta");
+		$this->mapColored(Blocks::STAINED_GLASS(), "minecraft:", "_stained_glass");
+		$this->mapColored(Blocks::STAINED_GLASS_PANE(), "minecraft:", "_stained_glass_pane");
+		$this->mapColored(Blocks::WOOL(), "minecraft:", "_wool");
 
 		$this->map(Blocks::GLAZED_TERRACOTTA(), function(GlazedTerracotta $block) : Writer{
 			return Writer::create(match($block->getColor()){
@@ -366,7 +370,7 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 				DyeColor::GRAY => Ids::GRAY_GLAZED_TERRACOTTA,
 				DyeColor::GREEN => Ids::GREEN_GLAZED_TERRACOTTA,
 				DyeColor::LIGHT_BLUE => Ids::LIGHT_BLUE_GLAZED_TERRACOTTA,
-				DyeColor::LIGHT_GRAY => Ids::SILVER_GLAZED_TERRACOTTA,
+				DyeColor::LIGHT_GRAY => Ids::SILVER_GLAZED_TERRACOTTA, //minecraft sadness
 				DyeColor::LIME => Ids::LIME_GLAZED_TERRACOTTA,
 				DyeColor::MAGENTA => Ids::MAGENTA_GLAZED_TERRACOTTA,
 				DyeColor::ORANGE => Ids::ORANGE_GLAZED_TERRACOTTA,
@@ -378,68 +382,6 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 			})
 				->writeHorizontalFacing($block->getFacing());
 		});
-
-		$this->mapFlattenedEnum(
-			Blocks::WOOL(),
-			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
-			"minecraft:",
-			"_wool",
-			fn(Wool $block) => $block->getColor()
-		);
-
-		$this->mapFlattenedEnum(
-			Blocks::CARPET(),
-			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
-			"minecraft:",
-			"_carpet",
-			fn(Carpet $block) => $block->getColor()
-		);
-
-		$this->mapFlattenedEnum(
-			Blocks::DYED_SHULKER_BOX(),
-			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
-			"minecraft:",
-			"_shulker_box",
-			fn(DyedShulkerBox $block) => $block->getColor()
-		);
-
-		$this->mapFlattenedEnum(
-			Blocks::CONCRETE(),
-			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
-			"minecraft:",
-			"_concrete",
-			fn(Concrete $block) => $block->getColor()
-		);
-		$this->mapFlattenedEnum(
-			Blocks::CONCRETE_POWDER(),
-			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
-			"minecraft:",
-			"_concrete_powder",
-			fn(ConcretePowder $block) => $block->getColor()
-		);
-
-		$this->mapFlattenedEnum(
-			Blocks::STAINED_CLAY(),
-			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
-			"minecraft:",
-			"_terracotta",
-			fn(StainedHardenedClay $block) => $block->getColor()
-		);
-
-		$this->mapFlattenedEnum(
-			Blocks::STAINED_GLASS(),
-			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
-			"minecraft:",
-			"_stained_glass",
-			fn(StainedGlass $block) => $block->getColor()
-		);
-		$this->mapFlattenedEnum(
-			Blocks::STAINED_GLASS_PANE(),
-			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
-			"minecraft:",
-			"_stained_glass_pane",
-			fn(StainedGlassPane $block) => $block->getColor()
-		);
 	}
 
 	private function registerFlatCoralSerializers() : void{
