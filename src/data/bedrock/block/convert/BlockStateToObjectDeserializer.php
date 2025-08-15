@@ -27,6 +27,7 @@ use pocketmine\block\AmethystCluster;
 use pocketmine\block\Anvil;
 use pocketmine\block\Bamboo;
 use pocketmine\block\Block;
+use pocketmine\block\CakeWithDyedCandle;
 use pocketmine\block\CaveVines;
 use pocketmine\block\ChorusFlower;
 use pocketmine\block\DoublePitcherCrop;
@@ -157,97 +158,68 @@ final class BlockStateToObjectDeserializer implements BlockStateDeserializer{
 		$this->map($strippedId, fn(Reader $in) => Helper::decodeLog($getBlock(), true, $in));
 	}
 
-	private function registerCandleDeserializers() : void{
-		$this->map(Ids::CANDLE, fn(Reader $in) => Helper::decodeCandle(Blocks::CANDLE(), $in));
-		foreach([
-			Ids::BLACK_CANDLE => DyeColor::BLACK,
-			Ids::BLUE_CANDLE => DyeColor::BLUE,
-			Ids::BROWN_CANDLE => DyeColor::BROWN,
-			Ids::CYAN_CANDLE => DyeColor::CYAN,
-			Ids::GRAY_CANDLE => DyeColor::GRAY,
-			Ids::GREEN_CANDLE => DyeColor::GREEN,
-			Ids::LIGHT_BLUE_CANDLE => DyeColor::LIGHT_BLUE,
-			Ids::LIGHT_GRAY_CANDLE => DyeColor::LIGHT_GRAY,
-			Ids::LIME_CANDLE => DyeColor::LIME,
-			Ids::MAGENTA_CANDLE => DyeColor::MAGENTA,
-			Ids::ORANGE_CANDLE => DyeColor::ORANGE,
-			Ids::PINK_CANDLE => DyeColor::PINK,
-			Ids::PURPLE_CANDLE => DyeColor::PURPLE,
-			Ids::RED_CANDLE => DyeColor::RED,
-			Ids::WHITE_CANDLE => DyeColor::WHITE,
-			Ids::YELLOW_CANDLE => DyeColor::YELLOW,
-		] as $id => $color){
-			$this->map($id, fn(Reader $in) => Helper::decodeCandle(Blocks::DYED_CANDLE()->setColor($color), $in));
-		}
-
-		$this->map(Ids::CANDLE_CAKE, fn(Reader $in) => Blocks::CAKE_WITH_CANDLE()->setLit($in->readBool(StateNames::LIT)));
-		foreach([
-			Ids::BLACK_CANDLE_CAKE => DyeColor::BLACK,
-			Ids::BLUE_CANDLE_CAKE => DyeColor::BLUE,
-			Ids::BROWN_CANDLE_CAKE => DyeColor::BROWN,
-			Ids::CYAN_CANDLE_CAKE => DyeColor::CYAN,
-			Ids::GRAY_CANDLE_CAKE => DyeColor::GRAY,
-			Ids::GREEN_CANDLE_CAKE => DyeColor::GREEN,
-			Ids::LIGHT_BLUE_CANDLE_CAKE => DyeColor::LIGHT_BLUE,
-			Ids::LIGHT_GRAY_CANDLE_CAKE => DyeColor::LIGHT_GRAY,
-			Ids::LIME_CANDLE_CAKE => DyeColor::LIME,
-			Ids::MAGENTA_CANDLE_CAKE => DyeColor::MAGENTA,
-			Ids::ORANGE_CANDLE_CAKE => DyeColor::ORANGE,
-			Ids::PINK_CANDLE_CAKE => DyeColor::PINK,
-			Ids::PURPLE_CANDLE_CAKE => DyeColor::PURPLE,
-			Ids::RED_CANDLE_CAKE => DyeColor::RED,
-			Ids::WHITE_CANDLE_CAKE => DyeColor::WHITE,
-			Ids::YELLOW_CANDLE_CAKE => DyeColor::YELLOW,
-		] as $id => $color){
-			$this->map($id, fn(Reader $in) => Blocks::CAKE_WITH_DYED_CANDLE()
-				->setColor($color)
-				->setLit($in->readBool(StateNames::LIT))
-			);
+	/**
+	 * @phpstan-template TBlock of Block
+	 * @phpstan-template TEnum of \UnitEnum
+	 *
+	 * @phpstan-param StringEnumMap<TEnum> $mapProperty
+	 * @phpstan-param \Closure(TEnum) : TBlock $getBlock
+	 * @phpstan-param ?\Closure(TBlock, Reader) : TBlock $extra
+	 */
+	public function mapFlattenedEnum(
+		StringEnumMap $mapProperty,
+		string $prefix,
+		string $suffix,
+		\Closure $getBlock,
+		?\Closure $extra = null
+	) : void{
+		foreach(Utils::stringifyKeys($mapProperty->getValueToEnum()) as $infix => $enumCase){
+			$id = $prefix . $infix . $suffix;
+			if($extra === null){
+				$this->map($id, fn() => $getBlock($enumCase));
+			}else{
+				$this->map($id, function(Reader $in) use ($enumCase, $getBlock, $extra) : Block{
+					$block = $getBlock($enumCase);
+					$extra($block, $in);
+					return $block;
+				});
+			}
 		}
 	}
 
-	private function registerFlatColorBlockDeserializers() : void{
-		foreach([
-			Ids::HARD_BLACK_STAINED_GLASS => DyeColor::BLACK,
-			Ids::HARD_BLUE_STAINED_GLASS => DyeColor::BLUE,
-			Ids::HARD_BROWN_STAINED_GLASS => DyeColor::BROWN,
-			Ids::HARD_CYAN_STAINED_GLASS => DyeColor::CYAN,
-			Ids::HARD_GRAY_STAINED_GLASS => DyeColor::GRAY,
-			Ids::HARD_GREEN_STAINED_GLASS => DyeColor::GREEN,
-			Ids::HARD_LIGHT_BLUE_STAINED_GLASS => DyeColor::LIGHT_BLUE,
-			Ids::HARD_LIGHT_GRAY_STAINED_GLASS => DyeColor::LIGHT_GRAY,
-			Ids::HARD_LIME_STAINED_GLASS => DyeColor::LIME,
-			Ids::HARD_MAGENTA_STAINED_GLASS => DyeColor::MAGENTA,
-			Ids::HARD_ORANGE_STAINED_GLASS => DyeColor::ORANGE,
-			Ids::HARD_PINK_STAINED_GLASS => DyeColor::PINK,
-			Ids::HARD_PURPLE_STAINED_GLASS => DyeColor::PURPLE,
-			Ids::HARD_RED_STAINED_GLASS => DyeColor::RED,
-			Ids::HARD_WHITE_STAINED_GLASS => DyeColor::WHITE,
-			Ids::HARD_YELLOW_STAINED_GLASS => DyeColor::YELLOW,
-		] as $id => $color){
-			$this->map($id, fn(Reader $in) => Blocks::STAINED_HARDENED_GLASS()->setColor($color));
-		}
+	private function registerCandleDeserializers() : void{
+		$this->map(Ids::CANDLE, fn(Reader $in) => Helper::decodeCandle(Blocks::CANDLE(), $in));
+		$this->mapFlattenedEnum(
+			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
+			"minecraft:",
+			"_candle",
+			fn(DyeColor $color) => Blocks::DYED_CANDLE()->setColor($color),
+			Helper::decodeCandle(...)
+		);
 
-		foreach([
-			Ids::HARD_BLACK_STAINED_GLASS_PANE => DyeColor::BLACK,
-			Ids::HARD_BLUE_STAINED_GLASS_PANE => DyeColor::BLUE,
-			Ids::HARD_BROWN_STAINED_GLASS_PANE => DyeColor::BROWN,
-			Ids::HARD_CYAN_STAINED_GLASS_PANE => DyeColor::CYAN,
-			Ids::HARD_GRAY_STAINED_GLASS_PANE => DyeColor::GRAY,
-			Ids::HARD_GREEN_STAINED_GLASS_PANE => DyeColor::GREEN,
-			Ids::HARD_LIGHT_BLUE_STAINED_GLASS_PANE => DyeColor::LIGHT_BLUE,
-			Ids::HARD_LIGHT_GRAY_STAINED_GLASS_PANE => DyeColor::LIGHT_GRAY,
-			Ids::HARD_LIME_STAINED_GLASS_PANE => DyeColor::LIME,
-			Ids::HARD_MAGENTA_STAINED_GLASS_PANE => DyeColor::MAGENTA,
-			Ids::HARD_ORANGE_STAINED_GLASS_PANE => DyeColor::ORANGE,
-			Ids::HARD_PINK_STAINED_GLASS_PANE => DyeColor::PINK,
-			Ids::HARD_PURPLE_STAINED_GLASS_PANE => DyeColor::PURPLE,
-			Ids::HARD_RED_STAINED_GLASS_PANE => DyeColor::RED,
-			Ids::HARD_WHITE_STAINED_GLASS_PANE => DyeColor::WHITE,
-			Ids::HARD_YELLOW_STAINED_GLASS_PANE => DyeColor::YELLOW,
-		] as $id => $color){
-			$this->map($id, fn(Reader $in) => Blocks::STAINED_HARDENED_GLASS_PANE()->setColor($color));
-		}
+		$this->map(Ids::CANDLE_CAKE, fn(Reader $in) => Blocks::CAKE_WITH_CANDLE()->setLit($in->readBool(StateNames::LIT)));
+		$this->mapFlattenedEnum(
+			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
+			"minecraft:",
+			"_candle_cake",
+			fn(DyeColor $color) => Blocks::CAKE_WITH_DYED_CANDLE()->setColor($color),
+			fn(CakeWithDyedCandle $block, Reader $in) => $block->setLit($in->readBool(StateNames::LIT))
+		);
+	}
+
+	private function registerFlatColorBlockDeserializers() : void{
+		$this->mapFlattenedEnum(
+			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
+			"minecraft:hard_",
+			"_stained_glass",
+			fn(DyeColor $color) => Blocks::STAINED_HARDENED_GLASS()->setColor($color)
+		);
+		$this->mapFlattenedEnum(
+			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
+			"minecraft:hard_",
+			"_stained_glass_pane",
+			fn(DyeColor $color) => Blocks::STAINED_HARDENED_GLASS_PANE()->setColor($color)
+		);
 
 		foreach([
 			Ids::BLACK_GLAZED_TERRACOTTA => DyeColor::BLACK,
@@ -273,110 +245,38 @@ final class BlockStateToObjectDeserializer implements BlockStateDeserializer{
 			);
 		}
 
-		foreach([
-			Ids::BLACK_WOOL => DyeColor::BLACK,
-			Ids::BLUE_WOOL => DyeColor::BLUE,
-			Ids::BROWN_WOOL => DyeColor::BROWN,
-			Ids::CYAN_WOOL => DyeColor::CYAN,
-			Ids::GRAY_WOOL => DyeColor::GRAY,
-			Ids::GREEN_WOOL => DyeColor::GREEN,
-			Ids::LIGHT_BLUE_WOOL => DyeColor::LIGHT_BLUE,
-			Ids::LIGHT_GRAY_WOOL => DyeColor::LIGHT_GRAY,
-			Ids::LIME_WOOL => DyeColor::LIME,
-			Ids::MAGENTA_WOOL => DyeColor::MAGENTA,
-			Ids::ORANGE_WOOL => DyeColor::ORANGE,
-			Ids::PINK_WOOL => DyeColor::PINK,
-			Ids::PURPLE_WOOL => DyeColor::PURPLE,
-			Ids::RED_WOOL => DyeColor::RED,
-			Ids::WHITE_WOOL => DyeColor::WHITE,
-			Ids::YELLOW_WOOL => DyeColor::YELLOW,
-		] as $id => $color){
-			$this->mapSimple($id, fn() => Blocks::WOOL()->setColor($color));
-		}
+		$this->mapFlattenedEnum(
+			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
+			"minecraft:",
+			"_wool",
+			fn(DyeColor $color) => Blocks::WOOL()->setColor($color)
+		);
+		$this->mapFlattenedEnum(
+			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
+			"minecraft:",
+			"_carpet",
+			fn(DyeColor $color) => Blocks::CARPET()->setColor($color)
+		);
 
-		foreach([
-			Ids::BLACK_CARPET => DyeColor::BLACK,
-			Ids::BLUE_CARPET => DyeColor::BLUE,
-			Ids::BROWN_CARPET => DyeColor::BROWN,
-			Ids::CYAN_CARPET => DyeColor::CYAN,
-			Ids::GRAY_CARPET => DyeColor::GRAY,
-			Ids::GREEN_CARPET => DyeColor::GREEN,
-			Ids::LIGHT_BLUE_CARPET => DyeColor::LIGHT_BLUE,
-			Ids::LIGHT_GRAY_CARPET => DyeColor::LIGHT_GRAY,
-			Ids::LIME_CARPET => DyeColor::LIME,
-			Ids::MAGENTA_CARPET => DyeColor::MAGENTA,
-			Ids::ORANGE_CARPET => DyeColor::ORANGE,
-			Ids::PINK_CARPET => DyeColor::PINK,
-			Ids::PURPLE_CARPET => DyeColor::PURPLE,
-			Ids::RED_CARPET => DyeColor::RED,
-			Ids::WHITE_CARPET => DyeColor::WHITE,
-			Ids::YELLOW_CARPET => DyeColor::YELLOW,
-		] as $id => $color){
-			$this->mapSimple($id, fn() => Blocks::CARPET()->setColor($color));
-		}
+		$this->mapFlattenedEnum(
+			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
+			"minecraft:",
+			"_shulker_box",
+			fn(DyeColor $color) => Blocks::DYED_SHULKER_BOX()->setColor($color)
+		);
 
-		foreach([
-			Ids::BLACK_SHULKER_BOX => DyeColor::BLACK,
-			Ids::BLUE_SHULKER_BOX => DyeColor::BLUE,
-			Ids::BROWN_SHULKER_BOX => DyeColor::BROWN,
-			Ids::CYAN_SHULKER_BOX => DyeColor::CYAN,
-			Ids::GRAY_SHULKER_BOX => DyeColor::GRAY,
-			Ids::GREEN_SHULKER_BOX => DyeColor::GREEN,
-			Ids::LIGHT_BLUE_SHULKER_BOX => DyeColor::LIGHT_BLUE,
-			Ids::LIGHT_GRAY_SHULKER_BOX => DyeColor::LIGHT_GRAY,
-			Ids::LIME_SHULKER_BOX => DyeColor::LIME,
-			Ids::MAGENTA_SHULKER_BOX => DyeColor::MAGENTA,
-			Ids::ORANGE_SHULKER_BOX => DyeColor::ORANGE,
-			Ids::PINK_SHULKER_BOX => DyeColor::PINK,
-			Ids::PURPLE_SHULKER_BOX => DyeColor::PURPLE,
-			Ids::RED_SHULKER_BOX => DyeColor::RED,
-			Ids::WHITE_SHULKER_BOX => DyeColor::WHITE,
-			Ids::YELLOW_SHULKER_BOX => DyeColor::YELLOW,
-		] as $id => $color){
-			$this->mapSimple($id, fn() => Blocks::DYED_SHULKER_BOX()->setColor($color));
-		}
-
-		foreach([
-			Ids::BLACK_CONCRETE => DyeColor::BLACK,
-			Ids::BLUE_CONCRETE => DyeColor::BLUE,
-			Ids::BROWN_CONCRETE => DyeColor::BROWN,
-			Ids::CYAN_CONCRETE => DyeColor::CYAN,
-			Ids::GRAY_CONCRETE => DyeColor::GRAY,
-			Ids::GREEN_CONCRETE => DyeColor::GREEN,
-			Ids::LIGHT_BLUE_CONCRETE => DyeColor::LIGHT_BLUE,
-			Ids::LIGHT_GRAY_CONCRETE => DyeColor::LIGHT_GRAY,
-			Ids::LIME_CONCRETE => DyeColor::LIME,
-			Ids::MAGENTA_CONCRETE => DyeColor::MAGENTA,
-			Ids::ORANGE_CONCRETE => DyeColor::ORANGE,
-			Ids::PINK_CONCRETE => DyeColor::PINK,
-			Ids::PURPLE_CONCRETE => DyeColor::PURPLE,
-			Ids::RED_CONCRETE => DyeColor::RED,
-			Ids::WHITE_CONCRETE => DyeColor::WHITE,
-			Ids::YELLOW_CONCRETE => DyeColor::YELLOW,
-		] as $id => $color){
-			$this->mapSimple($id, fn() => Blocks::CONCRETE()->setColor($color));
-		}
-
-		foreach([
-			Ids::BLACK_CONCRETE_POWDER => DyeColor::BLACK,
-			Ids::BLUE_CONCRETE_POWDER => DyeColor::BLUE,
-			Ids::BROWN_CONCRETE_POWDER => DyeColor::BROWN,
-			Ids::CYAN_CONCRETE_POWDER => DyeColor::CYAN,
-			Ids::GRAY_CONCRETE_POWDER => DyeColor::GRAY,
-			Ids::GREEN_CONCRETE_POWDER => DyeColor::GREEN,
-			Ids::LIGHT_BLUE_CONCRETE_POWDER => DyeColor::LIGHT_BLUE,
-			Ids::LIGHT_GRAY_CONCRETE_POWDER => DyeColor::LIGHT_GRAY,
-			Ids::LIME_CONCRETE_POWDER => DyeColor::LIME,
-			Ids::MAGENTA_CONCRETE_POWDER => DyeColor::MAGENTA,
-			Ids::ORANGE_CONCRETE_POWDER => DyeColor::ORANGE,
-			Ids::PINK_CONCRETE_POWDER => DyeColor::PINK,
-			Ids::PURPLE_CONCRETE_POWDER => DyeColor::PURPLE,
-			Ids::RED_CONCRETE_POWDER => DyeColor::RED,
-			Ids::WHITE_CONCRETE_POWDER => DyeColor::WHITE,
-			Ids::YELLOW_CONCRETE_POWDER => DyeColor::YELLOW,
-		] as $id => $color){
-			$this->mapSimple($id, fn() => Blocks::CONCRETE_POWDER()->setColor($color));
-		}
+		$this->mapFlattenedEnum(
+			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
+			"minecraft:",
+			"_concrete",
+			fn(DyeColor $color) => Blocks::CONCRETE()->setColor($color)
+		);
+		$this->mapFlattenedEnum(
+			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
+			"minecraft:",
+			"_concrete_powder",
+			fn(DyeColor $color) => Blocks::CONCRETE_POWDER()->setColor($color)
+		);
 
 		foreach([
 			Ids::BLACK_TERRACOTTA => DyeColor::BLACK,
@@ -399,47 +299,19 @@ final class BlockStateToObjectDeserializer implements BlockStateDeserializer{
 			$this->mapSimple($id, fn() => Blocks::STAINED_CLAY()->setColor($color));
 		}
 
-		foreach([
-			Ids::BLACK_STAINED_GLASS => DyeColor::BLACK,
-			Ids::BLUE_STAINED_GLASS => DyeColor::BLUE,
-			Ids::BROWN_STAINED_GLASS => DyeColor::BROWN,
-			Ids::CYAN_STAINED_GLASS => DyeColor::CYAN,
-			Ids::GRAY_STAINED_GLASS => DyeColor::GRAY,
-			Ids::GREEN_STAINED_GLASS => DyeColor::GREEN,
-			Ids::LIGHT_BLUE_STAINED_GLASS => DyeColor::LIGHT_BLUE,
-			Ids::LIGHT_GRAY_STAINED_GLASS => DyeColor::LIGHT_GRAY,
-			Ids::LIME_STAINED_GLASS => DyeColor::LIME,
-			Ids::MAGENTA_STAINED_GLASS => DyeColor::MAGENTA,
-			Ids::ORANGE_STAINED_GLASS => DyeColor::ORANGE,
-			Ids::PINK_STAINED_GLASS => DyeColor::PINK,
-			Ids::PURPLE_STAINED_GLASS => DyeColor::PURPLE,
-			Ids::RED_STAINED_GLASS => DyeColor::RED,
-			Ids::WHITE_STAINED_GLASS => DyeColor::WHITE,
-			Ids::YELLOW_STAINED_GLASS => DyeColor::YELLOW,
-		] as $id => $color){
-			$this->mapSimple($id, fn() => Blocks::STAINED_GLASS()->setColor($color));
-		}
+		$this->mapFlattenedEnum(
+			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
+			"minecraft:",
+			"_stained_glass",
+			fn(DyeColor $color) => Blocks::STAINED_GLASS()->setColor($color)
+		);
 
-		foreach([
-			Ids::BLACK_STAINED_GLASS_PANE => DyeColor::BLACK,
-			Ids::BLUE_STAINED_GLASS_PANE => DyeColor::BLUE,
-			Ids::BROWN_STAINED_GLASS_PANE => DyeColor::BROWN,
-			Ids::CYAN_STAINED_GLASS_PANE => DyeColor::CYAN,
-			Ids::GRAY_STAINED_GLASS_PANE => DyeColor::GRAY,
-			Ids::GREEN_STAINED_GLASS_PANE => DyeColor::GREEN,
-			Ids::LIGHT_BLUE_STAINED_GLASS_PANE => DyeColor::LIGHT_BLUE,
-			Ids::LIGHT_GRAY_STAINED_GLASS_PANE => DyeColor::LIGHT_GRAY,
-			Ids::LIME_STAINED_GLASS_PANE => DyeColor::LIME,
-			Ids::MAGENTA_STAINED_GLASS_PANE => DyeColor::MAGENTA,
-			Ids::ORANGE_STAINED_GLASS_PANE => DyeColor::ORANGE,
-			Ids::PINK_STAINED_GLASS_PANE => DyeColor::PINK,
-			Ids::PURPLE_STAINED_GLASS_PANE => DyeColor::PURPLE,
-			Ids::RED_STAINED_GLASS_PANE => DyeColor::RED,
-			Ids::WHITE_STAINED_GLASS_PANE => DyeColor::WHITE,
-			Ids::YELLOW_STAINED_GLASS_PANE => DyeColor::YELLOW,
-		] as $id => $color){
-			$this->mapSimple($id, fn() => Blocks::STAINED_GLASS_PANE()->setColor($color));
-		}
+		$this->mapFlattenedEnum(
+			ValueMappings::getInstance()->getEnumMap(DyeColor::class),
+			"minecraft:",
+			"_stained_glass_pane",
+			fn(DyeColor $color) => Blocks::STAINED_GLASS_PANE()->setColor($color)
+		);
 	}
 
 	private function registerFlatCoralDeserializers() : void{
