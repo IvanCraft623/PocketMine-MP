@@ -23,7 +23,6 @@ declare(strict_types=1);
 
 namespace pocketmine\block\tile;
 
-use pocketmine\block\HangingRoots;
 use pocketmine\data\SavedDataLoadingException;
 use pocketmine\math\Vector3;
 use pocketmine\nbt\NbtException;

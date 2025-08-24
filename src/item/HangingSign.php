@@ -27,7 +27,6 @@ use pocketmine\block\Block;
 use pocketmine\block\utils\SupportType;
 use pocketmine\math\Facing;
 use pocketmine\math\Vector3;
-use pocketmine\player\Player;
 
 final class HangingSign extends Item{
 

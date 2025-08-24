@@ -23,8 +23,6 @@ declare(strict_types=1);
 
 namespace pocketmine\block\tile;
 
-use pocketmine\nbt\tag\CompoundTag;
-
 /**
  * @deprecated
  */
