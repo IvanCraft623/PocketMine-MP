@@ -27,6 +27,7 @@ use pocketmine\block\tile\Banner as TileBanner;
 use pocketmine\block\utils\DyeColor;
 use pocketmine\block\utils\SupportType;
 use pocketmine\item\Item;
+use pocketmine\item\VanillaItems;
 use pocketmine\math\Vector3;
 use pocketmine\player\Player;
 use pocketmine\world\BlockTransaction;
@@ -81,5 +82,9 @@ abstract class BaseOminousBanner extends Transparent{
 		if(!$this->canBeSupportedBy($this->getSide($this->getSupportingFace()))){
 			$this->position->getWorld()->useBreakOn($this->position);
 		}
+	}
+
+	public function asItem() : Item{
+		return VanillaItems::OMINOUS_BANNER();
 	}
 }

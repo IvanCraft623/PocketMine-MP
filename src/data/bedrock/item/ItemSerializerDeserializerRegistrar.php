@@ -546,7 +546,7 @@ final class ItemSerializerDeserializerRegistrar{
 		$this->serializer?->map(Items::DYE(), fn(Dye $item) => new Data(DyeColorIdMap::getInstance()->toItemId($item->getColor())));
 
 		$this->deserializer?->map(Ids::BANNER, function(Data $data) : Item{
-			$type = $data->getTag()?->getInt(TileBanner::TAG_TYPE) ?? TileBanner::TYPE_NORMAL;
+			$type = $data->getTag()?->getInt(TileBanner::TAG_TYPE, TileBanner::TYPE_NORMAL) ?? TileBanner::TYPE_NORMAL;
 			if($type === TileBanner::TYPE_OMINOUS){
 				return Items::OMINOUS_BANNER();
 			}

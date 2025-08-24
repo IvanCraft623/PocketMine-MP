@@ -59,8 +59,13 @@ final class BlockSerializerDeserializerTest extends TestCase{
 				self::fail("Failed to deserialize " . $blockStateData->getName() . ": " . $e->getMessage() . " with data " . $blockStateData->toNbt());
 			}
 
-			if($block->getTypeId() === BlockTypeIds::POTION_CAULDRON){
-				//this pretends to be a water cauldron in the blockstate, and stores its actual data in the blockentity
+			if(match ($block->getTypeId()) {
+				BlockTypeIds::POTION_CAULDRON,
+				BlockTypeIds::OMINOUS_BANNER,
+				BlockTypeIds::OMINOUS_WALL_BANNER => true,
+				default => false
+			}){
+				//these pretend to be something else in the blockstate, and the variant switching is done via block entity data
 				continue;
 			}
 
