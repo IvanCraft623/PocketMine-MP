@@ -96,6 +96,7 @@ use pocketmine\block\utils\BrewingStandSlot;
 use pocketmine\block\utils\ChiseledBookshelfSlot;
 use pocketmine\block\utils\CopperOxidation;
 use pocketmine\block\utils\DirtType;
+use pocketmine\block\utils\DripleafState;
 use pocketmine\block\utils\DyeColor;
 use pocketmine\block\utils\FroglightType;
 use pocketmine\block\utils\HorizontalFacing;
@@ -1473,6 +1474,35 @@ final class VanillaBlockMappings{
 	}
 
 	/**
+	 * @phpstan-template TBlock of Block
+	 * @phpstan-param Model<TBlock> $model
+	 */
+	private static function mapAsymmetricSerializer(BlockSerializerDeserializerRegistrar $reg, Model $model) : void{
+		$id = $model->getId();
+		$properties = $model->getProperties();
+		$reg->serializer->map($model->getBlock(), function(Block $block) use ($id, $properties) : Writer{
+			$writer = new Writer($id);
+			foreach($properties as $property){
+				$property->serialize($block, $writer);
+			}
+			return $writer;
+		});
+	}
+
+	/**
+	 * @phpstan-template TBlock of Block
+	 * @phpstan-param Model<TBlock> $model
+	 * @phpstan-return TBlock
+	 */
+	private static function deserializeAsymmetric(Model $model, Reader $in) : Block{
+		$block = clone $model->getBlock();
+		foreach($model->getProperties() as $property){
+			$property->deserialize($block, $in);
+		}
+		return $block;
+	}
+
+	/**
 	 * All mappings that still use the split form of serializer/deserializer registration
 	 * This is typically only used by blocks with one ID but multiple PM types (split by property)
 	 * These currently can't be registered in a unified way, and due to their small number it may not be worth the
@@ -1480,97 +1510,94 @@ final class VanillaBlockMappings{
 	 */
 	private static function registerSplitMappings(BlockSerializerDeserializerRegistrar $reg, CommonProperties $commonProperties) : void{
 		//big dripleaf - split into head / stem variants, as stems don't have tilt or leaf state
-		$reg->serializer->map(Blocks::BIG_DRIPLEAF_HEAD(), function(BigDripleafHead $block) : Writer{
-			return Writer::create(Ids::BIG_DRIPLEAF)
-				->writeCardinalHorizontalFacing($block->getFacing())
-				->writeUnitEnum(StateNames::BIG_DRIPLEAF_TILT, ValueMappings::getInstance()->dripleafState, $block->getLeafState())
-				->writeBool(StateNames::BIG_DRIPLEAF_HEAD, true);
-		});
-		$reg->serializer->map(Blocks::BIG_DRIPLEAF_STEM(), function(BigDripleafStem $block) : Writer{
-			return Writer::create(Ids::BIG_DRIPLEAF)
-				->writeCardinalHorizontalFacing($block->getFacing())
-				->writeString(StateNames::BIG_DRIPLEAF_TILT, StringValues::BIG_DRIPLEAF_TILT_NONE)
-				->writeBool(StateNames::BIG_DRIPLEAF_HEAD, false);
-		});
-		$reg->deserializer->map(Ids::BIG_DRIPLEAF, function(Reader $in) : Block{
-			if($in->readBool(StateNames::BIG_DRIPLEAF_HEAD)){
-				return Blocks::BIG_DRIPLEAF_HEAD()
-					->setFacing($in->readCardinalHorizontalFacing())
-					->setLeafState($in->readUnitEnum(StateNames::BIG_DRIPLEAF_TILT, ValueMappings::getInstance()->dripleafState));
-			}else{
-				$in->ignored(StateNames::BIG_DRIPLEAF_TILT);
-				return Blocks::BIG_DRIPLEAF_STEM()->setFacing($in->readCardinalHorizontalFacing());
-			}
-		});
+		$bigDripleafHeadModel = Model::create(Blocks::BIG_DRIPLEAF_HEAD(), Ids::BIG_DRIPLEAF)->properties([
+			$commonProperties->horizontalFacingCardinal,
+			new ValueFromStringProperty(StateNames::BIG_DRIPLEAF_TILT, ValueMappings::getInstance()->dripleafState, fn(BigDripleafHead $b) => $b->getLeafState(), fn(BigDripleafHead $b, DripleafState $v) => $b->setLeafState($v)),
+			new DummyProperty(StateNames::BIG_DRIPLEAF_HEAD, true)
+		]);
+		$bigDripleafStemModel = Model::create(Blocks::BIG_DRIPLEAF_STEM(), Ids::BIG_DRIPLEAF)->properties([
+			$commonProperties->horizontalFacingCardinal,
+			new DummyProperty(StateNames::BIG_DRIPLEAF_TILT, StringValues::BIG_DRIPLEAF_TILT_NONE),
+			new DummyProperty(StateNames::BIG_DRIPLEAF_HEAD, false)
+		]);
+		self::mapAsymmetricSerializer($reg, $bigDripleafHeadModel);
+		self::mapAsymmetricSerializer($reg, $bigDripleafStemModel);
+		$reg->deserializer->map(Ids::BIG_DRIPLEAF, fn(Reader $in) => $in->readBool(StateNames::BIG_DRIPLEAF_HEAD) ?
+			self::deserializeAsymmetric($bigDripleafHeadModel, $in) :
+			self::deserializeAsymmetric($bigDripleafStemModel, $in)
+		);
 
-		//cauldrons - split into liquid variants, as each have different behaviour
-		$reg->serializer->map(Blocks::CAULDRON(), Helper::encodeCauldron(StringValues::CAULDRON_LIQUID_WATER, 0));
-		$reg->serializer->map(Blocks::LAVA_CAULDRON(), fn(FillableCauldron $b) => Helper::encodeCauldron(StringValues::CAULDRON_LIQUID_LAVA, $b->getFillLevel()));
-		//potion cauldrons store their real information in the block actor data
-		$reg->serializer->map(Blocks::POTION_CAULDRON(), fn(FillableCauldron $b) => Helper::encodeCauldron(StringValues::CAULDRON_LIQUID_WATER, $b->getFillLevel()));
-		$reg->serializer->map(Blocks::WATER_CAULDRON(), fn(FillableCauldron $b) => Helper::encodeCauldron(StringValues::CAULDRON_LIQUID_WATER, $b->getFillLevel()));
-		$reg->deserializer->map(Ids::CAULDRON, function(Reader $in) : Block{
-			$level = $in->readBoundedInt(StateNames::FILL_LEVEL, 0, 6);
-			if($level === 0){
-				$in->ignored(StateNames::CAULDRON_LIQUID);
-				return Blocks::CAULDRON();
-			}
+		$fillLevelProperty = new IntProperty(StateNames::FILL_LEVEL, 1, 6, fn(FillableCauldron $b) => $b->getFillLevel(), fn(FillableCauldron $b, int $v) => $b->setFillLevel($v));
 
-			return (match ($liquid = $in->readString(StateNames::CAULDRON_LIQUID)) {
-				StringValues::CAULDRON_LIQUID_WATER => Blocks::WATER_CAULDRON(),
-				StringValues::CAULDRON_LIQUID_LAVA => Blocks::LAVA_CAULDRON(),
+		//this pretends to be a water cauldron on disk and stores its real information in the block actor data, therefore only a serializer is needed
+		self::mapAsymmetricSerializer($reg, Model::create(Blocks::POTION_CAULDRON(), Ids::CAULDRON)->properties([$fillLevelProperty, new DummyProperty(StateNames::CAULDRON_LIQUID, StringValues::CAULDRON_LIQUID_WATER)]));
+
+		$lavaCauldronModel = Model::create(Blocks::LAVA_CAULDRON(), Ids::CAULDRON)->properties([
+			$fillLevelProperty,
+			new DummyProperty(StateNames::CAULDRON_LIQUID, StringValues::CAULDRON_LIQUID_LAVA)
+		]);
+		$waterCauldronModel = Model::create(Blocks::WATER_CAULDRON(), Ids::CAULDRON)->properties([
+			$fillLevelProperty,
+			new DummyProperty(StateNames::CAULDRON_LIQUID, StringValues::CAULDRON_LIQUID_WATER)
+		]);
+		$emptyCauldronModel = Model::create(Blocks::CAULDRON(), Ids::CAULDRON)->properties([
+			new DummyProperty(StateNames::FILL_LEVEL, 0),
+			new DummyProperty(StateNames::CAULDRON_LIQUID, StringValues::CAULDRON_LIQUID_WATER)
+		]);
+		self::mapAsymmetricSerializer($reg, $lavaCauldronModel);
+		self::mapAsymmetricSerializer($reg, $waterCauldronModel);
+		self::mapAsymmetricSerializer($reg, $emptyCauldronModel);
+		$reg->deserializer->map(Ids::CAULDRON, fn(Reader $in) => $in->readInt(StateNames::FILL_LEVEL) === 0 ?
+			self::deserializeAsymmetric($emptyCauldronModel, $in) :
+			match ($liquid = $in->readString(StateNames::CAULDRON_LIQUID)) {
+				StringValues::CAULDRON_LIQUID_WATER => self::deserializeAsymmetric($waterCauldronModel, $in),
+				StringValues::CAULDRON_LIQUID_LAVA => self::deserializeAsymmetric($lavaCauldronModel, $in),
 				StringValues::CAULDRON_LIQUID_POWDER_SNOW => throw new UnsupportedBlockStateException("Powder snow is not supported yet"),
 				default => throw $in->badValueException(StateNames::CAULDRON_LIQUID, $liquid)
-			})->setFillLevel($level);
-		});
+			}
+		);
 
 		//mushroom stems, split for consistency with all-sided logs vs normal logs
-		$reg->serializer->map(Blocks::ALL_SIDED_MUSHROOM_STEM(), Writer::create(Ids::MUSHROOM_STEM)
-			->writeInt(StateNames::HUGE_MUSHROOM_BITS, BlockLegacyMetadata::MUSHROOM_BLOCK_ALL_STEM));
-		$reg->serializer->map(Blocks::MUSHROOM_STEM(), Writer::create(Ids::MUSHROOM_STEM)
-			->writeInt(StateNames::HUGE_MUSHROOM_BITS, BlockLegacyMetadata::MUSHROOM_BLOCK_STEM));
-		$reg->deserializer->map(Ids::MUSHROOM_STEM, fn(Reader $in) => match ($in->readBoundedInt(StateNames::HUGE_MUSHROOM_BITS, 0, 15)) {
-			BlockLegacyMetadata::MUSHROOM_BLOCK_ALL_STEM => Blocks::ALL_SIDED_MUSHROOM_STEM(),
-			BlockLegacyMetadata::MUSHROOM_BLOCK_STEM => Blocks::MUSHROOM_STEM(),
+		$allSidedMushroomStemModel = Model::create(Blocks::ALL_SIDED_MUSHROOM_STEM(), Ids::MUSHROOM_STEM)->properties([new DummyProperty(StateNames::HUGE_MUSHROOM_BITS, BlockLegacyMetadata::MUSHROOM_BLOCK_ALL_STEM)]);
+		$mushroomStemModel = Model::create(Blocks::MUSHROOM_STEM(), Ids::MUSHROOM_STEM)->properties([new DummyProperty(StateNames::HUGE_MUSHROOM_BITS, BlockLegacyMetadata::MUSHROOM_BLOCK_STEM)]);
+		self::mapAsymmetricSerializer($reg, $allSidedMushroomStemModel);
+		self::mapAsymmetricSerializer($reg, $mushroomStemModel);
+		$reg->deserializer->map(Ids::MUSHROOM_STEM, fn(Reader $in) : Block => match ($in->readInt(StateNames::HUGE_MUSHROOM_BITS)) {
+			BlockLegacyMetadata::MUSHROOM_BLOCK_ALL_STEM => self::deserializeAsymmetric($allSidedMushroomStemModel, $in),
+			BlockLegacyMetadata::MUSHROOM_BLOCK_STEM => self::deserializeAsymmetric($mushroomStemModel, $in),
 			default => throw new BlockStateDeserializeException("This state does not exist"),
 		});
 
 		//pitcher crop, split into single and double variants as double has different properties and behaviour
 		//this will probably be the most annoying to unify
-		$reg->serializer->map(Blocks::PITCHER_CROP(), function(PitcherCrop $block) : Writer{
-			return Writer::create(Ids::PITCHER_CROP)
-				->writeInt(StateNames::GROWTH, $block->getAge())
-				->writeBool(StateNames::UPPER_BLOCK_BIT, false);
-		});
-		$reg->serializer->map(Blocks::DOUBLE_PITCHER_CROP(), function(DoublePitcherCrop $block) : Writer{
-			return Writer::create(Ids::PITCHER_CROP)
-				->writeInt(StateNames::GROWTH, $block->getAge() + 1 + PitcherCrop::MAX_AGE)
-				->writeBool(StateNames::UPPER_BLOCK_BIT, $block->isTop());
-		});
-		$reg->deserializer->map(Ids::PITCHER_CROP, function(Reader $in) : Block{
-			$growth = $in->readBoundedInt(StateNames::GROWTH, 0, 7);
-			$top = $in->readBool(StateNames::UPPER_BLOCK_BIT);
-			if($growth <= PitcherCrop::MAX_AGE){
-				//top pitcher crop with age 0-2 is an invalid state
-				//only the bottom half should exist in this case
-				return $top ? Blocks::AIR() : Blocks::PITCHER_CROP()->setAge($growth);
-			}
-			return Blocks::DOUBLE_PITCHER_CROP()
-				->setAge(min($growth - PitcherCrop::MAX_AGE - 1, DoublePitcherCrop::MAX_AGE))
-				->setTop($top);
-		});
+		$pitcherCropModel = Model::create(Blocks::PITCHER_CROP(), Ids::PITCHER_CROP)->properties([
+			new IntProperty(StateNames::GROWTH, 0, PitcherCrop::MAX_AGE, fn(PitcherCrop $b) => $b->getAge(), fn(PitcherCrop $b, int $v) => $b->setAge($v)),
+			new DummyProperty(StateNames::UPPER_BLOCK_BIT, false)
+		]);
+		$doublePitcherCropAgeOffset = PitcherCrop::MAX_AGE + 1;
+		$doublePitcherCropModel = Model::create(Blocks::DOUBLE_PITCHER_CROP(), Ids::PITCHER_CROP)->properties([
+			new IntProperty(
+				StateNames::GROWTH,
+				$doublePitcherCropAgeOffset, //TODO: it would be a bit less awkward if the bounds applied _after_ applying the offset, instead of before
+				7,
+				fn(DoublePitcherCrop $b) => $b->getAge(),
+				fn(DoublePitcherCrop $b, int $v) => $b->setAge(min($v, DoublePitcherCrop::MAX_AGE)), //state may give up to 7, but only up to 4 is valid
+				offset: -$doublePitcherCropAgeOffset
+			),
+			new BoolProperty(StateNames::UPPER_BLOCK_BIT, fn(DoublePitcherCrop $b) => $b->isTop(), fn(DoublePitcherCrop $b, bool $v) => $b->setTop($v))
+		]);
+		self::mapAsymmetricSerializer($reg, $pitcherCropModel);
+		self::mapAsymmetricSerializer($reg, $doublePitcherCropModel);
+		$reg->deserializer->map(Ids::PITCHER_CROP, fn(Reader $in) => $in->readInt(StateNames::GROWTH) <= PitcherCrop::MAX_AGE ?
+			($in->readBool(StateNames::UPPER_BLOCK_BIT) ?
+				Blocks::AIR() :
+				self::deserializeAsymmetric($pitcherCropModel, $in)
+			) : self::deserializeAsymmetric($doublePitcherCropModel, $in)
+		);
 
 		//these only exist within PM (mapped from tile properties) as they don't support the same properties as a
-		//normal banner
-		$reg->serializer->map(Blocks::OMINOUS_BANNER(), function(OminousFloorBanner $block) use ($commonProperties) : Writer{
-			$writer = Writer::create(Ids::STANDING_BANNER);
-			$commonProperties->floorSignLikeRotation->serialize($block, $writer);
-			return $writer;
-		});
-		$reg->serializer->map(Blocks::OMINOUS_WALL_BANNER(), function(OminousWallBanner $block) use ($commonProperties) : Writer{
-			$writer = Writer::create(Ids::WALL_BANNER);
-			$commonProperties->horizontalFacingClassic->serialize($block, $writer);
-			return $writer;
-		});
+		//normal banner, therefore no deserializer is needed
+		self::mapAsymmetricSerializer($reg, Model::create(Blocks::OMINOUS_BANNER(), Ids::STANDING_BANNER)->properties([$commonProperties->floorSignLikeRotation]));
+		self::mapAsymmetricSerializer($reg, Model::create(Blocks::OMINOUS_WALL_BANNER(), Ids::WALL_BANNER)->properties([$commonProperties->horizontalFacingClassic]));
 	}
 }
