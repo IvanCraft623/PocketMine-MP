@@ -26,6 +26,7 @@ namespace pocketmine\data\bedrock\item;
 use pocketmine\block\Bed;
 use pocketmine\block\Block;
 use pocketmine\block\CopperDoor;
+use pocketmine\block\tile\Banner as TileBanner;
 use pocketmine\block\utils\CopperOxidation;
 use pocketmine\block\utils\DyeColor;
 use pocketmine\block\VanillaBlocks as Blocks;
@@ -46,6 +47,7 @@ use pocketmine\item\Potion;
 use pocketmine\item\SplashPotion;
 use pocketmine\item\SuspiciousStew;
 use pocketmine\item\VanillaItems as Items;
+use pocketmine\nbt\tag\CompoundTag;
 
 final class ItemSerializerDeserializerRegistrar{
 
@@ -488,14 +490,6 @@ final class ItemSerializerDeserializerRegistrar{
 	 */
 	private function register1to1ItemWithMetaMappings() : void{
 		$this->map1to1ItemWithMeta(
-			Ids::BANNER,
-			Items::BANNER(),
-			function(Banner $item, int $meta) : void{
-				$item->setColor(DyeColorIdMap::getInstance()->fromInvertedId($meta) ?? throw new ItemTypeDeserializeException("Unknown banner meta $meta"));
-			},
-			fn(Banner $item) => DyeColorIdMap::getInstance()->toInvertedId($item->getColor())
-		);
-		$this->map1to1ItemWithMeta(
 			Ids::GOAT_HORN,
 			Items::GOAT_HORN(),
 			function(GoatHorn $item, int $meta) : void{
@@ -550,6 +544,21 @@ final class ItemSerializerDeserializerRegistrar{
 			$this->deserializer?->map($id, fn() => Items::DYE()->setColor($color));
 		}
 		$this->serializer?->map(Items::DYE(), fn(Dye $item) => new Data(DyeColorIdMap::getInstance()->toItemId($item->getColor())));
+
+		$this->deserializer?->map(Ids::BANNER, function(Data $data) : Item{
+			$type = $data->getTag()?->getInt(TileBanner::TAG_TYPE) ?? TileBanner::TYPE_NORMAL;
+			if($type === TileBanner::TYPE_OMINOUS){
+				return Items::OMINOUS_BANNER();
+			}
+			$color = DyeColorIdMap::getInstance()->fromInvertedId($data->getMeta()) ?? throw new ItemTypeDeserializeException("Unknown banner meta " . $data->getMeta());
+			return Items::BANNER()->setColor($color);
+		});
+		$this->serializer?->map(Items::OMINOUS_BANNER(), fn() => new Data(Ids::BANNER, tag: CompoundTag::create()
+			->setInt(TileBanner::TAG_TYPE, TileBanner::TYPE_OMINOUS))
+		);
+		$this->serializer?->map(Items::BANNER(), function(Banner $item) : Data{
+			return new Data(Ids::BANNER, DyeColorIdMap::getInstance()->toInvertedId($item->getColor()));
+		});
 	}
 
 	/**

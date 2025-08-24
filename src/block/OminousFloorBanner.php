@@ -23,31 +23,31 @@ declare(strict_types=1);
 
 namespace pocketmine\block;
 
-use pocketmine\block\utils\HorizontalFacing;
-use pocketmine\block\utils\HorizontalFacingTrait;
+use pocketmine\block\utils\SignLikeRotation;
+use pocketmine\block\utils\SignLikeRotationTrait;
 use pocketmine\item\Item;
-use pocketmine\math\Axis;
 use pocketmine\math\Facing;
 use pocketmine\math\Vector3;
 use pocketmine\player\Player;
 use pocketmine\world\BlockTransaction;
 
-final class WallBanner extends BaseBanner implements HorizontalFacing{
-	use HorizontalFacingTrait;
+final class OminousFloorBanner extends BaseOminousBanner implements SignLikeRotation{
+	use SignLikeRotationTrait;
 
-	protected function getOminousVersion() : Block{
-		return VanillaBlocks::OMINOUS_WALL_BANNER()->setFacing($this->facing);
-	}
+	//TODO: duplicated code :(
 
 	protected function getSupportingFace() : int{
-		return Facing::opposite($this->facing);
+		return Facing::DOWN;
 	}
 
 	public function place(BlockTransaction $tx, Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, ?Player $player = null) : bool{
-		if(Facing::axis($face) === Axis::Y){
+		if($face !== Facing::UP){
 			return false;
 		}
-		$this->facing = $face;
+
+		if($player !== null){
+			$this->rotation = self::getRotationFromYaw($player->getLocation()->getYaw());
+		}
 		return parent::place($tx, $item, $blockReplace, $blockClicked, $face, $clickVector, $player);
 	}
 }

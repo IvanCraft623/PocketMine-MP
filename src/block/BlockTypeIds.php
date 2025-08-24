@@ -787,8 +787,10 @@ final class BlockTypeIds{
 	public const RESIN_CLUMP = 10757;
 	public const CHISELED_RESIN_BRICKS = 10758;
 	public const RESPAWN_ANCHOR = 10759;
+	public const OMINOUS_BANNER = 10760;
+	public const OMINOUS_WALL_BANNER = 10761;
 
-	public const FIRST_UNUSED_BLOCK_ID = 10760;
+	public const FIRST_UNUSED_BLOCK_ID = 10762;
 
 	private static int $nextDynamicId = self::FIRST_UNUSED_BLOCK_ID;
 

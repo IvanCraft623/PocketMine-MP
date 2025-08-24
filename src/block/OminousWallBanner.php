@@ -32,12 +32,8 @@ use pocketmine\math\Vector3;
 use pocketmine\player\Player;
 use pocketmine\world\BlockTransaction;
 
-final class WallBanner extends BaseBanner implements HorizontalFacing{
+final class OminousWallBanner extends BaseOminousBanner implements HorizontalFacing{
 	use HorizontalFacingTrait;
-
-	protected function getOminousVersion() : Block{
-		return VanillaBlocks::OMINOUS_WALL_BANNER()->setFacing($this->facing);
-	}
 
 	protected function getSupportingFace() : int{
 		return Facing::opposite($this->facing);

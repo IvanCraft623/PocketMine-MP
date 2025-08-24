@@ -55,6 +55,7 @@ use pocketmine\block\Farmland;
 use pocketmine\block\FillableCauldron;
 use pocketmine\block\Fire;
 use pocketmine\block\FloorCoralFan;
+use pocketmine\block\OminousFloorBanner;
 use pocketmine\block\Froglight;
 use pocketmine\block\FrostedIce;
 use pocketmine\block\GlazedTerracotta;
@@ -103,6 +104,7 @@ use pocketmine\block\utils\MushroomBlockType;
 use pocketmine\block\utils\PoweredByRedstone;
 use pocketmine\block\VanillaBlocks as Blocks;
 use pocketmine\block\Vine;
+use pocketmine\block\OminousWallBanner;
 use pocketmine\data\bedrock\block\BlockLegacyMetadata;
 use pocketmine\data\bedrock\block\BlockStateDeserializeException;
 use pocketmine\data\bedrock\block\BlockStateNames as StateNames;
@@ -154,7 +156,7 @@ final class VanillaBlockMappings{
 		self::registerChemistryMappings($reg, $commonProperties);
 		self::register1to1CustomMappings($reg, $commonProperties);
 
-		self::registerSplitMappings($reg);
+		self::registerSplitMappings($reg, $commonProperties);
 	}
 
 	private static function registerSimpleIdOnlyMappings(BlockSerializerDeserializerRegistrar $reg) : void{
@@ -1476,7 +1478,7 @@ final class VanillaBlockMappings{
 	 * These currently can't be registered in a unified way, and due to their small number it may not be worth the
 	 * effort to implement a unified way to deal with them
 	 */
-	private static function registerSplitMappings(BlockSerializerDeserializerRegistrar $reg) : void{
+	private static function registerSplitMappings(BlockSerializerDeserializerRegistrar $reg, CommonProperties $commonProperties) : void{
 		//big dripleaf - split into head / stem variants, as stems don't have tilt or leaf state
 		$reg->serializer->map(Blocks::BIG_DRIPLEAF_HEAD(), function(BigDripleafHead $block) : Writer{
 			return Writer::create(Ids::BIG_DRIPLEAF)
@@ -1556,6 +1558,19 @@ final class VanillaBlockMappings{
 			return Blocks::DOUBLE_PITCHER_CROP()
 				->setAge(min($growth - PitcherCrop::MAX_AGE - 1, DoublePitcherCrop::MAX_AGE))
 				->setTop($top);
+		});
+
+		//these only exist within PM (mapped from tile properties) as they don't support the same properties as a
+		//normal banner
+		$reg->serializer->map(Blocks::OMINOUS_BANNER(), function(OminousFloorBanner $block) use ($commonProperties) : Writer{
+			$writer = Writer::create(Ids::STANDING_BANNER);
+			$commonProperties->floorSignLikeRotation->serialize($block, $writer);
+			return $writer;
+		});
+		$reg->serializer->map(Blocks::OMINOUS_WALL_BANNER(), function(OminousWallBanner $block) use ($commonProperties) : Writer{
+			$writer = Writer::create(Ids::WALL_BANNER);
+			$commonProperties->horizontalFacingClassic->serialize($block, $writer);
+			return $writer;
 		});
 	}
 }

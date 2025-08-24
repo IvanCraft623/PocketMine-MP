@@ -50,12 +50,18 @@ abstract class BaseBanner extends Transparent implements Colored{
 		parent::readStateFromWorld();
 		$tile = $this->position->getWorld()->getTile($this->position);
 		if($tile instanceof TileBanner){
+			if($tile->getType() === TileBanner::TYPE_OMINOUS){
+				//illager banner is implemented as a separate block, as it doesn't support base color or custom patterns
+				return $this->getOminousVersion();
+			}
 			$this->color = $tile->getBaseColor();
 			$this->setPatterns($tile->getPatterns());
 		}
 
 		return $this;
 	}
+
+	abstract protected function getOminousVersion() : Block;
 
 	public function writeStateToWorld() : void{
 		parent::writeStateToWorld();

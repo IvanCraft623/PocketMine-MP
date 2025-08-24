@@ -34,6 +34,10 @@ use pocketmine\world\BlockTransaction;
 final class FloorBanner extends BaseBanner implements SignLikeRotation{
 	use SignLikeRotationTrait;
 
+	protected function getOminousVersion() : Block{
+		return VanillaBlocks::OMINOUS_BANNER()->setRotation($this->rotation);
+	}
+
 	protected function getSupportingFace() : int{
 		return Facing::DOWN;
 	}

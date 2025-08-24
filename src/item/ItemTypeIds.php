@@ -334,8 +334,9 @@ final class ItemTypeIds{
 	public const RECORD_CREATOR = 20295;
 	public const RECORD_CREATOR_MUSIC_BOX = 20296;
 	public const RECORD_PRECIPICE = 20297;
+	public const OMINOUS_BANNER = 20298;
 
-	public const FIRST_UNUSED_ITEM_ID = 20298;
+	public const FIRST_UNUSED_ITEM_ID = 20299;
 
 	private static int $nextDynamicId = self::FIRST_UNUSED_ITEM_ID;
 
