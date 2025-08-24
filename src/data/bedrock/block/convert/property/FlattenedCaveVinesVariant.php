@@ -21,24 +21,15 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\data\bedrock;
-
-use pocketmine\block\utils\MushroomBlockType;
-use pocketmine\data\bedrock\block\convert\property\ValueMappings;
-use pocketmine\utils\SingletonTrait;
+namespace pocketmine\data\bedrock\block\convert\property;
 
 /**
- * @deprecated
+ * In PM we treat head/body as a bool and berries/no berries as a second bool.
+ * However, Bedrock doesn't have IDs to represent a separate head/body without berries, so this enum lets us use an
+ * EnumFromStringProperty to deal with this using special getter/setter logic.
  */
-final class MushroomBlockTypeIdMap{
-	use SingletonTrait;
-	/** @phpstan-use IntSaveIdMapTrait<MushroomBlockType> */
-	use IntSaveIdMapTrait;
-
-	public function __construct(){
-		$newMapping = ValueMappings::getInstance()->mushroomBlockType;
-		foreach(MushroomBlockType::cases() as $case){
-			$this->register($newMapping->valueToRaw($case), $case);
-		}
-	}
+enum FlattenedCaveVinesVariant : string{
+	case NO_BERRIES = "";
+	case HEAD_WITH_BERRIES = "_head_with_berries";
+	case BODY_WITH_BERRIES = "_body_with_berries";
 }

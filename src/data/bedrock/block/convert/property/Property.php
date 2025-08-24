@@ -21,24 +21,24 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\data\bedrock;
+namespace pocketmine\data\bedrock\block\convert\property;
 
-use pocketmine\block\utils\MushroomBlockType;
-use pocketmine\data\bedrock\block\convert\property\ValueMappings;
-use pocketmine\utils\SingletonTrait;
+use pocketmine\data\bedrock\block\convert\BlockStateReader;
+use pocketmine\data\bedrock\block\convert\BlockStateWriter;
 
 /**
- * @deprecated
+ * @phpstan-template TBlock of object
  */
-final class MushroomBlockTypeIdMap{
-	use SingletonTrait;
-	/** @phpstan-use IntSaveIdMapTrait<MushroomBlockType> */
-	use IntSaveIdMapTrait;
+interface Property{
+	public function getName() : string;
 
-	public function __construct(){
-		$newMapping = ValueMappings::getInstance()->mushroomBlockType;
-		foreach(MushroomBlockType::cases() as $case){
-			$this->register($newMapping->valueToRaw($case), $case);
-		}
-	}
+	/**
+	 * @phpstan-param TBlock $block
+	 */
+	public function deserialize(object $block, BlockStateReader $in) : void;
+
+	/**
+	 * @phpstan-param TBlock $block
+	 */
+	public function serialize(object $block, BlockStateWriter $out) : void;
 }
