@@ -55,7 +55,6 @@ use pocketmine\block\Wood;
 use pocketmine\data\bedrock\block\BlockLegacyMetadata;
 use pocketmine\data\bedrock\block\BlockStateNames as StateNames;
 use pocketmine\data\bedrock\block\BlockStateStringValues;
-use pocketmine\data\bedrock\block\convert\non;
 use pocketmine\math\Facing;
 use pocketmine\utils\SingletonTrait;
 
