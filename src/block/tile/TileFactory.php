@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace pocketmine\block\tile;
 
+use pocketmine\block\HangingRoots;
 use pocketmine\data\SavedDataLoadingException;
 use pocketmine\math\Vector3;
 use pocketmine\nbt\NbtException;
@@ -79,6 +80,7 @@ final class TileFactory{
 		$this->register(SporeBlossom::class, ["SporeBlossom", "minecraft:spore_blossom"]);
 		$this->register(MobHead::class, ["Skull", "minecraft:skull"]);
 		$this->register(GlowingItemFrame::class, ["GlowItemFrame"]);
+		$this->register(HangingSign::class, ["HangingSign", "minecraft:hanging_sign"]);
 
 		//TODO: ChalkboardBlock
 		//TODO: ChemistryTable
