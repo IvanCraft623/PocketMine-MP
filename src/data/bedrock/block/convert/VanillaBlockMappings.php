@@ -33,7 +33,6 @@ use pocketmine\block\Bed;
 use pocketmine\block\Bedrock;
 use pocketmine\block\Bell;
 use pocketmine\block\BigDripleafHead;
-use pocketmine\block\BigDripleafStem;
 use pocketmine\block\Block;
 use pocketmine\block\BrewingStand;
 use pocketmine\block\Cactus;
@@ -68,8 +67,6 @@ use pocketmine\block\MobHead;
 use pocketmine\block\NetherPortal;
 use pocketmine\block\NetherVines;
 use pocketmine\block\NetherWartPlant;
-use pocketmine\block\OminousFloorBanner;
-use pocketmine\block\OminousWallBanner;
 use pocketmine\block\PinkPetals;
 use pocketmine\block\PitcherCrop;
 use pocketmine\block\PoweredRail;
@@ -112,7 +109,6 @@ use pocketmine\data\bedrock\block\BlockStateNames as StateNames;
 use pocketmine\data\bedrock\block\BlockStateStringValues as StringValues;
 use pocketmine\data\bedrock\block\BlockTypeNames as Ids;
 use pocketmine\data\bedrock\block\convert\BlockStateReader as Reader;
-use pocketmine\data\bedrock\block\convert\BlockStateSerializerHelper as Helper;
 use pocketmine\data\bedrock\block\convert\BlockStateWriter as Writer;
 use pocketmine\data\bedrock\block\convert\property\BoolFromStringProperty;
 use pocketmine\data\bedrock\block\convert\property\BoolProperty;
@@ -1590,6 +1586,7 @@ final class VanillaBlockMappings{
 		self::mapAsymmetricSerializer($reg, $doublePitcherCropModel);
 		$reg->deserializer->map(Ids::PITCHER_CROP, fn(Reader $in) => $in->readInt(StateNames::GROWTH) <= PitcherCrop::MAX_AGE ?
 			($in->readBool(StateNames::UPPER_BLOCK_BIT) ?
+				//top pitcher crop with age 0-2 is an invalid state, only the bottom half should exist in this case
 				Blocks::AIR() :
 				self::deserializeAsymmetric($pitcherCropModel, $in)
 			) : self::deserializeAsymmetric($doublePitcherCropModel, $in)
