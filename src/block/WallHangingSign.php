@@ -27,6 +27,7 @@ use pocketmine\block\utils\HorizontalFacing;
 use pocketmine\block\utils\HorizontalFacingTrait;
 use pocketmine\item\Item;
 use pocketmine\math\Axis;
+use pocketmine\math\AxisAlignedBB;
 use pocketmine\math\Facing;
 use pocketmine\math\Vector3;
 use pocketmine\player\Player;
@@ -39,12 +40,13 @@ final class WallHangingSign extends BaseSign implements HorizontalFacing{
 		return Facing::rotateY($this->facing, clockwise: true);
 	}
 
-	protected function getSupportingFaceOptions() : array{
-		//wall hanging signs can be supported from either end of the post
-		return [
-			Facing::rotateY($this->facing, clockwise: true),
-			Facing::rotateY($this->facing, clockwise: false)
-		];
+	public function onNearbyBlockChange() : void{
+		//NOOP - disable default self-destruct behaviour
+	}
+
+	protected function recalculateCollisionBoxes() : array{
+		//only the cross bar is collidable
+		return [AxisAlignedBB::one()->trim(Facing::DOWN, 7 / 8)->squash(Facing::axis($this->facing), 3 / 4)];
 	}
 
 	public function place(BlockTransaction $tx, Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, ?Player $player = null) : bool{
