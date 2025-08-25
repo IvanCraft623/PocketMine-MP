@@ -106,7 +106,7 @@ abstract class BaseSign extends Transparent implements WoodMaterial{
 	abstract protected function getSupportingFace() : int;
 
 	public function onNearbyBlockChange() : void{
-		if($this->getSide($this->getSupportingFace())->getTypeId() !== BlockTypeIds::AIR){
+		if($this->getSide($this->getSupportingFace())->getTypeId() === BlockTypeIds::AIR){
 			$this->position->getWorld()->useBreakOn($this->position);
 		}
 	}
