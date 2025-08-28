@@ -169,6 +169,12 @@ parameters:
 			path: ../../../src/crafting/ShapedRecipe.php
 
 		-
+			message: '#^Offset ''name'' on \*NEVER\* in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.offset
+			count: 1
+			path: ../../../src/crafting/json/ItemStackData.php
+
+		-
 			message: '#^Property pocketmine\\crash\\CrashDumpData\:\:\$parameters \(list\<string\>\) does not accept array\.$#'
 			identifier: assign.propertyType
 			count: 1
