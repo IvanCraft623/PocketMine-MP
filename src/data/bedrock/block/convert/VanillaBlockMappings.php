@@ -118,10 +118,10 @@ use pocketmine\data\bedrock\block\convert\property\EnumFromRawStateMap;
 use pocketmine\data\bedrock\block\convert\property\FlattenedCaveVinesVariant;
 use pocketmine\data\bedrock\block\convert\property\IntFromRawStateMap;
 use pocketmine\data\bedrock\block\convert\property\IntProperty;
-use pocketmine\data\bedrock\block\convert\property\OptionSetFromIntProperty;
 use pocketmine\data\bedrock\block\convert\property\ValueFromIntProperty;
 use pocketmine\data\bedrock\block\convert\property\ValueFromStringProperty;
 use pocketmine\data\bedrock\block\convert\property\ValueMappings;
+use pocketmine\data\bedrock\block\convert\property\ValueSetFromIntProperty;
 use pocketmine\math\Facing;
 use function array_map;
 use function min;
@@ -581,7 +581,7 @@ final class VanillaBlockMappings{
 		$reg->mapModel(Model::create(Blocks::RESIN_CLUMP(), Ids::RESIN_CLUMP)->properties([$commonProperties->multiFacingFlags]));
 
 		$reg->mapModel(Model::create(Blocks::VINES(), Ids::VINE)->properties([
-			new OptionSetFromIntProperty(
+			new ValueSetFromIntProperty(
 				StateNames::VINE_DIRECTION_BITS,
 				IntFromRawStateMap::int([
 					Facing::NORTH => BlockLegacyMetadata::VINE_FLAG_NORTH,
@@ -1267,7 +1267,7 @@ final class VanillaBlockMappings{
 		$reg->mapModel(Model::create(Blocks::CHAIN(), Ids::CHAIN)->properties([$commonProperties->pillarAxis]));
 		$reg->mapModel(Model::create(Blocks::CHISELED_BOOKSHELF(), Ids::CHISELED_BOOKSHELF)->properties([
 			$commonProperties->horizontalFacingSWNE,
-			new OptionSetFromIntProperty(
+			new ValueSetFromIntProperty(
 				StateNames::BOOKS_STORED,
 				EnumFromRawStateMap::int(ChiseledBookshelfSlot::class, fn(ChiseledBookshelfSlot $case) => match($case){
 					//these are (currently) the same as the internal values, but it's best not to rely on those in case Mojang mess with the flags

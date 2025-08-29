@@ -80,8 +80,8 @@ final class CommonProperties{
 	/** @phpstan-var ValueFromIntProperty<AnyFacing, int> */
 	public readonly ValueFromIntProperty $anyFacingClassic;
 
-	/** @phpstan-var OptionSetFromIntProperty<MultiAnyFacing, int> */
-	public readonly OptionSetFromIntProperty $multiFacingFlags;
+	/** @phpstan-var ValueSetFromIntProperty<MultiAnyFacing, int> */
+	public readonly ValueSetFromIntProperty $multiFacingFlags;
 
 	/** @phpstan-var IntProperty<SignLikeRotation> */
 	public readonly IntProperty $floorSignLikeRotation;
@@ -242,7 +242,7 @@ final class CommonProperties{
 			fn(AnyFacing $b, int $v) => $b->setFacing($v)
 		);
 
-		$this->multiFacingFlags = new OptionSetFromIntProperty(
+		$this->multiFacingFlags = new ValueSetFromIntProperty(
 			StateNames::MULTI_FACE_DIRECTION_BITS,
 			IntFromRawStateMap::int([
 				Facing::DOWN => BlockLegacyMetadata::MULTI_FACE_DIRECTION_FLAG_DOWN,

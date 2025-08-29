@@ -32,7 +32,7 @@ use pocketmine\utils\AssumptionFailedError;
  * @phpstan-template TOption of int|\UnitEnum
  * @phpstan-implements Property<TBlock>
  */
-class OptionSetFromIntProperty implements Property{
+class ValueSetFromIntProperty implements Property{
 
 	private int $maxValue = 0;
 
