@@ -30,13 +30,11 @@ use pocketmine\inventory\transaction\action\SlotChangeAction;
 use pocketmine\item\Item;
 use pocketmine\player\Player;
 use pocketmine\utils\Utils;
-use function array_keys;
 use function array_values;
 use function assert;
 use function count;
 use function get_class;
 use function min;
-use function shuffle;
 use function spl_object_hash;
 use function spl_object_id;
 
