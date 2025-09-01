@@ -82,7 +82,7 @@ class Banner extends Spawnable{
 			}
 		}
 
-		$this->type = $nbt->getInt(self::TAG_TYPE);
+		$this->type = $nbt->getInt(self::TAG_TYPE, self::TYPE_NORMAL);
 	}
 
 	protected function writeSaveData(CompoundTag $nbt) : void{
