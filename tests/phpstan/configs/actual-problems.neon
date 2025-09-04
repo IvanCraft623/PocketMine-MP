@@ -1159,12 +1159,6 @@ parameters:
 			path: ../../../src/world/World.php
 
 		-
-			message: '#^Parameter \#2 \$x of method pocketmine\\block\\Block\:\:position\(\) expects int, float\|int given\.$#'
-			identifier: argument.type
-			count: 2
-			path: ../../../src/world/World.php
-
-		-
 			message: '#^Parameter \#2 \$y of method pocketmine\\world\\World\:\:getBlockAt\(\) expects int, float\|int given\.$#'
 			identifier: argument.type
 			count: 1
@@ -1189,12 +1183,6 @@ parameters:
 			path: ../../../src/world/World.php
 
 		-
-			message: '#^Parameter \#3 \$y of method pocketmine\\block\\Block\:\:position\(\) expects int, float\|int given\.$#'
-			identifier: argument.type
-			count: 2
-			path: ../../../src/world/World.php
-
-		-
 			message: '#^Parameter \#3 \$z of method pocketmine\\world\\World\:\:getBlockAt\(\) expects int, float\|int given\.$#'
 			identifier: argument.type
 			count: 1
@@ -1214,12 +1202,6 @@ parameters:
 
 		-
 			message: '#^Parameter \#3 \$z of static method pocketmine\\world\\World\:\:blockHash\(\) expects int, float\|int given\.$#'
-			identifier: argument.type
-			count: 2
-			path: ../../../src/world/World.php
-
-		-
-			message: '#^Parameter \#4 \$z of method pocketmine\\block\\Block\:\:position\(\) expects int, float\|int given\.$#'
 			identifier: argument.type
 			count: 2
 			path: ../../../src/world/World.php
