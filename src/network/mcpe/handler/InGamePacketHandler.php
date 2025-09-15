@@ -717,7 +717,8 @@ class InGamePacketHandler extends PacketHandler{
 			case PlayerAction::INTERACT_BLOCK: //TODO: ignored (for now)
 				break;
 			case PlayerAction::CREATIVE_PLAYER_DESTROY_BLOCK:
-				//TODO: do we need to handle this?
+				//in server auth block breaking, we get PREDICT_DESTROY_BLOCK anyway, so this action is redundant
+				break;
 			case PlayerAction::PREDICT_DESTROY_BLOCK:
 				self::validateFacing($face);
 				if(!$this->player->breakBlock($pos)){
