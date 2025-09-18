@@ -183,7 +183,12 @@ final class EntityFactory{
 				throw new SavedDataLoadingException("Trident item is invalid");
 			}
 			return new Trident(Helper::parseLocation($nbt, $world), $item, null, $nbt);
-		}, ['Trident', 'ThrownTrident', 'minecraft:trident']);
+		}, [
+			'minecraft:trident', //java
+			'minecraft:thrown_trident', //bedrock
+			'Trident', //backwards compat for people who used #4547 before it was merged, since it was sitting around for 4 years...
+			'ThrownTrident' //as above
+		]);
 
 		$this->register(Squid::class, function(World $world, CompoundTag $nbt) : Squid{
 			return new Squid(Helper::parseLocation($nbt, $world), $nbt);
