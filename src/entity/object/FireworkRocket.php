@@ -51,7 +51,7 @@ class FireworkRocket extends Entity implements Explosive{
 	public static function getNetworkTypeId() : string{ return EntityIds::FIREWORKS_ROCKET; }
 
 	/* Maximum number of ticks this will live for. */
-	protected int $lifeTicks;
+	protected int $maxAgeTicks;
 
 	/** @var FireworkRocketExplosion[] */
 	protected array $explosions = [];
@@ -63,7 +63,7 @@ class FireworkRocket extends Entity implements Explosive{
 		if ($lifeTicks < 0) {
 			throw new \InvalidArgumentException("Life ticks cannot be negative");
 		}
-		$this->lifeTicks = $lifeTicks;
+		$this->maxAgeTicks = $lifeTicks;
 		$this->setExplosions($explosions);
 
 		parent::__construct($location, $nbt);
@@ -78,8 +78,8 @@ class FireworkRocket extends Entity implements Explosive{
 	/**
 	 * Returns maximum number of ticks this will live for.
 	 */
-	public function getLifeTicks() : int{
-		return $this->lifeTicks;
+	public function getMaxAgeTicks() : int{
+		return $this->maxAgeTicks;
 	}
 
 	/**
@@ -87,11 +87,11 @@ class FireworkRocket extends Entity implements Explosive{
 	 *
 	 * @return $this
 	 */
-	public function setLifeTicks(int $lifeTicks) : self{
-		if ($lifeTicks < 0) {
-			throw new \InvalidArgumentException("Life ticks cannot be negative");
+	public function setMaxAgeTicks(int $maxAgeTicks) : self{
+		if ($maxAgeTicks < 0) {
+			throw new \InvalidArgumentException("Max age ticks cannot be negative");
 		}
-		$this->lifeTicks = $lifeTicks;
+		$this->maxAgeTicks = $maxAgeTicks;
 		return $this;
 	}
 
@@ -133,7 +133,7 @@ class FireworkRocket extends Entity implements Explosive{
 		if(!$this->isFlaggedForDespawn()){
 			$this->addMotion($this->motion->x * 0.15, 0.04, $this->motion->z * 0.15);
 
-			if($this->ticksLived >= $this->lifeTicks){
+			if($this->ticksLived >= $this->maxAgeTicks){
 				$this->flagForDespawn();
 				$this->explode();
 			}

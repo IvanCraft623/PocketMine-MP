@@ -43,6 +43,9 @@ class FireworkRocketExplosion{
 	protected const TAG_TWINKLE = "FireworkFlicker"; //TAG_Byte
 	protected const TAG_TRAIL = "FireworkTrail"; //TAG_Byte
 
+	/**
+	 * @throws SavedDataLoadingException
+	 */
 	public static function fromCompoundTag(CompoundTag $tag) : self{
 		$colors = self::decodeColors($tag->getByteArray(self::TAG_COLORS));
 		if(count($colors) === 0){
@@ -61,6 +64,7 @@ class FireworkRocketExplosion{
 	/**
 	 * @return DyeColor[]
 	 * @phpstan-return list<DyeColor>
+	 * @throws SavedDataLoadingException
 	 */
 	protected static function decodeColors(string $colorsBytes) : array{
 		$colors = [];

@@ -27,12 +27,10 @@ use pocketmine\block\Block;
 use pocketmine\data\SavedDataLoadingException;
 use pocketmine\entity\Location;
 use pocketmine\entity\object\FireworkRocket as FireworkEntity;
-use pocketmine\math\Facing;
 use pocketmine\math\Vector3;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\ListTag;
 use pocketmine\player\Player;
-use pocketmine\utils\AssumptionFailedError;
 use pocketmine\utils\Utils;
 use function lcg_value;
 use function mt_rand;
@@ -95,17 +93,8 @@ class FireworkRocket extends Item{
 	}
 
 	public function onInteractBlock(Player $player, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, array &$returnedItems) : ItemUseResult{
-		$correction = 0.15;
-		$position = $blockClicked->getPosition()->addVector($clickVector);
-		$position = match($face){
-			Facing::DOWN => $position->add(0, -$correction, 0),
-			Facing::UP => $position->add(0, $correction, 0),
-			Facing::NORTH => $position->add(0, 0, -$correction),
-			Facing::SOUTH => $position->add(0, 0, $correction),
-			Facing::WEST => $position->add(-$correction, 0, 0),
-			Facing::EAST => $position->add($correction, 0, 0),
-			default => throw new AssumptionFailedError("Invalid facing $face")
-		};
+		//TODO: this would be nicer if Vector3::getSide() accepted floats for distance
+		$position = $blockClicked->getPosition()->addVector($clickVector)->addVector(Vector3::zero()->getSide($face)->multiply(0.15));
 
 		$randomDuration = (($this->flightDurationMultiplier + 1) * 10) + mt_rand(0, 12);
 
