@@ -28,7 +28,7 @@ use pocketmine\entity\Entity;
 use pocketmine\entity\EntitySizeInfo;
 use pocketmine\entity\Location;
 use pocketmine\event\entity\EntityItemPickupEvent;
-use pocketmine\item\Trident as TridentItem;
+use pocketmine\item\Item;
 use pocketmine\math\RayTraceResult;
 use pocketmine\math\Vector3;
 use pocketmine\nbt\tag\CompoundTag;
@@ -48,6 +48,8 @@ class Trident extends Projectile{
 
 	public static function getNetworkTypeId() : string{ return EntityIds::THROWN_TRIDENT; }
 
+	protected Item $item;
+
 	protected float $damage = 8.0;
 
 	protected bool $canCollide = true;
@@ -56,13 +58,14 @@ class Trident extends Projectile{
 
 	public function __construct(
 		Location $location,
-		protected TridentItem $item,
+		Item $item,
 		?Entity $shootingEntity,
 		?CompoundTag $nbt = null
 	){
 		if($item->isNull()){
 			throw new \InvalidArgumentException("Trident must have a count of at least 1");
 		}
+		$this->item = clone $item;
 		parent::__construct($location, $shootingEntity, $nbt);
 	}
 
@@ -119,11 +122,11 @@ class Trident extends Projectile{
 		$this->broadcastSound(new TridentHitGroundSound());
 	}
 
-	public function getItem() : TridentItem{
+	public function getItem() : Item{
 		return clone $this->item;
 	}
 
-	public function setItem(TridentItem $item) : void{
+	public function setItem(Item $item) : void{
 		if($item->isNull()){
 			throw new \InvalidArgumentException("Trident must have a count of at least 1");
 		}

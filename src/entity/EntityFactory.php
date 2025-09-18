@@ -48,7 +48,6 @@ use pocketmine\entity\projectile\Snowball;
 use pocketmine\entity\projectile\SplashPotion;
 use pocketmine\entity\projectile\Trident;
 use pocketmine\item\Item;
-use pocketmine\item\Trident as TridentItem;
 use pocketmine\math\Facing;
 use pocketmine\math\Vector3;
 use pocketmine\nbt\NbtException;
@@ -180,7 +179,7 @@ final class EntityFactory{
 			}
 
 			$item = Item::nbtDeserialize($itemTag);
-			if($item->isNull() || !$item instanceof TridentItem){
+			if($item->isNull()){
 				throw new SavedDataLoadingException("Trident item is invalid");
 			}
 			return new Trident(Helper::parseLocation($nbt, $world), $item, null, $nbt);
