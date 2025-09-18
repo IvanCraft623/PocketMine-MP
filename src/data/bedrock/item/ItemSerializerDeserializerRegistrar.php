@@ -26,6 +26,7 @@ namespace pocketmine\data\bedrock\item;
 use pocketmine\block\Bed;
 use pocketmine\block\Block;
 use pocketmine\block\CopperDoor;
+use pocketmine\block\tile\Banner as TileBanner;
 use pocketmine\block\utils\CopperOxidation;
 use pocketmine\block\utils\DyeColor;
 use pocketmine\block\VanillaBlocks as Blocks;
@@ -47,6 +48,7 @@ use pocketmine\item\Potion;
 use pocketmine\item\SplashPotion;
 use pocketmine\item\SuspiciousStew;
 use pocketmine\item\VanillaItems as Items;
+use pocketmine\nbt\tag\CompoundTag;
 
 final class ItemSerializerDeserializerRegistrar{
 
@@ -152,6 +154,7 @@ final class ItemSerializerDeserializerRegistrar{
 		$this->map1to1Block(Ids::JUNGLE_DOOR, Blocks::JUNGLE_DOOR());
 		$this->map1to1Block(Ids::MANGROVE_DOOR, Blocks::MANGROVE_DOOR());
 		$this->map1to1Block(Ids::NETHER_WART, Blocks::NETHER_WART());
+		$this->map1to1Block(Ids::PALE_OAK_DOOR, Blocks::PALE_OAK_DOOR());
 		$this->map1to1Block(Ids::REPEATER, Blocks::REDSTONE_REPEATER());
 		$this->map1to1Block(Ids::SOUL_CAMPFIRE, Blocks::SOUL_CAMPFIRE());
 		$this->map1to1Block(Ids::SPRUCE_DOOR, Blocks::SPRUCE_DOOR());
@@ -165,6 +168,7 @@ final class ItemSerializerDeserializerRegistrar{
 	 */
 	private function register1to1ItemMappings() : void{
 		$this->map1to1Item(Ids::ACACIA_BOAT, Items::ACACIA_BOAT());
+		$this->map1to1Item(Ids::ACACIA_HANGING_SIGN, Items::ACACIA_HANGING_SIGN());
 		$this->map1to1Item(Ids::ACACIA_SIGN, Items::ACACIA_SIGN());
 		$this->map1to1Item(Ids::AMETHYST_SHARD, Items::AMETHYST_SHARD());
 		$this->map1to1Item(Ids::APPLE, Items::APPLE());
@@ -174,6 +178,7 @@ final class ItemSerializerDeserializerRegistrar{
 		$this->map1to1Item(Ids::BEETROOT_SEEDS, Items::BEETROOT_SEEDS());
 		$this->map1to1Item(Ids::BEETROOT_SOUP, Items::BEETROOT_SOUP());
 		$this->map1to1Item(Ids::BIRCH_BOAT, Items::BIRCH_BOAT());
+		$this->map1to1Item(Ids::BIRCH_HANGING_SIGN, Items::BIRCH_HANGING_SIGN());
 		$this->map1to1Item(Ids::BIRCH_SIGN, Items::BIRCH_SIGN());
 		$this->map1to1Item(Ids::BLAZE_POWDER, Items::BLAZE_POWDER());
 		$this->map1to1Item(Ids::BLAZE_ROD, Items::BLAZE_ROD());
@@ -192,6 +197,7 @@ final class ItemSerializerDeserializerRegistrar{
 		$this->map1to1Item(Ids::CHAINMAIL_HELMET, Items::CHAINMAIL_HELMET());
 		$this->map1to1Item(Ids::CHAINMAIL_LEGGINGS, Items::CHAINMAIL_LEGGINGS());
 		$this->map1to1Item(Ids::CHARCOAL, Items::CHARCOAL());
+		$this->map1to1Item(Ids::CHERRY_HANGING_SIGN, Items::CHERRY_HANGING_SIGN());
 		$this->map1to1Item(Ids::CHERRY_SIGN, Items::CHERRY_SIGN());
 		$this->map1to1Item(Ids::CHICKEN, Items::RAW_CHICKEN());
 		$this->map1to1Item(Ids::CHORUS_FRUIT, Items::CHORUS_FRUIT());
@@ -211,8 +217,10 @@ final class ItemSerializerDeserializerRegistrar{
 		$this->map1to1Item(Ids::COOKED_SALMON, Items::COOKED_SALMON());
 		$this->map1to1Item(Ids::COOKIE, Items::COOKIE());
 		$this->map1to1Item(Ids::COPPER_INGOT, Items::COPPER_INGOT());
+		$this->map1to1Item(Ids::CRIMSON_HANGING_SIGN, Items::CRIMSON_HANGING_SIGN());
 		$this->map1to1Item(Ids::CRIMSON_SIGN, Items::CRIMSON_SIGN());
 		$this->map1to1Item(Ids::DARK_OAK_BOAT, Items::DARK_OAK_BOAT());
+		$this->map1to1Item(Ids::DARK_OAK_HANGING_SIGN, Items::DARK_OAK_HANGING_SIGN());
 		$this->map1to1Item(Ids::DARK_OAK_SIGN, Items::DARK_OAK_SIGN());
 		$this->map1to1Item(Ids::DIAMOND, Items::DIAMOND());
 		$this->map1to1Item(Ids::DIAMOND_AXE, Items::DIAMOND_AXE());
@@ -282,6 +290,7 @@ final class ItemSerializerDeserializerRegistrar{
 		$this->map1to1Item(Ids::IRON_SHOVEL, Items::IRON_SHOVEL());
 		$this->map1to1Item(Ids::IRON_SWORD, Items::IRON_SWORD());
 		$this->map1to1Item(Ids::JUNGLE_BOAT, Items::JUNGLE_BOAT());
+		$this->map1to1Item(Ids::JUNGLE_HANGING_SIGN, Items::JUNGLE_HANGING_SIGN());
 		$this->map1to1Item(Ids::JUNGLE_SIGN, Items::JUNGLE_SIGN());
 		$this->map1to1Item(Ids::LAPIS_LAZULI, Items::LAPIS_LAZULI());
 		$this->map1to1Item(Ids::LAVA_BUCKET, Items::LAVA_BUCKET());
@@ -292,6 +301,7 @@ final class ItemSerializerDeserializerRegistrar{
 		$this->map1to1Item(Ids::LEATHER_LEGGINGS, Items::LEATHER_PANTS());
 		$this->map1to1Item(Ids::MAGMA_CREAM, Items::MAGMA_CREAM());
 		$this->map1to1Item(Ids::MANGROVE_BOAT, Items::MANGROVE_BOAT());
+		$this->map1to1Item(Ids::MANGROVE_HANGING_SIGN, Items::MANGROVE_HANGING_SIGN());
 		$this->map1to1Item(Ids::MANGROVE_SIGN, Items::MANGROVE_SIGN());
 		$this->map1to1Item(Ids::MELON_SEEDS, Items::MELON_SEEDS());
 		$this->map1to1Item(Ids::MELON_SLICE, Items::MELON());
@@ -304,11 +314,15 @@ final class ItemSerializerDeserializerRegistrar{
 		$this->map1to1Item(Ids::MUSIC_DISC_BLOCKS, Items::RECORD_BLOCKS());
 		$this->map1to1Item(Ids::MUSIC_DISC_CAT, Items::RECORD_CAT());
 		$this->map1to1Item(Ids::MUSIC_DISC_CHIRP, Items::RECORD_CHIRP());
+		$this->map1to1Item(Ids::MUSIC_DISC_CREATOR, Items::RECORD_CREATOR());
+		$this->map1to1Item(Ids::MUSIC_DISC_CREATOR_MUSIC_BOX, Items::RECORD_CREATOR_MUSIC_BOX());
 		$this->map1to1Item(Ids::MUSIC_DISC_FAR, Items::RECORD_FAR());
 		$this->map1to1Item(Ids::MUSIC_DISC_MALL, Items::RECORD_MALL());
 		$this->map1to1Item(Ids::MUSIC_DISC_MELLOHI, Items::RECORD_MELLOHI());
 		$this->map1to1Item(Ids::MUSIC_DISC_OTHERSIDE, Items::RECORD_OTHERSIDE());
 		$this->map1to1Item(Ids::MUSIC_DISC_PIGSTEP, Items::RECORD_PIGSTEP());
+		$this->map1to1Item(Ids::MUSIC_DISC_PRECIPICE, Items::RECORD_PRECIPICE());
+		$this->map1to1Item(Ids::MUSIC_DISC_RELIC, Items::RECORD_RELIC());
 		$this->map1to1Item(Ids::MUSIC_DISC_STAL, Items::RECORD_STAL());
 		$this->map1to1Item(Ids::MUSIC_DISC_STRAD, Items::RECORD_STRAD());
 		$this->map1to1Item(Ids::MUSIC_DISC_WAIT, Items::RECORD_WAIT());
@@ -331,8 +345,11 @@ final class ItemSerializerDeserializerRegistrar{
 		$this->map1to1Item(Ids::NETHERITE_SWORD, Items::NETHERITE_SWORD());
 		$this->map1to1Item(Ids::NETHERITE_UPGRADE_SMITHING_TEMPLATE, Items::NETHERITE_UPGRADE_SMITHING_TEMPLATE());
 		$this->map1to1Item(Ids::OAK_BOAT, Items::OAK_BOAT());
+		$this->map1to1Item(Ids::OAK_HANGING_SIGN, Items::OAK_HANGING_SIGN());
 		$this->map1to1Item(Ids::OAK_SIGN, Items::OAK_SIGN());
 		$this->map1to1Item(Ids::PAINTING, Items::PAINTING());
+		$this->map1to1Item(Ids::PALE_OAK_HANGING_SIGN, Items::PALE_OAK_HANGING_SIGN());
+		$this->map1to1Item(Ids::PALE_OAK_SIGN, Items::PALE_OAK_SIGN());
 		$this->map1to1Item(Ids::PAPER, Items::PAPER());
 		$this->map1to1Item(Ids::PHANTOM_MEMBRANE, Items::PHANTOM_MEMBRANE());
 		$this->map1to1Item(Ids::PITCHER_POD, Items::PITCHER_POD());
@@ -356,6 +373,7 @@ final class ItemSerializerDeserializerRegistrar{
 		$this->map1to1Item(Ids::RAW_IRON, Items::RAW_IRON());
 		$this->map1to1Item(Ids::RECOVERY_COMPASS, Items::RECOVERY_COMPASS());
 		$this->map1to1Item(Ids::REDSTONE, Items::REDSTONE_DUST());
+		$this->map1to1Item(Ids::RESIN_BRICK, Items::RESIN_BRICK());
 		$this->map1to1Item(Ids::RIB_ARMOR_TRIM_SMITHING_TEMPLATE, Items::RIB_ARMOR_TRIM_SMITHING_TEMPLATE());
 		$this->map1to1Item(Ids::ROTTEN_FLESH, Items::ROTTEN_FLESH());
 		$this->map1to1Item(Ids::SALMON, Items::RAW_SALMON());
@@ -371,6 +389,7 @@ final class ItemSerializerDeserializerRegistrar{
 		$this->map1to1Item(Ids::SPIDER_EYE, Items::SPIDER_EYE());
 		$this->map1to1Item(Ids::SPIRE_ARMOR_TRIM_SMITHING_TEMPLATE, Items::SPIRE_ARMOR_TRIM_SMITHING_TEMPLATE());
 		$this->map1to1Item(Ids::SPRUCE_BOAT, Items::SPRUCE_BOAT());
+		$this->map1to1Item(Ids::SPRUCE_HANGING_SIGN, Items::SPRUCE_HANGING_SIGN());
 		$this->map1to1Item(Ids::SPRUCE_SIGN, Items::SPRUCE_SIGN());
 		$this->map1to1Item(Ids::SPYGLASS, Items::SPYGLASS());
 		$this->map1to1Item(Ids::SQUID_SPAWN_EGG, Items::SQUID_SPAWN_EGG());
@@ -386,11 +405,13 @@ final class ItemSerializerDeserializerRegistrar{
 		$this->map1to1Item(Ids::TORCHFLOWER_SEEDS, Items::TORCHFLOWER_SEEDS());
 		$this->map1to1Item(Ids::TIDE_ARMOR_TRIM_SMITHING_TEMPLATE, Items::TIDE_ARMOR_TRIM_SMITHING_TEMPLATE());
 		$this->map1to1Item(Ids::TOTEM_OF_UNDYING, Items::TOTEM());
+		$this->map1to1Item(Ids::TRIDENT, Items::TRIDENT());
 		$this->map1to1Item(Ids::TROPICAL_FISH, Items::CLOWNFISH());
 		$this->map1to1Item(Ids::TURTLE_HELMET, Items::TURTLE_HELMET());
 		$this->map1to1Item(Ids::VEX_ARMOR_TRIM_SMITHING_TEMPLATE, Items::VEX_ARMOR_TRIM_SMITHING_TEMPLATE());
 		$this->map1to1Item(Ids::VILLAGER_SPAWN_EGG, Items::VILLAGER_SPAWN_EGG());
 		$this->map1to1Item(Ids::WARD_ARMOR_TRIM_SMITHING_TEMPLATE, Items::WARD_ARMOR_TRIM_SMITHING_TEMPLATE());
+		$this->map1to1Item(Ids::WARPED_HANGING_SIGN, Items::WARPED_HANGING_SIGN());
 		$this->map1to1Item(Ids::WARPED_SIGN, Items::WARPED_SIGN());
 		$this->map1to1Item(Ids::WATER_BUCKET, Items::WATER_BUCKET());
 		$this->map1to1Item(Ids::WAYFINDER_ARMOR_TRIM_SMITHING_TEMPLATE, Items::WAYFINDER_ARMOR_TRIM_SMITHING_TEMPLATE());
@@ -483,14 +504,6 @@ final class ItemSerializerDeserializerRegistrar{
 	 */
 	private function register1to1ItemWithMetaMappings() : void{
 		$this->map1to1ItemWithMeta(
-			Ids::BANNER,
-			Items::BANNER(),
-			function(Banner $item, int $meta) : void{
-				$item->setColor(DyeColorIdMap::getInstance()->fromInvertedId($meta) ?? throw new ItemTypeDeserializeException("Unknown banner meta $meta"));
-			},
-			fn(Banner $item) => DyeColorIdMap::getInstance()->toInvertedId($item->getColor())
-		);
-		$this->map1to1ItemWithMeta(
 			Ids::FIREWORK_STAR,
 			Items::FIREWORK_STAR(),
 			function(FireworkStar $item, int $meta) : void{
@@ -553,6 +566,21 @@ final class ItemSerializerDeserializerRegistrar{
 			$this->deserializer?->map($id, fn() => Items::DYE()->setColor($color));
 		}
 		$this->serializer?->map(Items::DYE(), fn(Dye $item) => new Data(DyeColorIdMap::getInstance()->toItemId($item->getColor())));
+
+		$this->deserializer?->map(Ids::BANNER, function(Data $data) : Item{
+			$type = $data->getTag()?->getInt(TileBanner::TAG_TYPE, TileBanner::TYPE_NORMAL) ?? TileBanner::TYPE_NORMAL;
+			if($type === TileBanner::TYPE_OMINOUS){
+				return Items::OMINOUS_BANNER();
+			}
+			$color = DyeColorIdMap::getInstance()->fromInvertedId($data->getMeta()) ?? throw new ItemTypeDeserializeException("Unknown banner meta " . $data->getMeta());
+			return Items::BANNER()->setColor($color);
+		});
+		$this->serializer?->map(Items::OMINOUS_BANNER(), fn() => new Data(Ids::BANNER, tag: CompoundTag::create()
+			->setInt(TileBanner::TAG_TYPE, TileBanner::TYPE_OMINOUS))
+		);
+		$this->serializer?->map(Items::BANNER(), function(Banner $item) : Data{
+			return new Data(Ids::BANNER, DyeColorIdMap::getInstance()->toInvertedId($item->getColor()));
+		});
 	}
 
 	/**
