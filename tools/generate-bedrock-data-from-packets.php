@@ -37,10 +37,10 @@ use pocketmine\data\bedrock\item\BlockItemIdMap;
 use pocketmine\data\bedrock\item\ItemTypeNames;
 use pocketmine\inventory\json\CreativeGroupData;
 use pocketmine\nbt\LittleEndianNbtSerializer;
-use pocketmine\nbt\NBT;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\ListTag;
 use pocketmine\nbt\TreeRoot;
+use pocketmine\nbt\UnexpectedTagTypeException;
 use pocketmine\network\mcpe\convert\BlockStateDictionary;
 use pocketmine\network\mcpe\convert\BlockTranslator;
 use pocketmine\network\mcpe\convert\ItemTranslator;
@@ -554,8 +554,8 @@ class ParserPacketHandler extends PacketHandler{
 		if(!($tag instanceof CompoundTag)){
 			throw new AssumptionFailedError();
 		}
-		$idList = $tag->getTag("idlist");
-		if(!($idList instanceof ListTag) || $idList->getTagType() !== NBT::TAG_Compound){
+		$generic = $tag->getTag("idlist");
+		if(!($generic instanceof ListTag) || ($idList = $generic->cast(CompoundTag::class)) === null){
 			echo $tag . "\n";
 			throw new \RuntimeException("expected TAG_List<TAG_Compound>(\"idlist\") tag inside root TAG_Compound");
 		}
@@ -565,9 +565,6 @@ class ParserPacketHandler extends PacketHandler{
 		}
 		echo "updating legacy => string entity ID mapping table\n";
 		$map = [];
-		/**
-		 * @var CompoundTag $thing
-		 */
 		foreach($idList as $thing){
 			$map[$thing->getString("id")] = $thing->getInt("rid");
 		}
