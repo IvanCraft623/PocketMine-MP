@@ -29,6 +29,7 @@ use pocketmine\entity\EntitySizeInfo;
 use pocketmine\entity\Explosive;
 use pocketmine\entity\Living;
 use pocketmine\entity\Location;
+use pocketmine\entity\NeverSavedWithChunkEntity;
 use pocketmine\event\entity\EntityDamageByEntityEvent;
 use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\item\FireworkRocket as FireworkItem;
@@ -46,7 +47,7 @@ use pocketmine\world\sound\FireworkLaunchSound;
 use function count;
 use function sqrt;
 
-class FireworkRocket extends Entity implements Explosive{
+class FireworkRocket extends Entity implements Explosive, NeverSavedWithChunkEntity{
 
 	public static function getNetworkTypeId() : string{ return EntityIds::FIREWORKS_ROCKET; }
 
@@ -111,14 +112,6 @@ class FireworkRocket extends Entity implements Explosive{
 		Utils::validateArrayValueType($explosions, function(FireworkRocketExplosion $_) : void{});
 		$this->explosions = $explosions;
 		return $this;
-	}
-
-	/**
-	 * TODO: The entity should be saved and loaded, but this is not possible.
-	 * @see https://bugs.mojang.com/browse/MCPE-165230
-	 */
-	public function canSaveWithChunk() : bool{
-		return false;
 	}
 
 	protected function onFirstUpdate(int $currentTick) : void{
