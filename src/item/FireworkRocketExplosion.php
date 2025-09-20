@@ -148,7 +148,7 @@ class FireworkRocketExplosion{
 	public function getColorMix() : Color{
 		/** @var Color[] $colors */
 		$colors = [];
-		foreach ($this->colors as $dyeColor) {
+		foreach($this->colors as $dyeColor){
 			$colors[] = $dyeColor->getRgbValue();
 		}
 		return Color::mix(...$colors);
@@ -185,7 +185,6 @@ class FireworkRocketExplosion{
 			->setByteArray(self::TAG_COLORS, self::encodeColors($this->colors))
 			->setByteArray(self::TAG_FADE_COLORS, self::encodeColors($this->fadeColors))
 			->setByte(self::TAG_TWINKLE, $this->twinkle ? 1 : 0)
-			->setByte(self::TAG_TRAIL, $this->trail ? 1 : 0)
-		;
+			->setByte(self::TAG_TRAIL, $this->trail ? 1 : 0);
 	}
 }

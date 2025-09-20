@@ -60,7 +60,7 @@ class FireworkRocket extends Entity implements Explosive, NeverSavedWithChunkEnt
 	 * @param FireworkRocketExplosion[] $explosions
 	 */
 	public function __construct(Location $location, int $maxFlightTimeTicks, array $explosions, ?CompoundTag $nbt = null){
-		if ($maxFlightTimeTicks < 0) {
+		if($maxFlightTimeTicks < 0){
 			throw new \InvalidArgumentException("Life ticks cannot be negative");
 		}
 		$this->maxFlightTimeTicks = $maxFlightTimeTicks;
@@ -88,7 +88,7 @@ class FireworkRocket extends Entity implements Explosive, NeverSavedWithChunkEnt
 	 * @return $this
 	 */
 	public function setMaxFlightTimeTicks(int $maxFlightTimeTicks) : self{
-		if ($maxFlightTimeTicks < 0) {
+		if($maxFlightTimeTicks < 0){
 			throw new \InvalidArgumentException("Max flight time ticks cannot be negative");
 		}
 		$this->maxFlightTimeTicks = $maxFlightTimeTicks;
