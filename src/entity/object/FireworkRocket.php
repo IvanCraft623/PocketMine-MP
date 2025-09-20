@@ -140,7 +140,7 @@ class FireworkRocket extends Entity implements Explosive, NeverSavedWithChunkEnt
 	}
 
 	public function explode() : void{
-		if(($expCount = count($this->explosions)) !== 0){
+		if(($explosionCount = count($this->explosions)) !== 0){
 			$this->broadcastAnimation(new FireworkParticlesAnimation($this));
 			foreach($this->explosions as $explosion){
 				$this->broadcastSound($explosion->getType()->getExplosionSound());
@@ -149,29 +149,36 @@ class FireworkRocket extends Entity implements Explosive, NeverSavedWithChunkEnt
 				}
 			}
 
-			$force = ($expCount * 2) + 5;
-			foreach($this->getWorld()->getCollidingEntities($this->getBoundingBox()->expandedCopy(5, 5, 5), $this) as $entity){
+			$force = ($explosionCount * 2) + 5;
+			$world = $this->getWorld();
+			foreach($world->getCollidingEntities($this->getBoundingBox()->expandedCopy(5, 5, 5), $this) as $entity){
 				if(!$entity instanceof Living){
 					continue;
 				}
 
-				$position = $entity->getEyePos();
-				$distance = $position->distance($this->location);
-				if($distance > 5){
+				$position = $entity->getPosition();
+				$distance = $position->distanceSquared($this->location);
+				if($distance > 25){
 					continue;
 				}
 
-				$world = $this->getWorld();
-
-				//check for obstructing blocks
-				foreach(VoxelRayTrace::betweenPoints($this->location, $position) as $pos){
-					if($world->getBlockAt((int) $pos->x, (int) $pos->y, (int) $pos->z)->isSolid()){
-						continue 2;
+				//cast two rays - one to the entity's feet and another to halfway up its body (according to Java, anyway)
+				//this seems like it'd miss some cases but who am I to argue with vanilla logic :>
+				$height = $entity->getBoundingBox()->getYLength();
+				for($i = 0; $i < 2; $i++){
+					$target = $position->add(0, 0.5 * $i * $height, 0);
+					foreach(VoxelRayTrace::betweenPoints($this->location, $target) as $blockPos){
+						if($world->getBlock($blockPos)->calculateIntercept($this->location, $target) !== null){
+							continue 2; //obstruction, try another path
+						}
 					}
-				}
 
-				$ev = new EntityDamageByEntityEvent($this, $entity, EntityDamageEvent::CAUSE_ENTITY_EXPLOSION, $force * sqrt((5 - $distance) / 5));
-				$entity->attack($ev);
+					//no obstruction
+					$damage = $force * sqrt((5 - $position->distance($this->location)) / 5);
+					$ev = new EntityDamageByEntityEvent($this, $entity, EntityDamageEvent::CAUSE_ENTITY_EXPLOSION, $damage);
+					$entity->attack($ev);
+					break;
+				}
 			}
 		}
 	}
