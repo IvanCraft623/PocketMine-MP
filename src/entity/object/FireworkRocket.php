@@ -51,8 +51,7 @@ class FireworkRocket extends Entity implements Explosive, NeverSavedWithChunkEnt
 
 	public static function getNetworkTypeId() : string{ return EntityIds::FIREWORKS_ROCKET; }
 
-	/* Maximum number of ticks this will live for. */
-	protected int $maxAgeTicks;
+	protected int $maxFlightTimeTicks;
 
 	/** @var FireworkRocketExplosion[] */
 	protected array $explosions = [];
@@ -60,11 +59,11 @@ class FireworkRocket extends Entity implements Explosive, NeverSavedWithChunkEnt
 	/**
 	 * @param FireworkRocketExplosion[] $explosions
 	 */
-	public function __construct(Location $location, int $lifeTicks, array $explosions, ?CompoundTag $nbt = null){
-		if ($lifeTicks < 0) {
+	public function __construct(Location $location, int $maxFlightTimeTicks, array $explosions, ?CompoundTag $nbt = null){
+		if ($maxFlightTimeTicks < 0) {
 			throw new \InvalidArgumentException("Life ticks cannot be negative");
 		}
-		$this->maxAgeTicks = $lifeTicks;
+		$this->maxFlightTimeTicks = $maxFlightTimeTicks;
 		$this->setExplosions($explosions);
 
 		parent::__construct($location, $nbt);
@@ -77,22 +76,22 @@ class FireworkRocket extends Entity implements Explosive, NeverSavedWithChunkEnt
 	protected function getInitialGravity() : float{ return 0.0; }
 
 	/**
-	 * Returns maximum number of ticks this will live for.
+	 * Returns the total number of ticks the firework will fly for before it explodes.
 	 */
-	public function getMaxAgeTicks() : int{
-		return $this->maxAgeTicks;
+	public function getMaxFlightTimeTicks() : int{
+		return $this->maxFlightTimeTicks;
 	}
 
 	/**
-	 * Sets maximum number of ticks this will live for.
+	 * Sets the total number of ticks the firework will fly for before it explodes.
 	 *
 	 * @return $this
 	 */
-	public function setMaxAgeTicks(int $maxAgeTicks) : self{
-		if ($maxAgeTicks < 0) {
-			throw new \InvalidArgumentException("Max age ticks cannot be negative");
+	public function setMaxFlightTimeTicks(int $maxFlightTimeTicks) : self{
+		if ($maxFlightTimeTicks < 0) {
+			throw new \InvalidArgumentException("Max flight time ticks cannot be negative");
 		}
-		$this->maxAgeTicks = $maxAgeTicks;
+		$this->maxFlightTimeTicks = $maxFlightTimeTicks;
 		return $this;
 	}
 
@@ -131,7 +130,7 @@ class FireworkRocket extends Entity implements Explosive, NeverSavedWithChunkEnt
 				$this->addMotion($this->motion->x * 0.15, 0.04, $this->motion->z * 0.15);
 			}
 
-			if($this->ticksLived >= $this->maxAgeTicks){
+			if($this->ticksLived >= $this->maxFlightTimeTicks){
 				$this->flagForDespawn();
 				$this->explode();
 			}
@@ -191,8 +190,7 @@ class FireworkRocket extends Entity implements Explosive, NeverSavedWithChunkEnt
 		$fireworksData = CompoundTag::create()
 			->setTag(FireworkItem::TAG_FIREWORK_DATA, CompoundTag::create()
 				->setTag(FireworkItem::TAG_EXPLOSIONS, $explosions)
-			)
-		;
+			);
 
 		$properties->setCompoundTag(EntityMetadataProperties::FIREWORK_ITEM, new CacheableNbt($fireworksData));
 	}

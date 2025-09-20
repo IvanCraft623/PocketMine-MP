@@ -29,10 +29,11 @@ use pocketmine\data\bedrock\DyeColorIdMap;
 use pocketmine\data\bedrock\FireworkRocketTypeIdMap;
 use pocketmine\data\SavedDataLoadingException;
 use pocketmine\nbt\tag\CompoundTag;
-use pocketmine\utils\Binary;
 use pocketmine\utils\Utils;
 use function array_key_first;
+use function chr;
 use function count;
+use function ord;
 use function strlen;
 
 class FireworkRocketExplosion{
@@ -70,8 +71,8 @@ class FireworkRocketExplosion{
 		$colors = [];
 
 		$dyeColorIdMap = DyeColorIdMap::getInstance();
-		for($i = 0; $i < strlen($colorsBytes); $i++){
-			$colorByte = Binary::readByte($colorsBytes[$i]);
+		for($i = 0, $len = strlen($colorsBytes); $i < $len; $i++){
+			$colorByte = ord($colorsBytes[$i]);
 			$color = $dyeColorIdMap->fromInvertedId($colorByte);
 			if($color !== null){
 				$colors[] = $color;
@@ -91,7 +92,7 @@ class FireworkRocketExplosion{
 
 		$dyeColorIdMap = DyeColorIdMap::getInstance();
 		foreach($colors as $color){
-			$colorsBytes .= Binary::writeByte($dyeColorIdMap->toInvertedId($color));
+			$colorsBytes .= chr($dyeColorIdMap->toInvertedId($color));
 		}
 
 		return $colorsBytes;
@@ -172,7 +173,7 @@ class FireworkRocketExplosion{
 	}
 
 	/**
-	 * Returns whether the particles has a trail effect.
+	 * Returns whether the particles have a trail effect.
 	 */
 	public function getTrail() : bool{
 		return $this->trail;

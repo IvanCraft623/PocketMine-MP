@@ -32,15 +32,16 @@ use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\ListTag;
 use pocketmine\player\Player;
 use pocketmine\utils\Utils;
+use function array_map;
 use function mt_rand;
 
 class FireworkRocket extends Item{
 
 	public const TAG_FIREWORK_DATA = "Fireworks"; //TAG_Compound
-	protected const TAG_FLIGHT_DURATION = "Flight"; //TAG_Byte
+	protected const TAG_FLIGHT_TIME_MULTIPLIER = "Flight"; //TAG_Byte
 	public const TAG_EXPLOSIONS = "Explosions"; //TAG_List
 
-	protected int $flightDurationMultiplier = 1;
+	protected int $flightTimeMultiplier = 1;
 
 	/** @var FireworkRocketExplosion[] */
 	protected array $explosions = [];
@@ -51,8 +52,8 @@ class FireworkRocket extends Item{
 	 *
 	 * The higher this value, the longer the flight duration.
 	 */
-	public function getFlightDurationMultiplier() : int{
-		return $this->flightDurationMultiplier;
+	public function getFlightTimeMultiplier() : int{
+		return $this->flightTimeMultiplier;
 	}
 
 	/**
@@ -63,11 +64,11 @@ class FireworkRocket extends Item{
 	 *
 	 * @return $this
 	 */
-	public function setFlightDurationMultiplier(int $duration) : self{
-		if($duration < 1 || $duration > 127){
-			throw new \InvalidArgumentException("Flight duration must be in range 1-127");
+	public function setFlightTimeMultiplier(int $multiplier) : self{
+		if($multiplier < 1 || $multiplier > 127){
+			throw new \InvalidArgumentException("Flight time multiplier must be in range 1-127");
 		}
-		$this->flightDurationMultiplier = $duration;
+		$this->flightTimeMultiplier = $multiplier;
 
 		return $this;
 	}
@@ -95,7 +96,7 @@ class FireworkRocket extends Item{
 		//TODO: this would be nicer if Vector3::getSide() accepted floats for distance
 		$position = $blockClicked->getPosition()->addVector($clickVector)->addVector(Vector3::zero()->getSide($face)->multiply(0.15));
 
-		$randomDuration = (($this->flightDurationMultiplier + 1) * 10) + mt_rand(0, 12);
+		$randomDuration = (($this->flightTimeMultiplier + 1) * 10) + mt_rand(0, 12);
 
 		$entity = new FireworkEntity(Location::fromObject($position, $player->getWorld(), Utils::getRandomFloat() * 360, 90), $randomDuration, $this->explosions);
 		$entity->setOwningEntity($player);
@@ -119,10 +120,9 @@ class FireworkRocket extends Item{
 			throw new SavedDataLoadingException("Missing firework data");
 		}
 
-		$this->setFlightDurationMultiplier($fireworkData->getByte(self::TAG_FLIGHT_DURATION, 1));
+		$this->setFlightTimeMultiplier($fireworkData->getByte(self::TAG_FLIGHT_TIME_MULTIPLIER, 1));
 
-		if(($explosions = $fireworkData->getListTag(self::TAG_EXPLOSIONS)) instanceof ListTag){
-			/** @var CompoundTag $explosion */
+		if(($explosions = $fireworkData->getListTag(self::TAG_EXPLOSIONS, CompoundTag::class)) !== null){
 			foreach($explosions as $explosion){
 				$this->explosions[] = FireworkRocketExplosion::fromCompoundTag($explosion);
 			}
@@ -133,13 +133,8 @@ class FireworkRocket extends Item{
 		parent::serializeCompoundTag($tag);
 
 		$fireworkData = CompoundTag::create();
-		$fireworkData->setByte(self::TAG_FLIGHT_DURATION, $this->flightDurationMultiplier);
-
-		$explosions = new ListTag();
-		foreach($this->explosions as $explosion){
-			$explosions->push($explosion->toCompoundTag());
-		}
-		$fireworkData->setTag(self::TAG_EXPLOSIONS, $explosions);
+		$fireworkData->setByte(self::TAG_FLIGHT_TIME_MULTIPLIER, $this->flightTimeMultiplier);
+		$fireworkData->setTag(self::TAG_EXPLOSIONS, new ListTag(array_map(fn(FireworkRocketExplosion $e) => $e->toCompoundTag(), $this->explosions)));
 
 		$tag->setTag(self::TAG_FIREWORK_DATA, $fireworkData);
 	}
