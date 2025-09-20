@@ -124,7 +124,12 @@ class FireworkRocket extends Entity implements Explosive, NeverSavedWithChunkEnt
 		$hasUpdate = parent::entityBaseTick($tickDiff);
 
 		if(!$this->isFlaggedForDespawn()){
-			$this->addMotion($this->motion->x * 0.15, 0.04, $this->motion->z * 0.15);
+			//Don't keep accelerating long-lived fireworks - this gets very rapidly out of control and makes the server
+			//die vanilla fireworks will only live for about 52 ticks maximum anyway, so this only makes sure plugin
+			//created fireworks don't murder the server
+			if($this->ticksLived < 80){
+				$this->addMotion($this->motion->x * 0.15, 0.04, $this->motion->z * 0.15);
+			}
 
 			if($this->ticksLived >= $this->maxAgeTicks){
 				$this->flagForDespawn();

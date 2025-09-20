@@ -98,9 +98,13 @@ class FireworkRocket extends Item{
 
 		$randomDuration = (($this->flightDurationMultiplier + 1) * 10) + mt_rand(0, 12);
 
-		$entity = new FireworkEntity(Location::fromObject($position, $player->getWorld(), lcg_value() * 360, 90), $randomDuration, $this->explosions);
+		$entity = new FireworkEntity(Location::fromObject($position, $player->getWorld(), Utils::getRandomFloat() * 360, 90), $randomDuration, $this->explosions);
 		$entity->setOwningEntity($player);
-		$entity->setMotion(new Vector3(lcg_value() * 0.001, 0.05, lcg_value() * 0.001));
+		$entity->setMotion(new Vector3(
+			(Utils::getRandomFloat() - Utils::getRandomFloat()) * 0.0023,
+			0.05,
+			(Utils::getRandomFloat() - Utils::getRandomFloat()) * 0.0023
+		));
 		$entity->spawnToAll();
 
 		$this->pop();
