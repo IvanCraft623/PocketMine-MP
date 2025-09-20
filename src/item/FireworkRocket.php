@@ -32,7 +32,6 @@ use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\ListTag;
 use pocketmine\player\Player;
 use pocketmine\utils\Utils;
-use function lcg_value;
 use function mt_rand;
 
 class FireworkRocket extends Item{
